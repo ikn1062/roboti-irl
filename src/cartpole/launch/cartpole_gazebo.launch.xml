@@ -16,12 +16,26 @@
     <arg name="verbose" default="true"/>
   </include>
 
+  <!-- COMPLETE -->
   <!-- send robot urdf to param server -->
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(find cartpole_gazebo)/urdf/carpole_gazebo_urdf.xacro.urdf" />
-
   <!-- push robot_description to factory and spawn robot in gazebo -->
   <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model robot -z 0.1" respawn="false" output="screen" />
+  <!-- Robot state publisher -->
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="50.0" />
+    <param name="tf_prefix" type="string" value="/" />
+    <remap from="/joint_states" to="/teo/joint_states"/>
+  </node>
+  <!-- COMPLETE -->
 
-  <include file="$(find cartpole_gazebo)/launch/controller_utils.launch"/>
+  <!-- load the controllers -->
+  <rosparam file="$(find cartpole_gazebo)/config/cart_pole_controller.yaml" command="load"/>
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/" args="cart_pole_controller joint_state_controller"/>
+
+  <!-- The next two lines contains scripts for controlling the cart -->
+  <node name="cartpole_trajectories" pkg="cartpole_gazebo" type="cartpole_trajectories.py" respawn="false" output="log" />
+  <node name="key_control_cart" pkg="cartpole_gazebo" type="key_control_cart.py" respawn="false" output="screen" /> 
+  
 
 </launch>
