@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
+  <!-- COMPLETE -->
   <arg name="world_file"  default="/usr/share/gazebo-8/worlds/empty_bullet.world"/>
   <arg name="paused" default="false"/>
   <arg name="gui" default="true"/>
@@ -16,7 +17,6 @@
     <arg name="verbose" default="true"/>
   </include>
 
-  <!-- COMPLETE -->
   <!-- send robot urdf to param server -->
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(find cartpole_gazebo)/urdf/carpole_gazebo_urdf.xacro.urdf" />
   <!-- push robot_description to factory and spawn robot in gazebo -->
