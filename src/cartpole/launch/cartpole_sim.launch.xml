@@ -1,5 +1,5 @@
 <launch>
-    
+    <!--
     <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher" output="screen">
         <param name="robot_description" value="command 'xacro $(find-pkg-share cartpole)/urdf/xacro/carpole_gazebo_urdf.urdf.xacro'" />
         <param name="publish_frequency" value="50.0" />
