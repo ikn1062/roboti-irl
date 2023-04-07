@@ -32,11 +32,11 @@ def generate_launch_description():
                 Command(['xacro', ' ',
                         PathJoinSubstitution([
                             FindPackageShare(package='cartpole'),
-                            'urdf', 'xacro', 'cartpole_gazebo_urdf.urdf.xacro'])])}
+                            'urdf', 'xacro', 'cartpole_urdf.urdf.xacro'])])}
                         ],
             arguments=[PathJoinSubstitution([
                 FindPackageShare(package='cartpole'),
-                'urdf', 'xacro', 'cartpole_gazebo_urdf.urdf.xacro'])]
+                'urdf', 'xacro', 'cartpole_urdf.urdf.xacro'])]
         ),
         Node(
             package='joint_state_publisher',

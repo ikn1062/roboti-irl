@@ -1,7 +1,5 @@
-1. Create new launch files for RVIZ2 and link joint states to controller
-
-
-Notes:
-* Check RSP on launch xml files -> crashing with exit code -6
-* need to check the turtlebot3 teleop keyboard and link it to the cartpole joint states
-* write a c++ scripts to collect demonstrations 
+### Things To Do:
+1. Write a Node to control the cart using teleoptwist keyboard
+2. Write a Node to collect demonstrations when started
+3. Clean up launch file
+4. Connect Gazebo to RVIZ: https://docs.ros.org/en/humble/Tutorials/Advanced/Simulators/Gazebo.html

@@ -105,7 +105,7 @@
 
   <gazebo>
     <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
-      <parameters>$(find cartpole)/config/cartpole_controller.yaml</parameters>
+      <parameters>$(find cartpole)/config/cart_pole_controller.yaml</parameters>
     </plugin>
   </gazebo>
 
