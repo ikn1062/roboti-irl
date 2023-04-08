@@ -6,12 +6,16 @@
         <arg name="ign_args" value="-r -v 2 $(var world).sdf"/>
     </include>
 
-    <node pkg="ros_gz_sim" exec="create" name="cartpole_gazebo" output="screen" args="-world $(var world) -string $(var robot_desc)"> </node>
-    <node pkg="ros_gz_bridge" exec="parameter_bridge" name="ros2_gazebo_bridge" output="screen" args="/cartpole/cmd@std_msgs/msg/Float64@ignition.msgs.Double"> </node>
+    <node pkg="ros_gz_sim" exec="create" name="cartpole_gazebo" output="screen" args="-world $(var world) -string $(var robot_desc)" />
+    <node pkg="ros_gz_bridge" exec="parameter_bridge" name="ros2_gazebo_bridge" output="screen" args="/cartpole/cmd@std_msgs/msg/Float64@ignition.msgs.Double" /> 
+    <node pkg="ros_gz_bridge" exec="parameter_bridge" name="ros2_gazebo_bridge" output="screen" args="/world/empty/model/cartpole/joint_state@sensor_msgs/msg/JointState@ignition.msgs.Model">
+        <remap from="/world/empty/model/cartpole/joint_state" to="/cartpole/joint_state" />
+    </node>
 
     <node name="teleop_keyboard" pkg="turtlebot3_teleop" exec="teleop_keyboard" output="screen"  launch-prefix="xterm -e"/> 
     
     <node name="cartpole_control" pkg="cartpole" exec="cartpole_ctrl" output = "screen"> 
         <param from="$(find-pkg-share cartpole)/config/cartpole_controller.yaml" />
+        <param name="scale" value="10.0" />
     </node>
 </launch>
