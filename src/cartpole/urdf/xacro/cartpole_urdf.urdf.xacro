@@ -1,6 +1,17 @@
 <?xml version="1.0"?>
 <robot name="cartpole" xmlns:xacro="http://ros.org/wiki/xacro">
 
+  <xacro:property name="cartpole_params" value="$(find cartpole)/config/cartpole_params.yaml" />
+  <xacro:property name="load_params" value="${xacro.load_yaml(cartpole_params)}" />
+  <xacro:property name="params" value="${load_params['cartpole_parameters']['ros__parameters']}" />
+  <xacro:property name="cart_mass"  value="${params['cart_mass']}" />
+  <xacro:property name="pole_mass"  value="${params['pole_mass']}" />
+  <xacro:property name="pole_len"  value="${params['pole_len']}" />
+  <xacro:property name="pole_org"  value="${params['pole_org']}" />
+  <xacro:property name="prop_gain"  value="${params['prop_gain']}" />
+  <xacro:property name="int_gain"  value="${params['int_gain']}" />
+  <xacro:property name="diff_gain"  value="${params['diff_gain']}" />
+
   <link name="world"/>
 
   <link name="slideBar">
@@ -30,7 +41,7 @@
       </material>
     </visual>
     <inertial>
-      <mass value="1"/>
+      <mass value="${cart_mass}"/>
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
     </inertial>
   </link>
@@ -53,16 +64,16 @@
   <link name="pole">
     <visual>
       <geometry>
-        <box size="0.05 0.05 1.0"/>
+        <box size="0.05 0.05 ${pole_len}"/>
       </geometry>
-      <origin rpy="0 0 0" xyz="0 0 -0.5"/>
+      <origin rpy="0 0 0" xyz="0 0 ${pole_org}"/>
       <material name="white">
         <color rgba="1 1 1 1"/>
       </material>
     </visual>
     <inertial>
     <origin xyz="0 0 0.5"/>
-      <mass value="2"/>
+      <mass value="${pole_mass}"/>
       <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
     </inertial>
   </link>
@@ -94,9 +105,9 @@
       <use_force_commands>true</use_force_commands>
       <topic>/cartpole/cmd</topic>
       <initial_velocity>0.0</initial_velocity>
-      <p_gain>100.0</p_gain>
-      <i_gain>0.01</i_gain>
-      <d_gain>10.0</d_gain>
+      <p_gain>${prop_gain}</p_gain>
+      <i_gain>${int_gain}</i_gain>
+      <d_gain>${diff_gain}</d_gain>
     </plugin>
 
     <plugin 

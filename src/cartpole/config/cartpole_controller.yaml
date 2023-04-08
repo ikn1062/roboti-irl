@@ -1,0 +1,6 @@
+cartpole_ctrl:
+  ros__parameters:
+    rate: 50.0
+    scale: 64.0
+    max_force: 256.0
+    
