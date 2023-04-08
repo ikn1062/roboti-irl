@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<robot name="cartpole" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:property name="cartpole_params" value="$(find cartpole)/config/cartpole_params.yaml" />
+  <xacro:property name="load_params" value="${xacro.load_yaml(cartpole_params)}" />
+  <xacro:property name="params" value="${load_params['cartpole_parameters']['ros__parameters']}" />
+  <xacro:property name="cart_mass"  value="${params['cart_mass']}" />
+  <xacro:property name="pole_mass"  value="${params['pole_mass']}" />
+  <xacro:property name="pole_len"  value="${params['pole_len']}" />
+  <xacro:property name="pole_org"  value="${params['pole_org']}" />
+  <xacro:property name="prop_gain"  value="${params['prop_gain']}" />
+  <xacro:property name="int_gain"  value="${params['int_gain']}" />
+  <xacro:property name="diff_gain"  value="${params['diff_gain']}" />
+
+  <link name="world"/>
+
+  <link name="slideBar">
+    <visual>
+      <geometry>
+        <box size="30 0.05 0.05"/>
+      </geometry>
+      <origin xyz="0 0 0"/>
+      <material name="green">
+        <color rgba="0 0.8 .8 1"/>
+      </material>
+    </visual>
+    <inertial>
+      <mass value="100"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <link name="cart">
+    <visual>
+      <geometry>
+        <box size="0.5 0.5 0.2"/>
+      </geometry>
+      <origin xyz="0 0 0"/>
+      <material name="blue">
+        <color rgba="0 0 .8 1"/>
+      </material>
+    </visual>
+    <inertial>
+      <mass value="${cart_mass}"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="world_to_base" type="fixed">
+    <origin xyz="0 0 1" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="slideBar"/>
+  </joint>
+
+  <joint name="slider_to_cart" type="prismatic">
+    <axis xyz="1 0 0"/>
+    <origin xyz="0.0 0.0 0.0"/>
+    <parent link="slideBar"/>
+    <child link="cart"/>
+    <limit effort="1000.0" lower="-15" upper="15" velocity="30"/>
+    <dynamics damping="0.0" friction="0.0" />
+  </joint>
+
+  <link name="pole">
+    <visual>
+      <geometry>
+        <box size="0.05 0.05 ${pole_len}"/>
+      </geometry>
+      <origin rpy="0 0 0" xyz="0 0 ${pole_org}"/>
+      <material name="white">
+        <color rgba="1 1 1 1"/>
+      </material>
+    </visual>
+    <inertial>
+    <origin xyz="0 0 0.5"/>
+      <mass value="${pole_mass}"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="cart_to_pole" type="continuous">
+    <axis xyz="0 1 0"/>
+    <origin xyz="0.0 0.0 0"/>
+    <parent link="cart"/>
+    <child link="pole"/>
+    <dynamics damping="0.0" friction="0.0" />
+  </joint>
+
+  <transmission name="slider_to_cart_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="slider_to_cart">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="slider_to_cart_motor">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <gazebo>
+    <plugin 
+      filename="libignition-gazebo-joint-controller-system.so" 
+      name="ignition::gazebo::systems::JointController">
+      <joint_name>cart_to_pole</joint_name>
+      <use_force_commands>true</use_force_commands>
+      <topic>/cartpole/cmd</topic>
+      <initial_velocity>0.0</initial_velocity>
+      <p_gain>${prop_gain}</p_gain>
+      <i_gain>${int_gain}</i_gain>
+      <d_gain>${diff_gain}</d_gain>
+    </plugin>
+
+    <plugin 
+      filename="libignition-gazebo-joint-state-publisher-system.so" 
+      name="ignition::gazebo::systems::JointStatePublisher">
+      <joint_name>cart_to_pole</joint_name>
+    </plugin>
+
+    <plugin 
+      filename="libignition-gazebo-joint-state-publisher-system.so" 
+      name="ignition::gazebo::systems::JointStatePublisher">
+      <joint_name>slider_to_cart</joint_name>
+    </plugin>
+  </gazebo>
+
+</robot>

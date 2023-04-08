@@ -1,0 +1,9 @@
+cartpole_parameters:
+  ros__parameters:
+    cart_mass: "10"
+    pole_mass: "2"
+    pole_len: "1.0"
+    pole_org: "-0.5"
+    prop_gain: 100.0
+    int_gain: 0.01
+    diff_gain: 10.0
