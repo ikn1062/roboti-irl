@@ -23,7 +23,7 @@ int main()
     std::cout << "Testing Ergodic Utility Functions...  START" << std::endl;
     std::vector<std::vector<int> > K_series = create_K_series(1, 4);
     
-    for (int i = 0; i < demos.size(); i++) {
+    for (unsigned int i = 0; i < demos.size(); i++) {
         std::cout << "demo idx: " << i << ", demo size: " << demos[i].size() << std::endl;
     }
     
@@ -44,7 +44,7 @@ int main()
     std::vector<double> lambdaK = erg.get_LambdaK();
     std::vector<double> hK = erg.get_hK(); 
 
-    for (int i = 0; i < phik.size(); i++){
+    for (unsigned int i = 0; i < phik.size(); i++){
         std::cout << "K: ";
         for (int j = 0; j < 4; j++) {
             std::cout << K_series[i][j]; 
@@ -52,7 +52,7 @@ int main()
         std::cout << ", PhiK: " << std::setprecision(10) << phik[i] << std::endl;
     }
 
-    for (int i = 0; i < lambdaK.size(); i++){
+    for (unsigned int i = 0; i < lambdaK.size(); i++){
         std::cout << "K: ";
         for (int j = 0; j < 4; j++) {
             std::cout << K_series[i][j]; 
@@ -60,7 +60,7 @@ int main()
         std::cout << ", lambdaK: " << std::setprecision(10) << lambdaK[i] << std::endl;
     }
 
-    for (int i = 0; i < hK.size(); i++){
+    for (unsigned int i = 0; i < hK.size(); i++){
         std::cout << "K: ";
         for (int j = 0; j < 4; j++) {
             std::cout << K_series[i][j]; 

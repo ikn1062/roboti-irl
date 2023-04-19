@@ -1,4 +1,5 @@
 #include <ergodiclib/ergodic_utils.hpp>
+
 namespace ergodiclib
 {
     std::vector<std::vector<int> > create_K_series(int K, int n_dim) 
@@ -15,7 +16,7 @@ namespace ergodiclib
     {
         std::vector<std::vector<int> > res;
         std::vector<std::vector<int> > k_series;
-        for (int i = 0; i < K_num.size(); i++) {
+        for (unsigned int i = 0; i < K_num.size(); i++) {
             permutation[idx] = K_num[i];
             if (idx == n_dim-1) {
                 res.push_back(permutation);
@@ -42,7 +43,7 @@ namespace ergodiclib
     double l2_norm(const std::vector<int>& v)
     {
         double sum = 0.0;
-        for (int i = 0; i < v.size(); i++) {
+        for (unsigned int i = 0; i < v.size(); i++) {
             sum += pow(v[i], 2);
         }
         return sqrt(sum);
@@ -51,7 +52,7 @@ namespace ergodiclib
     double l2_norm(const std::vector<double>& v)
     {
         double sum = 0.0;
-        for (int i = 0; i < v.size(); i++) {
+        for (unsigned int i = 0; i < v.size(); i++) {
             sum += pow(v[i], 2);
         }
         return sqrt(sum);

@@ -1,4 +1,5 @@
 #include <ergodiclib/ergodic_measure.hpp>
+
 namespace ergodiclib
 {
     ErgodicMeasure::ErgodicMeasure(std::vector<std::vector<std::vector<double> > > demonstrations, std::vector<int> demo_weights, int K_coeff, std::vector<std::pair<double, double> > L_dim, double dt_demo)
@@ -48,7 +49,7 @@ namespace ergodiclib
     {   
         double PhiK_val = 0;
         
-        for (int i = 0; i < K_series.size(); i++) {
+        for (unsigned int i = 0; i < K_series.size(); i++) {
             PhiK_val = 0;
             for (int j = 0; j < m_demo; j++) {
                 PhiK_val += E_vec[j] * weight_vec[j] * calculateCk(D_mat[j], K_series[i], i);
@@ -76,7 +77,7 @@ namespace ergodiclib
         double hk = calculateHk(K_vec, k_idx);
         double fourier_basis = 1.0;
         double upper, lower;
-        for (int i = 0; i < x_i_trajectory.size(); i++) {
+        for (unsigned int i = 0; i < x_i_trajectory.size(); i++) {
             upper = K_vec[i] * PI * x_i_trajectory[i];
             lower = L[i].first - L[i].second;
             fourier_basis *= cos(upper/lower);
@@ -109,7 +110,7 @@ namespace ergodiclib
     {
         double lambda_k; 
         double s = (n_dim + 1) / 2.0;
-        for (int i = 0; i < K_series.size(); i++) {
+        for (unsigned int i = 0; i < K_series.size(); i++) {
             // FIX UTILITY to not return sqrt
             lambda_k = 1 / pow(1 + pow(l2_norm(K_series[i]), 2), s);
             lambdaK_vec[i] = lambda_k; 

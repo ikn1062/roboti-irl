@@ -9,10 +9,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include </opt/homebrew/include/eigen3/Eigen/Dense>
 #include <ergodiclib/ergodic_utils.hpp>
-
-// #include <Eigen/Dense>
 
 namespace ergodiclib
 {
@@ -38,6 +35,8 @@ namespace ergodiclib
         /// \brief Returns Normalizing factor for Fk for each series coefficient
         /// \return hK vector
         std::vector<double> get_hK();
+
+        void calcErgodic();
 
     private:
         /// \brief Calculates coefficients that describe the task definition, phi_k

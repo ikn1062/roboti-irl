@@ -321,9 +321,9 @@ class ErgodicMeasure:
 
 def main():
     print("Getting Demonstrations")
-    project_name = input("Please input project name: ")
+    ergodic_properties_json = input("Please input the full path to ergodic properties json: ")
 
-    with open(os.path.join(os.getcwd(), "src", project_name, "config", "ergodic_properties.json"), 'r') as f:
+    with open(ergodic_properties_json, 'r') as f:
         properties = json.load(f)
         ergodic_properties = properties["ergodic_system"]
 
