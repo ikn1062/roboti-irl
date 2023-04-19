@@ -146,8 +146,6 @@ class Plot2DMetric:
         contour_count = contour_count[:-1, :-1]
         return contour_count
 
-import numpy as np
-
 
 class ErgodicMeasure:
     def __init__(self, D, E, K, L, dt):
@@ -325,7 +323,7 @@ def main():
     print("Getting Demonstrations")
     project_name = input("Please input project name: ")
 
-    with open(os.path.join("src", project_name, "config", "ergodic_system_properties.json"), 'r') as f:
+    with open(os.path.join(os.getcwd(), "src", project_name, "config", "ergodic_properties.json"), 'r') as f:
         properties = json.load(f)
         ergodic_properties = properties["ergodic_system"]
 
@@ -353,13 +351,9 @@ def main():
         raise FileNotFoundError("No files found in demonstration folder")
     
     print("Visualize Ergodic Metric")
-    
     plot_phix_metric = Plot2DMetric(D, new_E, K, L, dt, 0, 1, interpolation='bilinear')
     plot_phix_metric.visualize_ergodic()
     plot_phix_metric.visualize_trajectory()
-
-
-    
 
 
 if __name__ == "__main__":
