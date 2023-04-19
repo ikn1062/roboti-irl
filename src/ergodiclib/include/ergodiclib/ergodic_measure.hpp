@@ -16,8 +16,6 @@
 
 namespace ergodiclib
 {
-    constexpr double PI = 3.14159265358979323846;
-
     /// \brief 
     class ErgodicMeasure
     {
