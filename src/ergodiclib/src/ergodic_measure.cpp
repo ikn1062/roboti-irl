@@ -1,8 +1,7 @@
 #include <ergodiclib/ergodic_measure.hpp>
-
 namespace ergodiclib
 {
-    ErgodicMeasure::ErgodicMeasure(std::vector<std::vector<std::vector<double>>> demonstrations, std::vector<int> demo_weights, int K_coeff, std::vector<std::pair<double, double>> L_dim, double dt_demo)
+    ErgodicMeasure::ErgodicMeasure(std::vector<std::vector<std::vector<double> > > demonstrations, std::vector<int> demo_weights, int K_coeff, std::vector<std::pair<double, double> > L_dim, double dt_demo)
     : D_mat(demonstrations),
       E_vec(demo_weights),
       K(K_coeff),
@@ -39,6 +38,12 @@ namespace ergodiclib
         return hK_vec; 
     }
 
+    void ErgodicMeasure::calcErgodic()
+    {
+        PhiK_vec = calculatePhik();
+        lambdaK_vec = calculateLambdaK(); 
+    }
+
     std::vector<double> ErgodicMeasure::calculatePhik()
     {   
         double PhiK_val = 0;
@@ -53,16 +58,16 @@ namespace ergodiclib
         return PhiK_vec;
     }
 
-    double ErgodicMeasure::calculateCk(const std::vector<std::vector<double>>& x_trajectory, const std::vector<int>& K_vec, int k_idx)
+    double ErgodicMeasure::calculateCk(const std::vector<std::vector<double> >& x_trajectory, const std::vector<int>& K_vec, int k_idx)
     {
         int x_len = x_trajectory.size();
         double trajec_time = x_len * dt;
         std::vector<double> Fk_vec(x_len);
 
         for (int i = 0; i < x_len; i++) {
-            Fk_vec[i] = calculateFk(x_trajectory[i], K_vec, k_idx); 
+            Fk_vec[i] = calculateFk(x_trajectory[i], K_vec, k_idx);
         }
-        double Ck = integralTrapz(Fk_vec, dt);
+        double Ck = (1/trajec_time) * integralTrapz(Fk_vec, dt);
         return Ck;
     }
 
@@ -105,8 +110,9 @@ namespace ergodiclib
         double lambda_k; 
         double s = (n_dim + 1) / 2.0;
         for (int i = 0; i < K_series.size(); i++) {
-           lambda_k = 1 / pow(pow(1 + l2_norm(K_series[i]), 2), s);
-           lambdaK_vec[i] = lambda_k; 
+            // FIX UTILITY to not return sqrt
+            lambda_k = 1 / pow(1 + pow(l2_norm(K_series[i]), 2), s);
+            lambdaK_vec[i] = lambda_k; 
         }
         return lambdaK_vec;
     }

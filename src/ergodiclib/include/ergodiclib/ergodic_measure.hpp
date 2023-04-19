@@ -25,7 +25,7 @@ namespace ergodiclib
         /// \param demo_weights Demonstration weights - length of demonstrations
         /// \param K_coeff Size of Series Coefficient 
         /// \param L_dim Size of boundaries for dimensions 
-        ErgodicMeasure(std::vector<std::vector<std::vector<double>>> demonstrations, std::vector<int> demo_weights, int K_coeff, std::vector<std::pair<double, double>> L_dim, double dt_demo);
+        ErgodicMeasure(std::vector<std::vector<std::vector<double> > > demonstrations, std::vector<int> demo_weights, int K_coeff, std::vector<std::pair<double, double> > L_dim, double dt_demo);
 
         /// \brief Returns Spatial distribution of demonstrations for each series coefficient
         /// \return PhiK Vector 
@@ -61,7 +61,7 @@ namespace ergodiclib
         /// \param K_vec The series coefficient given as a list of length dimensions 
         /// \param k_idx The index of the series coefficient K_vec
         /// \return CK value, Spacial Statistics
-        double calculateCk(const std::vector<std::vector<double>>& x_trajectory, const std::vector<int>& K_vec, int k_idx);
+        double calculateCk(const std::vector<std::vector<double> >& x_trajectory, const std::vector<int>& K_vec, int k_idx);
 
         /// \brief Calculates normalized fourier coeffecient using basis function metric
         ///        Fk is defined by the following:
@@ -83,7 +83,7 @@ namespace ergodiclib
         double calculateHk(const std::vector<int>& K_vec, int k_idx);
 
         /// \brief Vector of Demonstrations - Each Demonstration is a trajectory of n-dimensions
-        std::vector<std::vector<std::vector<double>>> D_mat;
+        std::vector<std::vector<std::vector<double> > > D_mat;
 
         /// \brief Vector of weights for each Demonstration
         std::vector<int> E_vec;
@@ -92,7 +92,7 @@ namespace ergodiclib
         int K;
 
         /// \brief Size of boundaries for dimensions - [Lower boundary, Higher Boundary]
-        std::vector<std::pair<double, double>> L;
+        std::vector<std::pair<double, double> > L;
 
         /// \brief Time Difference 
         double dt;
@@ -107,7 +107,7 @@ namespace ergodiclib
         std::vector<double> weight_vec;
 
         /// \brief Vector of Weights for each demonstration
-        std::vector<std::vector<int>> K_series;
+        std::vector<std::vector<int> > K_series;
 
         /// \brief Vector of PhiK Values
         std::vector<double> PhiK_vec;

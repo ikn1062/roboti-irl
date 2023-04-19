@@ -17,7 +17,7 @@ namespace ergodiclib
     /// \param K Size of series coefficients
     /// \param n_dim Size of dimension for demonstrations
     /// \return List of Fourier Series Coefficients
-    std::vector<std::vector<int>> create_K_series(int K, int n_dim);
+    std::vector<std::vector<int> > create_K_series(int K, int n_dim);
 
     /// \brief Reccursive helper for fourier series coefficients 
     /// \param K_num Size of series coefficients 
@@ -25,7 +25,7 @@ namespace ergodiclib
     /// \param n_dim Size of dimension for demonstrations
     /// \param idx Current idx of sequence in permutation
     /// \return List of Fourier Series Coefficients
-    std::vector<std::vector<int>> create_K_helper(std::vector<int> K_num, std::vector<int> permutation, int n_dim, int idx);
+    std::vector<std::vector<int> > create_K_helper(std::vector<int> K_num, std::vector<int> permutation, int n_dim, int idx);
     
     /// \brief Finds the integral of a trajectory using the trapezoidal rule, using constant dx
     /// \param y_trajec Trajectory to perform integration over

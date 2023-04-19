@@ -1,8 +1,7 @@
 #include <ergodiclib/ergodic_utils.hpp>
-
 namespace ergodiclib
 {
-    std::vector<std::vector<int>> create_K_series(int K, int n_dim) 
+    std::vector<std::vector<int> > create_K_series(int K, int n_dim) 
     {
         std::vector<int> input_k;
         for (int k = 0; k < K+1; k++) {
@@ -12,10 +11,10 @@ namespace ergodiclib
         return create_K_helper(input_k, permutation, n_dim, 0); 
     }
 
-    std::vector<std::vector<int>> create_K_helper(std::vector<int> K_num, std::vector<int> permutation, int n_dim, int idx) 
+    std::vector<std::vector<int> > create_K_helper(std::vector<int> K_num, std::vector<int> permutation, int n_dim, int idx) 
     {
-        std::vector<std::vector<int>> res;
-        std::vector<std::vector<int>> k_series;
+        std::vector<std::vector<int> > res;
+        std::vector<std::vector<int> > k_series;
         for (int i = 0; i < K_num.size(); i++) {
             permutation[idx] = K_num[i];
             if (idx == n_dim-1) {

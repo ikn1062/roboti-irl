@@ -355,6 +355,19 @@ def main():
     plot_phix_metric.visualize_ergodic()
     plot_phix_metric.visualize_trajectory()
 
+    """
+    ergodic_test = ErgodicMeasure(D, E, K, L, dt)
+    hk, phik, lambdak = ergodic_test.calc_fourier_metrics()
+    for k_series in phik.keys():
+        print(f"K: {k_series}, PhiK: {phik[k_series]}")
+
+    for k_series in lambdak.keys():
+        print(f"K: {k_series}, LambdaK: {lambdak[k_series]}")
+
+    for k_series in hk.keys():
+        print(f"K: {k_series}, hK: {hk[k_series]}")
+    """
+
 
 if __name__ == "__main__":
     main()
