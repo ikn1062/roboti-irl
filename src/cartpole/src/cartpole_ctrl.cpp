@@ -1,14 +1,18 @@
 /// \file
-/// \brief INCLUDE BRIEF HERE
+/// \brief Cartpole Controller File used to command Cart in simulation and save Joint States
 ///
 /// PARAMETERS:
-///     NAME (TYPE): DESC
+///     rate (float): Rate of Main Loop 
+///     scale (float): Scale of force relative to teleop twist input
+///     max_force (float): Max Force allowed to publish to cartpole sim
+///     cart_path (string): Path to save the cart joint position outputs 
+///     pole_path (string): Path to save the pole joint position outputs
 /// PUBLISHES:
-///     pub_var_name (MSG TYPE): DESC
+///     cartpole/timestep (std_msgs::msg::UInt64): Current Timestep of Simulation
+///     /cartpole/cmd (std_msgs::msg::Float64): Command Publisher for cartpole sim
 /// SUBSCRIBES:
-///     sub_var_name (MSG TYPE): DESC
-/// SERVERS:
-///     nusim/reset (Empty): Resets the turtlebot to the original position in the world frame
+///     /cmd_vel (geometry_msgs::msg::Twist): Subscribes to the Teleop Twist Keyboard
+///     /cartpole/joint_state (sensor_msgs::msg::JointState): Receives joint states of cart and pole  
 
 
 #include <chrono>
@@ -53,7 +57,7 @@ public:
     pole_path = get_parameter("pole_path").as_string();
 
     // Publishers and Subscribers
-    timestep_pub_ = create_publisher<std_msgs::msg::UInt64>("~/timestep", 50);
+    timestep_pub_ = create_publisher<std_msgs::msg::UInt64>("cartpole/timestep", 50);
     command_pub_ = create_publisher<std_msgs::msg::Float64>("/cartpole/cmd", 10);
     keyboard_sub_ =
       create_subscription<geometry_msgs::msg::Twist>(

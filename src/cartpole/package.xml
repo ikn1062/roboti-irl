@@ -3,7 +3,7 @@
 <package format="3">
   <name>cartpole</name>
   <version>0.0.4</version>
-  <description>TODO: Package description</description>
+  <description>ROS Package for Launching Cartpole Simulation with Control</description>
   <maintainer email="ishaannarain2022@u.northwestern.edu">student</maintainer>
   <license>BSD</license>
 
