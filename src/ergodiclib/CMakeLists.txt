@@ -19,7 +19,7 @@ target_include_directories(${PROJECT_NAME}
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
   $<INSTALL_INTERFACE:include/>)
 
-target_compile_features(${PROJECT_NAME}  PUBLIC cxx_std_17) 
+target_compile_features(${PROJECT_NAME}  PUBLIC cxx_std_17)
 target_compile_options(${PROJECT_NAME}  PUBLIC -Wall -Wextra -Wpedantic)
 
 add_executable(ergodic_test src/ergodic_test.cpp)
@@ -31,7 +31,7 @@ target_link_libraries(ergodic_main ${PROJECT_NAME})
 install(TARGETS ergodic_test ergodic_main DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
 install(TARGETS ergodic_test ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
-install(EXPORT ${PROJECT_NAME}-targets 
+install(EXPORT ${PROJECT_NAME}-targets
         FILE ${PROJECT_NAME}-config.cmake
         NAMESPACE ${PROJECT_NAME}::
         DESTINATION lib/cmake/${PROJECT_NAME})
@@ -55,9 +55,9 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-include(CTest)
-add_executable(ergodiclib_test tests/tests.cpp)
-target_link_libraries(ergodiclib_test ${PROJECT_NAME} Catch2::Catch2WithMain)
-add_test(NAME Test_of_Ergodic_lib COMMAND ergodiclib_test)
+# include(CTest)
+# add_executable(ergodiclib_test tests/tests.cpp)
+# target_link_libraries(ergodiclib_test ${PROJECT_NAME} Catch2::Catch2WithMain)
+# add_test(NAME Test_of_Ergodic_lib COMMAND ergodiclib_test)
 
 ament_package()

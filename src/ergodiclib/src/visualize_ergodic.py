@@ -5,21 +5,23 @@ import os
 
 
 class Plot2DMetric:
-    def __init__(self, D, E, K, L, dt, dim1, dim2, interpolation='none', vminmax=(-0.1, 0.5), sizexy=(15, 30)):
+    def __init__(self, D, E, K, L, dt, dim1, dim2,
+                 interpolation='none', vminmax=(-0.1, 0.5), sizexy=(15, 30)):
         """
-        Plots Ergodic Spatial Metrix Phix using the Demonstrations and the ErgodicMeasure Class
-        - Can also plot the Spatial Information Density of Trajectory as well as trajectory plots over state space
+        Plot Ergodic Spatial Metrix Phix using Demonstrations.
+
+        - Can also plot the Spatial Information Density of Trajectory
 
         :param D: List of demonstrations (list)
         :param E: Weights that describe whether a demonstration D[i] is good [1] or bad [-1] (list)
         :param K: Size of series coefficient (int)
-        :param L: Size of boundaries for dimensions, listed as [Lower boundary, Higher Boundary] (list)
+        :param L: Size of boundaries for dimensions [Lower boundary, Higher Boundary] (list)
         :param dt: Time difference (float)
         :param dim1: Dimension 1 to visualize State space - column # (int)
         :param dim2: Dimension 2 to visualize State space - column # (int)
-        :param interpolation: Interpolation for Ergodic Metric Visualization - matplotlib imshow interpolation (str)
+        :param interpolation: Interpolation for Ergodic Metric Visualization (str)
         :param vminmax: Min/Max Value for matplotlib interpolation (vmin, vmax) (tuple)
-        :param sizexy: Size of bins for x and y for visualize trajectory (dim1 bins, dim2 bins) (tuple)
+        :param sizexy: Size of bins for x and y (dim1 bins, dim2 bins) (tuple)
         """
         self.K = K
         self.L = L
@@ -40,7 +42,7 @@ class Plot2DMetric:
 
     def visualize_ergodic(self):
         """
-        Visualizes ergodic spatial metric Phix using inverse fourier transform of ergodic fourier metrix Phik
+        Visualizes ergodic spatial metric Phix using inverse fourier transform of Phik.
 
         :return: None
         """
@@ -54,10 +56,10 @@ class Plot2DMetric:
 
     def visualize_trajectory(self, show_trajectory=True, show_information_density=True):
         """
-        Creates a plot of all trajectory demonstrations
+        Create a plot of all trajectory demonstrations.
 
         - Good demonstrations are blue o, bad demonstrations are red +
-        - Shows information content of trajectory, where positive values relate to positive demonstrations
+        - Shows information content of trajectory (positive values = positive demonstrations)
 
         :param show_trajectory:
         :param show_information_density:
@@ -66,9 +68,11 @@ class Plot2DMetric:
         if show_trajectory:
             for i in range(len(self.D)):
                 if self.E[i] == 1:
-                    plt.plot(self.D[i][:, 0], self.D[i][:, 1], 'bo', markersize=0.2, linestyle='None')
+                    plt.plot(self.D[i][:, 0], self.D[i][:, 1], 'bo',
+                             markersize=0.2, linestyle='None')
                 else:
-                    plt.plot(self.D[i][:, 0], self.D[i][:, 1], 'r+', markersize=0.2, linestyle='None')
+                    plt.plot(self.D[i][:, 0], self.D[i][:, 1], 'r+',
+                             markersize=0.2, linestyle='None')
 
         if show_information_density:
             contour_count = self.__calculate_contour_count()
@@ -84,10 +88,9 @@ class Plot2DMetric:
 
     def __calc_phix_x(self, x):
         """
-        Calculates Phix variable using inverse fourier transform for a given position state vector x
+        Calculate Phix variable using inverse fourier transform for position state vector x.
 
-        Phix is defined by the function:
-        Phix = 2 * Sum (phi_k * Fkx) for all k
+        Phix is defined by the function: Phix = 2 * Sum (phi_k * Fkx) for all k
 
         :param x: Position state vector x (np array of shape (1, 2))
         :return: Phi_x (float)
@@ -104,8 +107,7 @@ class Plot2DMetric:
 
     def __calc_phix(self, axis_res=50):
         """
-        Calculates Phix for all possible values of position state vector x within bounds L1 and L2, with resolution
-        axis_res
+        Calculate Phix for all values of position vector x within bounds L1 and L2.
 
         :param axis_res: Number of discrete values for plot axis x and y (int)
         :return: Ergodic Measure Phix for all coordinates of dimension 1 and 2 in bounds L1 and L2
@@ -118,12 +120,11 @@ class Plot2DMetric:
 
     def __calculate_contour_count(self):
         """
-        Calculates the information of all the trajectory demonstrations D using digitization of trajectory within
-        buckets
+        Calculate information of all trajectory demonstrations using digitization within buckets.
 
-        - Uses dimension 1 and 2 as bounds for bins, with self.sizexy[0] and self.sizexy[1] bins for each axis
+        - Uses dimension 1 and 2 as bounds for bins, with self.sizexy[0] and self.sizexy[1]
 
-        :return: contour_count - 2d information content in digitized buckets (np array of shape (self.sizexy[0], self.sizexy[1])
+        :return: contour_count - 2d information content in digitized buckets (np array)
         """
         bin_theta = np.linspace(self.dim1[0], self.dim1[1], self.sizexy[0])
         bin_thetadot = np.linspace(self.dim2[0], self.dim2[1], self.sizexy[1])
@@ -150,15 +151,16 @@ class Plot2DMetric:
 class ErgodicMeasure:
     def __init__(self, D, E, K, L, dt):
         """
-        Ergodic Helper Class to calculate the following metrics:
+        Ergodic Helper Class to calculate the following metrics.
+
         - Phi_k: Spatial Distribution of demonstrations
-        - h_k: Normalizing factor for Fk
-        - Lambda_k: Coefficient of Hilbert Space placing higher importance on lower freq information
+        - h_k: Normalize factor for Fk
+        - Lambda_k: Coefficient of Hilbert Space
 
         :param D: List of demonstrations (list)
         :param E: Weights that describe whether a demonstration D[i] is good [1] or bad [-1] (list)
         :param K: Size of series coefficient (int)
-        :param L: Size of boundaries for dimensions, listed as [Lower boundary, Higher Boundary] (list)
+        :param L: Size of boundaries for dimensions, [Lower boundary, Higher Boundary] (list)
         :param dt: Time difference (float)
         """
         # Creating Fourier Distributions
@@ -183,8 +185,9 @@ class ErgodicMeasure:
 
     def calc_fourier_metrics(self):
         """
-        Calculates Phi_k, lambda_k, and h_k values based on demonstrations
-        :return: (hk_value dictionary (dict), phi_k value dictionary (dict), h_k value dictionary (dict))
+        Calculate Phi_k, lambda_k, and h_k values based on demonstrations.
+
+        :return: (hk_value (dict), phi_k value (dict), h_k value (dict))
         """
         self.__recursive_wrapper(self.K + 1, [], self.n, self.calc_phik)
         self.__recursive_wrapper(self.K + 1, [], self.n, self.calc_lambda_k)
@@ -192,12 +195,13 @@ class ErgodicMeasure:
 
     def calc_phik(self, k):
         """
-        Calculates coefficients that describe the task definition, phi_k
+        Calculate coefficients that describe the task definition, phi_k.
+
         - Spatial distribution of demonstrations
 
         phi_k is defined by the following:
         phi_k = sum w_j * c_k_j where j ranges from 1 to num_trajectories
-        - w_j is initialized as 1/num_trajectories, the weighting of each trajectory in the spatial coefficient
+        - w_j is initialized as 1/num_trajectories, the weighting of each trajectory
 
         - Sets self.phi_k value in dictionary using k as a string
         :param k: k: The series coefficient given as a list of length dimensions (list)
@@ -211,7 +215,7 @@ class ErgodicMeasure:
 
     def calc_lambda_k(self, k):
         """
-        Calculate lambda_k places larger weights on lower coefficients of information
+        Calculate lambda_k places larger weights on lower coefficients of information.
 
         lambda_k is defined by the following:
         lambda_k = (1 + ||k||2) − s where s = n+1/2
@@ -227,7 +231,7 @@ class ErgodicMeasure:
 
     def __calc_ck(self, x_t, k):
         """
-        Calculates spacial statistics for a given trajectory and series coefficient value
+        Calculate spacial statistics for a given trajectory and series coefficient value.
 
         ck is given by:
         ck = integral Fk(x(t)) dt from t=0 to t=T
@@ -247,7 +251,7 @@ class ErgodicMeasure:
 
     def calc_Fk(self, x, k):
         """
-        Calculates normalized fourier coeffecient using basis function metric
+        Calculate normalized fourier coeffecient using basis function metric.
 
         Fk is defined by the following:
         Fk = 1/hk * product(cos(k[i] *x[i])) where i ranges for all dimensions of x
@@ -267,7 +271,7 @@ class ErgodicMeasure:
 
     def __calc_hk(self, k):
         """
-        Normalizing factor for Fk
+        Normalize factor for Fk.
 
         hk is defined as:
         hk = Integral cos^2(k[i] * x[i]) dx from L[i][0] to L[i][1]
@@ -290,7 +294,7 @@ class ErgodicMeasure:
 
     def __recursive_wrapper(self, K, k_arr, count, f):
         """
-        Recurrsive wrapper allowing for to calculate various permuations of K
+        Recurrsive wrapper allowing for to calculate various permuations of K.
 
         :param K: K Value - Needs to be passed as K+1 (int)
         :param k_arr: array of traversed K values (list)
@@ -317,27 +321,30 @@ class ErgodicMeasure:
         if calc:
             self.__recursive_wrapper(self.K + 1, [], self.n, self.calc_lambda_k)
         return self.lambdak_values
-    
+
 
 def main():
     print("Getting Demonstrations")
-    ergodic_properties_json = input("Please input the full path to ergodic properties json: ")
+    ergodic_properties_json = input("Please input the full path to ergodic properties: ")
 
     with open(ergodic_properties_json, 'r') as f:
         properties = json.load(f)
         ergodic_properties = properties["ergodic_system"]
 
     file_path = os.path.join(properties["demonstration_path"])
-    K, L, dt, E = ergodic_properties["K"], ergodic_properties["L"], ergodic_properties["dt"], ergodic_properties["E"]
+    K, L = ergodic_properties["K"], ergodic_properties["L"]
+    dt, E = ergodic_properties["dt"], ergodic_properties["E"]
     demonstration_list, D, new_E = [], [], []
 
-    input_demonstration = input("Please input the demonstrations you would like to use for training [list] (if empty, all demonstrations are used) \ninput: ")
+    input_demonstration = input("Please input \
+                                the demonstrations you would like to use for training \
+                                [list] (if empty, all demonstrations are used) \ninput: ")
     if input_demonstration != "q" or len(input_demonstration) != 0:
         input_demonstration = input_demonstration.split(",")
         for num in input_demonstration:
             if num.isnumeric():
                 demonstration_list.append(int(num))
-    
+
     sorted_files = sorted(os.listdir(file_path), key=lambda x: int(x[4:-4]))
     for i, file in enumerate(sorted_files):
         if (len(demonstration_list) != 0 and i not in demonstration_list) or "csv" not in file:
@@ -349,7 +356,7 @@ def main():
         D.append(demonstration)
     if len(D) == 0:
         raise FileNotFoundError("No files found in demonstration folder")
-    
+
     print("Visualize Ergodic Metric")
     plot_phix_metric = Plot2DMetric(D, new_E, K, L, dt, 0, 1, interpolation='bilinear')
     plot_phix_metric.visualize_ergodic()
@@ -371,4 +378,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

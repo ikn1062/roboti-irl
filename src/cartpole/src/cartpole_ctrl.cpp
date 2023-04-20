@@ -2,17 +2,17 @@
 /// \brief Cartpole Controller File used to command Cart in simulation and save Joint States
 ///
 /// PARAMETERS:
-///     rate (float): Rate of Main Loop 
+///     rate (float): Rate of Main Loop
 ///     scale (float): Scale of force relative to teleop twist input
 ///     max_force (float): Max Force allowed to publish to cartpole sim
-///     cart_path (string): Path to save the cart joint position outputs 
+///     cart_path (string): Path to save the cart joint position outputs
 ///     pole_path (string): Path to save the pole joint position outputs
 /// PUBLISHES:
 ///     cartpole/timestep (std_msgs::msg::UInt64): Current Timestep of Simulation
 ///     /cartpole/cmd (std_msgs::msg::Float64): Command Publisher for cartpole sim
 /// SUBSCRIBES:
 ///     /cmd_vel (geometry_msgs::msg::Twist): Subscribes to the Teleop Twist Keyboard
-///     /cartpole/joint_state (sensor_msgs::msg::JointState): Receives joint states of cart and pole  
+///     /cartpole/joint_state (sensor_msgs::msg::JointState): Receives joint states of cart and pole
 
 
 #include <chrono>
