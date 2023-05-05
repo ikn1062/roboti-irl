@@ -176,7 +176,6 @@ class ErgodicMeasure:
         # Weights for demonstration trajectories
         self.m = len(self.D)
         self.w = np.array([(1/self.m) for _ in range(self.m)])
-        print(self.w)
 
         # Stores lambda_k, phi_k, and ck values
         self.lambdak_values = {}
@@ -331,7 +330,7 @@ def main():
         properties = json.load(f)
         ergodic_properties = properties["ergodic_system"]
 
-    file_path = os.path.join(properties["demonstration_path"])
+    file_path = input("Please input a path to the demonstration folder: ")
     K, L = ergodic_properties["K"], ergodic_properties["L"]
     dt, E = ergodic_properties["dt"], ergodic_properties["E"]
     demonstration_list, D, new_E = [], [], []
@@ -358,7 +357,10 @@ def main():
         raise FileNotFoundError("No files found in demonstration folder")
 
     print("Visualize Ergodic Metric")
-    plot_phix_metric = Plot2DMetric(D, new_E, K, L, dt, 0, 1, interpolation='bilinear')
+    print(D[0][0])
+    print(L[2])
+    print(L[3])
+    plot_phix_metric = Plot2DMetric(D, new_E, K, L, dt, 2, 3, interpolation='bilinear')
     plot_phix_metric.visualize_ergodic()
     plot_phix_metric.visualize_trajectory()
 
