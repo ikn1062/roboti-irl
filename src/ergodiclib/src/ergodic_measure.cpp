@@ -116,4 +116,9 @@ namespace ergodiclib
         }
         return lambdaK_vec;
     }
+
+    arma::vec ErodicMeasure::calculateDFk(const arma::vec& xi_vec, const std::vector<int>& K_vec)
+    {
+        
+    }
 }
