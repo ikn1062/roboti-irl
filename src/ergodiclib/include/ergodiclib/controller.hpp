@@ -20,7 +20,7 @@ namespace ergodiclib
     class iLQRController
     {
         public:
-            iLQRController(ErgodicMeasure ergodicMes, fourierBasis basis, double q_val, arma::mat R_mat, arma::mat Q_mat, double t0_val, double tf_val, double dt_val);
+            iLQRController(ErgodicMeasure ergodicMes, fourierBasis basis, double q_val, arma::mat R_mat, arma::mat Q_mat, double t0_val, double tf_val, double dt_val, double eps_val, double beta_val);
 
             arma::mat calc_b(const arma::mat& u_mat);
 
@@ -50,6 +50,8 @@ namespace ergodiclib
             double tf;
             double dt;
             int n_iter;
+            double eps;
+            double beta;
     };
 }
 

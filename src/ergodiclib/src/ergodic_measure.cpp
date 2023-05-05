@@ -4,8 +4,8 @@ namespace ergodiclib
 {
 ErgodicMeasure::ErgodicMeasure(
   std::vector<arma::mat> demonstrations,
-  std::vector<int> demo_weights, int K_coeff,
-  std::vector<std::pair<double, double>> L_dim, double dt_demo, fourierBasis basis)
+  std::vector<int> demo_weights, int K_coeff, 
+  double dt_demo, fourierBasis basis)
 : D_mat(demonstrations),
   E_vec(demo_weights),
   dt(dt_demo),

@@ -2,7 +2,7 @@
 
 namespace ergodiclib
 {
-   iLQRController::iLQRController(ErgodicMeasure ergodicMes, fourierBasis basis, double q_val, arma::mat R_mat, arma::mat Q_mat, double t0_val, double tf_val, double dt_val):
+   iLQRController::iLQRController(ErgodicMeasure ergodicMes, fourierBasis basis, double q_val, arma::mat R_mat, arma::mat Q_mat, double t0_val, double tf_val, double dt_val, double eps_val, double beta_val):
    ergodicMeasure(ergodicMes),
    Basis(basis),
    q(q_val),
@@ -10,7 +10,9 @@ namespace ergodiclib
    Q(Q_mat),
    t0(t0),
    tf(tf),
-   dt(dt)
+   dt(dt),
+   eps(eps_val)
+   beta(beta_val)
    {
       n_iter = (int) ((tf - t0)/ dt);
    }
@@ -148,6 +150,31 @@ namespace ergodiclib
       }
       
       return x_traj;
+   }
+
+   int iLQRController::gradient_descent() 
+   {
+      arma::mat xt, ut, x0;
+      
+      double dj = 2e31;
+
+      arma::mat at, bt;
+      std::pair<arma::mat, arma::mat> zeta_pair;
+      std::pair<std::vector<arma::mat>, std::vector<arma::mat>> listPr;
+      while (abs(dj) > eps) {
+         at = calc_a(xt);
+         bt = calc_b(ut);
+
+         listPr = calculatePr(at, bt);
+         
+         zeta_pair = descentDirection(xt, ut, listPr.first, listPr.second, bt);
+
+         dj = DJ(zeta_pair, at, bt);
+
+         arma::mat vega = zeta_pair.second;
+         ut = ut + beta * vega;
+         xt = make_trajec(x0, ut);
+      }
    }
 
 }
