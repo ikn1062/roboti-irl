@@ -23,44 +23,46 @@ namespace ergodiclib
     }
 
     double fourierBasis::calculateFk(
-    const std::vector<double> & x_i_trajectory,
+    const arma::vec & x_i_trajectory,
     const std::vector<int> & K_vec, int k_idx)
     {
-    double hk = calculateHk(K_vec, k_idx);
-    double fourier_basis = 1.0;
-    double upper, lower;
-    for (unsigned int i = 0; i < x_i_trajectory.size(); i++) {
-        upper = K_vec[i] * PI * x_i_trajectory[i];
-        lower = L[i].first - L[i].second;
-        fourier_basis *= cos(upper / lower);
-    }
-    double Fk = (1 / hk) * fourier_basis;
-    return Fk;
+        double hk = calculateHk(K_vec, k_idx);
+        double fourier_basis = 1.0;
+        double upper, lower;
+
+        for (unsigned int i = 0; i < x_i_trajectory.n_elem; i++) {
+            upper = K_vec[i] * PI * x_i_trajectory(i);
+            lower = L[i].first - L[i].second;
+            fourier_basis *= cos(upper / lower);
+        }
+        
+        double Fk = (1 / hk) * fourier_basis;
+        return Fk;
     }
 
     double fourierBasis::calculateHk(const std::vector<int> & K_vec, int k_idx)
     {
-    double l0, l1, ki;
+        double l0, l1, ki;
 
-    double hk = 1.0;
-    for (int i = 0; i < n_dim; i++) {
-        l0 = L[i].first;
-        l1 = L[i].second;
-        if (K_vec[i] == 0) {
-        hk *= (l1 - l0);
-        continue;
+        double hk = 1.0;
+        for (int i = 0; i < n_dim; i++) {
+            l0 = L[i].first;
+            l1 = L[i].second;
+            if (K_vec[i] == 0) {
+                hk *= (l1 - l0);
+                continue;
+            }
+            ki = (K_vec[i] * PI) / l1;
+            hk *= (2 * ki * (l1 - l0) - sin(2 * ki * l0) + sin(2 * ki * l1)) / (4 * ki);
         }
-        ki = (K_vec[i] * PI) / l1;
-        hk *= (2 * ki * (l1 - l0) - sin(2 * ki * l0) + sin(2 * ki * l1)) / (4 * ki);
-    }
-    hk = sqrt(hk);
-    hK_vec[k_idx] = hk;
-    return hk;
+        hk = sqrt(hk);
+        hK_vec[k_idx] = hk;
+        return hk;
     }
 
-    arma::mat fourierBasis::calculateDFk(const arma::mat& xi_vec, const std::vector<int>& K_vec)
+    arma::rowvec fourierBasis::calculateDFk(const arma::colvec& xi_vec, const std::vector<int>& K_vec)
     {
-        arma::mat dfk(xi_vec.n_rows, xi_vec.n_cols, arma::fill::zeros);
+        arma::rowvec dfk(xi_vec.n_cols, arma::fill::zeros);
 
         double ki = 0.0;
         for (int i = 0; i < n_dim; i++) {

@@ -1,5 +1,5 @@
-#ifndef ERG_UTIL_INCLUDE_GUARD_HPP
-#define ERG_UTIL_INCLUDE_GUARD_HPP
+#ifndef NUM_UTIL_INCLUDE_GUARD_HPP
+#define NUM_UTIL_INCLUDE_GUARD_HPP
 /// \file
 /// \brief
 
@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#include </opt/homebrew/include/armadillo>
+
 namespace ergodiclib
 {
 constexpr double PI = 3.14159265358979323846;
@@ -17,7 +19,7 @@ constexpr double PI = 3.14159265358979323846;
 /// \param y_trajec Trajectory to perform integration over
 /// \param dx difference in x for each step of the trajectory
 /// \return Value of integral
-double integralTrapz(std::vector<double> y_trajec, double dx);
+double integralTrapz(const arma::vec& y_trajec, double dx);
 
 /// \brief Gets the L2 norm of a given vector
 /// \param v Vector of integers

@@ -12,7 +12,7 @@ find_package(Catch2 3 REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-add_library(${PROJECT_NAME} src/ergodic_measure.cpp src/ergodic_utils.cpp src/file_utils.cpp)
+add_library(${PROJECT_NAME} src/ergodic_measure.cpp src/num_utils.cpp src/file_utils.cpp)
 
 target_include_directories(${PROJECT_NAME}
   PUBLIC

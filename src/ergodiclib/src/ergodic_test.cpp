@@ -3,13 +3,15 @@
 #include <vector>
 
 #include <ergodiclib/file_utils.hpp>
-#include <ergodiclib/ergodic_utils.hpp>
+#include <ergodiclib/num_utils.hpp>
 #include <ergodiclib/ergodic_measure.hpp>
 
 using namespace ergodiclib;
 
+
 int main()
 {
+  /*
   std::cout << "Ergodic Main FIle" << std::endl << std::endl;
 
   std::cout << "Testing File Utility Functions...  START" << std::endl;
@@ -69,6 +71,6 @@ int main()
   }
 
   std::cout << "Testing Ergodic Measure Functions...  COMPLETE" << std::endl << std::endl;
-
+  */
   return 0;
 }

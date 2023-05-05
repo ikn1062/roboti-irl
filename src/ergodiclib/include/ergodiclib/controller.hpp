@@ -10,37 +10,46 @@
 #include <string>
 #include <vector>
 #include </opt/homebrew/include/armadillo>
+
 #include <ergodiclib/ergodic_measure.hpp>
-#include <ergodiclib/ergodic_utils.hpp>
+#include <ergodiclib/num_utils.hpp>
+#include <ergodiclib/fourier_basis.hpp>
 
 namespace ergodiclib
 {
     class iLQRController
     {
         public:
-            iLQRController();
+            iLQRController(ErgodicMeasure ergodicMes, fourierBasis basis, double q_val, arma::mat R_mat, arma::mat Q_mat, double t0_val, double tf_val, double dt_val);
 
-            arma::mat calc_b(const arma::mat& u_mat, const arma::mat& R);
+            arma::mat calc_b(const arma::mat& u_mat);
 
-            arma::mat calc_a(const arma::mat& x_mat, const std::vector<std::vector<int> > K_series, const double q);
+            arma::mat calc_a(const arma::mat& x_mat);
 
-            arma::mat integrate(const arma::mat& x_mat, const arma::mat& u_mat);
+            arma::vec integrate(const arma::vec& x_mat, const arma::vec& u_mat);
 
-            arma::mat dynamics(const arma::mat& x_mat, const arma::mat& u_mat);
+            arma::vec dynamics(const arma::vec& x_mat, const arma::vec& u_mat);
 
-            void calculatePr(const arma::mat& at, const arma::mat& bt);
+            std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(const arma::mat& at, const arma::mat& bt);
 
             std::pair<arma::mat, arma::mat> descentDirection(arma::mat xt, arma::mat ut, std::vector<arma::mat> listP, std::vector<arma::mat> listr, arma::mat bt); 
 
             double DJ(std::pair<arma::mat, arma::mat> zeta_pair, const arma::mat& at, const arma::mat& bt);
 
-            arma::mat make_trajec(arma::mat x0, arma::mat ut);
+            arma::mat make_trajec(arma::vec x0, arma::mat ut);
 
             int gradient_descent();
 
         private:
-
-        
+            ErgodicMeasure ergodicMeasure;
+            fourierBasis Basis;
+            const double q;
+            const arma::mat R; 
+            const arma::mat Q;
+            double t0;
+            double tf;
+            double dt;
+            int n_iter;
     };
 }
 

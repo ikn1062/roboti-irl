@@ -1,12 +1,12 @@
 #include <ergodiclib/file_utils.hpp>
 
 
-std::vector<std::vector<std::vector<double>>> readDemonstrations(
+std::vector<arma::mat> readDemonstrations(
   const std::string & demonstration_folder_path, int n_dimension)
 {
-  std::vector<std::vector<std::vector<double>>> demonstrations;
+  std::vector<arma::mat> demonstrations;
 
-  std::vector<std::vector<double>> demonstration_vec;
+  arma::mat demonstration_vec;
   std::vector<std::string> demonstration_list;
   std::string filename;
   for (const auto & dirEntry :
@@ -44,14 +44,15 @@ std::vector<std::vector<std::vector<double>>> readDemonstrationsFileList(const s
 }
 */
 
-std::vector<std::vector<double>> readDemonstrationCSV(
-  const std::string & csv_filepath,
-  int n_dimension)
+arma::mat readDemonstrationCSV(const std::string & csv_filepath, int n_dimension)
 {
-  std::vector<std::vector<double>> demonstration;
-  std::ifstream demonstration_file(csv_filepath);
+  arma::mat demonstration(0, 0, arma::fill::zeros);
+  std::ifstream demonstration_file(csv_filepath); 
 
+  std::vector<double> line_values;
+  arma::vec col_vec;
   std::string line;
+  int demo_len;
   while (std::getline(demonstration_file, line)) {
     std::stringstream ss(line);
     std::vector<double> line_values;
@@ -62,8 +63,10 @@ std::vector<std::vector<double>> readDemonstrationCSV(
       double number = std::stod(value);
       line_values.push_back(number);
     }
-
-    demonstration.push_back(line_values);
+    col_vec = arma::conv_to< arma::vec >::from(line_values);
+    demo_len = demonstration.n_cols;
+    demonstration.resize(col_vec.n_elem, demo_len+1);
+    demonstration.insert_cols(demo_len, col_vec);
   }
 
   demonstration_file.close();

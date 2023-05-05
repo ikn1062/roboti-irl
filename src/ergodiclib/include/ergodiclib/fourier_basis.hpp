@@ -10,7 +10,7 @@
 #include <vector>
 #include </opt/homebrew/include/armadillo>
 
-#include <ergodiclib/ergodic_utils.hpp>
+#include <ergodiclib/num_utils.hpp>
 
 namespace ergodiclib
 {
@@ -28,10 +28,10 @@ namespace ergodiclib
             /// \param K_vec The series coefficient given as a list of length dimensions
             /// \param k_idx The index of the series coefficient K_vec
             /// \return Fk Value, normalized fourier coeffecient
-            double calculateFk(const std::vector<double> & x_i_trajectory, const std::vector<int> & K_vec, int k_idx);
+            double calculateFk(const arma::vec & x_i_trajectory, const std::vector<int> & K_vec, int k_idx);
 
             /// \brief WRITE COMMENT
-            arma::mat calculateDFk(const arma::mat& xi_vec, const std::vector<int>& K_vec);
+            arma::rowvec calculateDFk(const arma::colvec& xi_vec, const std::vector<int>& K_vec);
 
             /// \brief Returns Normalizing factor for Fk for each series coefficient
             /// \return hK vector

@@ -11,7 +11,7 @@
 #include <vector>
 #include </opt/homebrew/include/armadillo>
 
-#include <ergodiclib/ergodic_utils.hpp>
+#include <ergodiclib/num_utils.hpp>
 #include <ergodiclib/fourier_basis.hpp>
 
 namespace ergodiclib
@@ -28,17 +28,17 @@ public:
   /// \param dt_demo time difference between each state in the trajectory
   /// \param basis Fourier basis class for the demonstration
   ErgodicMeasure(
-    std::vector<std::vector<std::vector<double>>> demonstrations,
+    std::vector<arma::mat> demonstrations,
     std::vector<int> demo_weights, int K_coeff, std::vector<std::pair<double,
     double>> L_dim, double dt_demo, fourierBasis basis);
 
   /// \brief Returns Spatial distribution of demonstrations for each series coefficient
   /// \return PhiK Vector
-  std::vector<double> get_PhiK();
+  arma::vec get_PhiK();
 
   /// \brief Returns lambda_k which places larger weights on lower coefficients of information for each series coefficient
   /// \return LambdaK Vector
-  std::vector<double> get_LambdaK();
+  arma::vec get_LambdaK();
 
   /// \brief Calculates spacial statistics for a given trajectory and series coefficient value
   ///        ck is given by:
@@ -49,7 +49,7 @@ public:
   /// \param k_idx The index of the series coefficient K_vec
   /// \return CK value, Spacial Statistics
   double calculateCk(
-    const std::vector<std::vector<double>> & x_trajectory,
+    const arma::mat& x_trajectory,
     const std::vector<int> & K_vec, int k_idx);
 
   void calcErgodic();
@@ -60,16 +60,16 @@ private:
   ///        phi_k = sum w_j * c_k_j where j ranges from 1 to num_trajectories
   ///        - w_j is initialized as 1/num_trajectories, the weighting of each trajectory in the spatial coefficient
   /// \return  PhiK Vector
-  std::vector<double> calculatePhik();
+  arma::vec calculatePhik();
 
   /// \brief Calculate lambda_k places larger weights on lower coefficients of information
   ///        lambda_k is defined by the following:
   ///        lambda_k = (1 + ||k||2) − s where s = n+1/2
   /// \return  LambdaK Vector
-  std::vector<double> calculateLambdaK();
+  arma::vec calculateLambdaK();
 
   /// \brief Vector of Demonstrations - Each Demonstration is a trajectory of n-dimensions
-  std::vector<std::vector<std::vector<double>>> D_mat;
+  std::vector<arma::mat> D_mat;
 
   /// Class that contains the fourier basis for the space
   fourierBasis Basis;
@@ -93,10 +93,10 @@ private:
   std::vector<std::vector<int>> K_series;
 
   /// \brief Vector of PhiK Values
-  std::vector<double> PhiK_vec;
+  arma::vec PhiK_vec;
 
   /// \brief Vector of lambdaK Values
-  std::vector<double> lambdaK_vec;
+  arma::vec lambdaK_vec;
 };
 }
 
