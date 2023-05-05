@@ -12,6 +12,7 @@
 #include </opt/homebrew/include/armadillo>
 
 #include <ergodiclib/ergodic_utils.hpp>
+#include <ergodiclib/fourier_basis.hpp>
 
 namespace ergodiclib
 {
@@ -24,10 +25,12 @@ public:
   /// \param demo_weights Demonstration weights - length of demonstrations
   /// \param K_coeff Size of Series Coefficient
   /// \param L_dim Size of boundaries for dimensions
+  /// \param dt_demo time difference between each state in the trajectory
+  /// \param basis Fourier basis class for the demonstration
   ErgodicMeasure(
     std::vector<std::vector<std::vector<double>>> demonstrations,
     std::vector<int> demo_weights, int K_coeff, std::vector<std::pair<double,
-    double>> L_dim, double dt_demo);
+    double>> L_dim, double dt_demo, fourierBasis basis);
 
   /// \brief Returns Spatial distribution of demonstrations for each series coefficient
   /// \return PhiK Vector
@@ -36,10 +39,6 @@ public:
   /// \brief Returns lambda_k which places larger weights on lower coefficients of information for each series coefficient
   /// \return LambdaK Vector
   std::vector<double> get_LambdaK();
-
-  /// \brief Returns Normalizing factor for Fk for each series coefficient
-  /// \return hK vector
-  std::vector<double> get_hK();
 
   /// \brief Calculates spacial statistics for a given trajectory and series coefficient value
   ///        ck is given by:
@@ -69,41 +68,14 @@ private:
   /// \return  LambdaK Vector
   std::vector<double> calculateLambdaK();
 
-  /// \brief Calculates normalized fourier coeffecient using basis function metric
-  ///        Fk is defined by the following:
-  ///        Fk = 1/hk * product(cos(k[i] *x[i])) where i ranges for all dimensions of x
-  ///        - Where k[i] = (K[i] * pi) / L[i]
-  ///        - Where L[i] is the bounds of the variable dimension i
-  /// \param x_i_trajectory Position vector X at a given time t
-  /// \param K_vec The series coefficient given as a list of length dimensions
-  /// \param k_idx The index of the series coefficient K_vec
-  /// \return Fk Value, normalized fourier coeffecient
-  double calculateFk(
-    const std::vector<double> & x_i_trajectory, const std::vector<int> & K_vec,
-    int k_idx);
-
-  /// \brief Calculates normalized fourier coeffecient using basis function metric
-  arma::mat calculateDFk(const arma::mat& xi_vec, const std::vector<int>& K_vec);
-
-  /// \brief Normalizing factor for Fk
-  ///        hk is defined as:
-  ///        hk = Integral cos^2(k[i] * x[i]) dx from L[i][0] to L[i][1]
-  /// \param K_vec The series coefficient given as a list of length dimensions
-  /// \param k_idx The index of the series coefficient K_vec
-  /// \return hk, normalizing factor for Fk
-  double calculateHk(const std::vector<int> & K_vec, int k_idx);
-
   /// \brief Vector of Demonstrations - Each Demonstration is a trajectory of n-dimensions
   std::vector<std::vector<std::vector<double>>> D_mat;
 
+  /// Class that contains the fourier basis for the space
+  fourierBasis Basis;
+
   /// \brief Vector of weights for each Demonstration
   std::vector<int> E_vec;
-
-  /// \brief Size of series coefficient
-  int K;
-
-  /// \brief Size of boundaries for dimensions - [Lower boundary, Higher Boundary]
-  std::vector<std::pair<double, double>> L;
 
   /// \brief Time Difference
   double dt;
@@ -122,9 +94,6 @@ private:
 
   /// \brief Vector of PhiK Values
   std::vector<double> PhiK_vec;
-
-  /// \brief Vector of hK Values
-  std::vector<double> hK_vec;
 
   /// \brief Vector of lambdaK Values
   std::vector<double> lambdaK_vec;

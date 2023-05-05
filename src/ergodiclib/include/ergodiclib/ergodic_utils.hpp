@@ -13,22 +13,6 @@ namespace ergodiclib
 {
 constexpr double PI = 3.14159265358979323846;
 
-/// \brief Creates the fourier series coefficients
-/// \param K Size of series coefficients
-/// \param n_dim Size of dimension for demonstrations
-/// \return List of Fourier Series Coefficients
-std::vector<std::vector<int>> create_K_series(int K, int n_dim);
-
-/// \brief Reccursive helper for fourier series coefficients
-/// \param K_num Size of series coefficients
-/// \param permutation Current Permutation in sequence
-/// \param n_dim Size of dimension for demonstrations
-/// \param idx Current idx of sequence in permutation
-/// \return List of Fourier Series Coefficients
-std::vector<std::vector<int>> create_K_helper(
-  std::vector<int> K_num, std::vector<int> permutation,
-  int n_dim, int idx);
-
 /// \brief Finds the integral of a trajectory using the trapezoidal rule, using constant dx
 /// \param y_trajec Trajectory to perform integration over
 /// \param dx difference in x for each step of the trajectory
