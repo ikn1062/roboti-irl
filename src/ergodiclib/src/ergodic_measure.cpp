@@ -124,4 +124,18 @@ std::vector<double> ErgodicMeasure::calculateLambdaK()
   }
   return lambdaK_vec;
 }
+
+arma::mat ErgodicMeasure::calculateDFk(const arma::mat& xi_vec, const std::vector<int>& K_vec)
+{
+    arma::mat dfk(xi_vec.n_rows, xi_vec.n_cols, arma::fill::zeros);
+
+    double ki = 0.0;
+    for (int i = 0; i < n_dim; i++) {
+        ki = (K_vec[i] * PI) / (L[i].first - L[i].second);
+        dfk(i) = (1 / hK_vec[i]) * (-1.0 * ki) * cos(ki * xi_vec(i)) * sin(ki * xi_vec(i));
+    }
+
+    return dfk;
+}
+
 }

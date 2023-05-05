@@ -9,6 +9,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include </opt/homebrew/include/armadillo>
+
 #include <ergodiclib/ergodic_utils.hpp>
 
 namespace ergodiclib
@@ -39,6 +41,18 @@ public:
   /// \return hK vector
   std::vector<double> get_hK();
 
+  /// \brief Calculates spacial statistics for a given trajectory and series coefficient value
+  ///        ck is given by:
+  ///        ck = integral Fk(x(t)) dt from t=0 to t=T
+  ///        - where x(t) is a trajectory, mapping t to position vector x
+  /// \param x_trajectory x(t) function, mapping position vectors over a period of time
+  /// \param K_vec The series coefficient given as a list of length dimensions
+  /// \param k_idx The index of the series coefficient K_vec
+  /// \return CK value, Spacial Statistics
+  double calculateCk(
+    const std::vector<std::vector<double>> & x_trajectory,
+    const std::vector<int> & K_vec, int k_idx);
+
   void calcErgodic();
 
 private:
@@ -55,18 +69,6 @@ private:
   /// \return  LambdaK Vector
   std::vector<double> calculateLambdaK();
 
-  /// \brief Calculates spacial statistics for a given trajectory and series coefficient value
-  ///        ck is given by:
-  ///        ck = integral Fk(x(t)) dt from t=0 to t=T
-  ///        - where x(t) is a trajectory, mapping t to position vector x
-  /// \param x_trajectory x(t) function, mapping position vectors over a period of time
-  /// \param K_vec The series coefficient given as a list of length dimensions
-  /// \param k_idx The index of the series coefficient K_vec
-  /// \return CK value, Spacial Statistics
-  double calculateCk(
-    const std::vector<std::vector<double>> & x_trajectory,
-    const std::vector<int> & K_vec, int k_idx);
-
   /// \brief Calculates normalized fourier coeffecient using basis function metric
   ///        Fk is defined by the following:
   ///        Fk = 1/hk * product(cos(k[i] *x[i])) where i ranges for all dimensions of x
@@ -79,6 +81,9 @@ private:
   double calculateFk(
     const std::vector<double> & x_i_trajectory, const std::vector<int> & K_vec,
     int k_idx);
+
+  /// \brief Calculates normalized fourier coeffecient using basis function metric
+  arma::mat calculateDFk(const arma::mat& xi_vec, const std::vector<int>& K_vec);
 
   /// \brief Normalizing factor for Fk
   ///        hk is defined as:
