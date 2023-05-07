@@ -7,6 +7,7 @@
 #include <ergodiclib/num_utils.hpp>
 #include <ergodiclib/ergodic_measure.hpp>
 #include <ergodiclib/ergodic_controller.hpp>
+#include <ergodiclib/cartpole.hpp>
 
 using namespace ergodiclib;
 
@@ -32,13 +33,14 @@ int main()
   std::vector<std::pair<double, double>> lengths{pair1, pair2, pair3, pair4};
   fourierBasis Basis = fourierBasis(lengths, 4, 4);
 
-  ErgodicMeasure ergodicMeasure = ErgodicMeasure(demonstrations, demo_weights, 4, 0.1, Basis);
+  ErgodicMeasure ergodicMeasure = ErgodicMeasure(demonstrations, demo_weights, 0.1, Basis);
   ergodicMeasure.calcErgodic();
   std::cout << "Ergodic Measurements...  COMPLETE" << std::endl << std::endl;
 
   std::cout << "Controller...  START" << std::endl;
+  CartPole model = CartPole();
   arma::mat R = 0.1 * arma::eye(1,1);
   arma::mat Q = arma::eye(4,4);
-  iLQRController controller = iLQRController(ergodicMeasure, Basis, 100, R, Q, 0.0, 30.0, 0.1, 0.01, 0.15);
+  iLQRController controller = iLQRController(ergodicMeasure, Basis, model, 100, R, Q, 0.0, 30.0, 0.1, 0.01, 0.15);
   std::cout << "Controller...  COMPLETE" << std::endl;
 }

@@ -29,7 +29,7 @@ public:
   /// \param basis Fourier basis class for the demonstration
   ErgodicMeasure(
     std::vector<arma::mat> demonstrations,
-    std::vector<int> demo_weights, int K_coeff,
+    std::vector<int> demo_weights,
     double dt_demo, fourierBasis basis);
 
   /// \brief Returns Spatial distribution of demonstrations for each series coefficient

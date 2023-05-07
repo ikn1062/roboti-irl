@@ -8,29 +8,33 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(Catch2 3 REQUIRED)
+find_package(Armadillo REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-add_library(${PROJECT_NAME} src/ergodic_measure.cpp src/num_utils.cpp src/file_utils.cpp)
+add_library(${PROJECT_NAME} src/ergodic_measure.cpp src/num_utils.cpp src/file_utils.cpp src/controller.cpp src/fourier_basis.cpp)
 
 target_include_directories(${PROJECT_NAME}
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-  $<INSTALL_INTERFACE:include/>)
+  $<INSTALL_INTERFACE:include/>
+  ${ARMADILLO_INCLUDE_DIRS})
 
 target_compile_features(${PROJECT_NAME}  PUBLIC cxx_std_17)
 target_compile_options(${PROJECT_NAME}  PUBLIC -Wall -Wextra -Wpedantic)
 
 add_executable(ergodic_test src/ergodic_test.cpp)
-target_link_libraries(ergodic_test ${PROJECT_NAME})
+ament_target_dependencies(ergodic_test Armadillo)
+target_link_libraries(ergodic_test ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
 
 add_executable(ergodic_main src/ergodic_main.cpp)
-target_link_libraries(ergodic_main ${PROJECT_NAME})
+ament_target_dependencies(ergodic_main Armadillo)
+target_link_libraries(ergodic_main ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
 
 install(TARGETS ergodic_test ergodic_main DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
-install(TARGETS ergodic_test ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+install(TARGETS ergodic_test ergodic_main ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
 install(EXPORT ${PROJECT_NAME}-targets
         FILE ${PROJECT_NAME}-config.cmake
         NAMESPACE ${PROJECT_NAME}::
