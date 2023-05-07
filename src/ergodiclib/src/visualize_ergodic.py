@@ -325,25 +325,31 @@ class ErgodicMeasure:
 def main():
     print("Getting Demonstrations")
     ergodic_properties_json = input("Please input the full path to ergodic properties: ")
+    # ergodic_properties_json = "../../cartpole/config/ergodic_properties.json"
 
     with open(ergodic_properties_json, 'r') as f:
         properties = json.load(f)
         ergodic_properties = properties["ergodic_system"]
 
     file_path = input("Please input a path to the demonstration folder: ")
+    # file_path = "../../cartpole/demonstrations"
+    # K = 15
+    # L = [[-15, 15], [-15, 15], [-3.14159, 3.14159], [-11, 11]]
+    # dt = 0.1
+    # E = [1, -1, -1, -1, -1, -1, 1, 1, 1, -1, -1, -1, 1, 1.2]
     K, L = ergodic_properties["K"], ergodic_properties["L"]
     dt, E = ergodic_properties["dt"], ergodic_properties["E"]
     demonstration_list, D, new_E = [], [], []
 
-    input_demonstration = input("Please input \
-                                the demonstrations you would like to use for training \
-                                [list] (if empty, all demonstrations are used) \ninput: ")
+    input_demonstration = input("Please input the demonstrations you would like to use for training [list] "
+                                "(if empty, all demonstrations are used) \ninput: ")
     if input_demonstration != "q" or len(input_demonstration) != 0:
         input_demonstration = input_demonstration.split(",")
         for num in input_demonstration:
             if num.isnumeric():
                 demonstration_list.append(int(num))
 
+    print(demonstration_list)
     sorted_files = sorted(os.listdir(file_path), key=lambda x: int(x[4:-4]))
     for i, file in enumerate(sorted_files):
         if (len(demonstration_list) != 0 and i not in demonstration_list) or "csv" not in file:
@@ -357,12 +363,14 @@ def main():
         raise FileNotFoundError("No files found in demonstration folder")
 
     print("Visualize Ergodic Metric")
+    print(len(D))
     print(D[0][0])
     print(L[2])
     print(L[3])
+
     plot_phix_metric = Plot2DMetric(D, new_E, K, L, dt, 2, 3, interpolation='bilinear')
-    plot_phix_metric.visualize_ergodic()
     plot_phix_metric.visualize_trajectory()
+    plot_phix_metric.visualize_ergodic()
 
     """
     ergodic_test = ErgodicMeasure(D, E, K, L, dt)
