@@ -1,17 +1,18 @@
-#include <ergodiclib/controller.hpp>
+#include <ergodiclib/ergodic_controller.hpp>
 
 namespace ergodiclib
 {
-   iLQRController::iLQRController(ErgodicMeasure ergodicMes, fourierBasis basis, double q_val, arma::mat R_mat, arma::mat Q_mat, double t0_val, double tf_val, double dt_val, double eps_val, double beta_val):
+   iLQRController::iLQRController(ErgodicMeasure ergodicMes, fourierBasis basis, Model model_agent, double q_val, arma::mat R_mat, arma::mat Q_mat, double t0_val, double tf_val, double dt_val, double eps_val, double beta_val):
    ergodicMeasure(ergodicMes),
    Basis(basis),
+   model(model_agent),
    q(q_val),
    R(R_mat),
    Q(Q_mat),
    t0(t0),
    tf(tf),
    dt(dt),
-   eps(eps_val)
+   eps(eps_val),
    beta(beta_val)
    {
       n_iter = (int) ((tf - t0)/ dt);
@@ -50,29 +51,15 @@ namespace ergodiclib
       return a_mat;
    }
 
-   arma::vec iLQRController::integrate(const arma::vec& x_mat, const arma::vec& u_mat)
-   {
-      arma::vec k1 = dynamics(x_mat, u_mat);
-      arma::vec k2 = dynamics(x_mat + 0.5 * dt * k1, u_mat);
-      arma::vec k3 = dynamics(x_mat + 0.5 * dt * k2, u_mat);
-      arma::vec k4 = dynamics(x_mat + dt * k3, u_mat);
-      return x_mat + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
-   }
-
-   arma::vec iLQRController::dynamics(const arma::vec& x_mat, const arma::vec& u_mat) 
-   {
-      arma::mat A, B;
-      return A * x_mat + B * u_mat;
-   }
-
    std::pair<std::vector<arma::mat>, std::vector<arma::mat>> iLQRController::calculatePr(const arma::mat& at_mat, const arma::mat& bt_mat)
    {
-      arma::mat A, B;
+      arma::mat A = model.getA();
+      arma::mat B = model.getB();
+
       std::vector<arma::mat> listP, listr;
       arma::mat Rinv = R.i();
 
       arma::mat P, r, at, bt, Pdot, rdot;
-      
       for (int i = 1; i < n_iter; i++) {
          // A and B here have to be solved from the model
          P = listP[i-1];
@@ -96,7 +83,9 @@ namespace ergodiclib
 
    std::pair<arma::mat, arma::mat> iLQRController::descentDirection(arma::mat xt, arma::mat ut, std::vector<arma::mat> listP, std::vector<arma::mat> listr, arma::mat bt)
    {
-      arma::mat A, B;
+      arma::mat A = model.getA();
+      arma::mat B = model.getB();
+
       arma::mat zeta(xt.n_rows, xt.n_cols, arma::fill::zeros);
       arma::mat vega(ut.n_rows, ut.n_cols, arma::fill::zeros);
       arma::mat Rinv = R.i();
@@ -119,14 +108,13 @@ namespace ergodiclib
 
    double iLQRController::DJ(std::pair<arma::mat, arma::mat> zeta_pair, const arma::mat& at, const arma::mat& bt) 
    {
-      int timespan;
-      arma::vec J(timespan, 1, arma::fill::zeros);
+      arma::vec J(n_iter, 1, arma::fill::zeros);
       arma::mat zeta = zeta_pair.first;
       arma::mat vega = zeta_pair.second;
 
       arma::mat a_T, b_T;
 
-      for (int i = 0; i < timespan; i++) {
+      for (int i = 0; i < n_iter; i++) {
          a_T = at.row(i).t();
          b_T = bt.row(i).t();
 
@@ -138,23 +126,12 @@ namespace ergodiclib
       return J_integral;
    }
 
-   arma::mat iLQRController::make_trajec(arma::vec x0, arma::mat ut)
+   int iLQRController::gradient_descent(arma::vec x0) 
    {
-      arma::mat x_traj(x0.n_elem, n_iter, arma::fill::zeros);
-      x_traj.col(0) = x0;
-      
-      arma::mat x_new;
-      for (int i = 1; i < n_iter; i++) {
-         x_new = integrate(x_traj.col(i-1), ut.col(i-1));
-         x_traj.col(i) = x_new;
-      }
-      
-      return x_traj;
-   }
-
-   int iLQRController::gradient_descent() 
-   {
-      arma::mat xt, ut, x0;
+      std::pair<arma::mat, arma::mat> xtut = model.createTrajectory();
+      arma::mat xt = xtut.first;
+      arma::mat ut = xtut.second; 
+      model.setx0(x0);
       
       double dj = 2e31;
 
@@ -173,8 +150,7 @@ namespace ergodiclib
 
          arma::mat vega = zeta_pair.second;
          ut = ut + beta * vega;
-         xt = make_trajec(x0, ut);
+         xt = model.createTrajectory(x0, ut);
       }
    }
-
 }

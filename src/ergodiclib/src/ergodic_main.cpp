@@ -6,13 +6,14 @@
 #include <ergodiclib/file_utils.hpp>
 #include <ergodiclib/num_utils.hpp>
 #include <ergodiclib/ergodic_measure.hpp>
-#include <ergodiclib/controller.hpp>
+#include <ergodiclib/ergodic_controller.hpp>
 
 using namespace ergodiclib;
 
 
 int main()
 {
+  // NEED TO USE SMART POINTERS
   std::cout << "Running Ergodic Exploration and Controller..." << std::endl << std::endl;
 
   std::cout << "Getting Demonstrations...  START" << std::endl;

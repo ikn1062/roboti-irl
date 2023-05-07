@@ -31,6 +31,8 @@ double l2_norm(const std::vector<int> & v);
 /// \return L2 Norm Value
 double l2_norm(const std::vector<double> & v);
 
+double normalizeAngle(double rad);
+
 /// \brief approximately compare two floating-point numbers using
 ///        an absolute comparison
 /// \param d1 - a number to compare

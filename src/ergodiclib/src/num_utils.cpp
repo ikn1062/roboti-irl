@@ -13,6 +13,18 @@ double integralTrapz(const arma::vec& y_trajec, double dx)
   return sum;
 }
 
+double normalizeAngle(double rad) 
+{
+  double new_rad = std::fmod(rad, 2.0 * PI);
+  if (new_rad <= -1.0 * PI) {
+    new_rad += 2.0 * PI;
+  }
+  if (new_rad > PI) {
+    new_rad -= 2.0 * PI;
+  }
+  return new_rad;
+}
+
 double l2_norm(const std::vector<int> & v)
 {
   double sum = 0.0;

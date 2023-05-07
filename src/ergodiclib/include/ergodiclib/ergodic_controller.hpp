@@ -14,21 +14,18 @@
 #include <ergodiclib/ergodic_measure.hpp>
 #include <ergodiclib/num_utils.hpp>
 #include <ergodiclib/fourier_basis.hpp>
+#include <ergodiclib/model.hpp>
 
 namespace ergodiclib
 {
     class iLQRController
     {
         public:
-            iLQRController(ErgodicMeasure ergodicMes, fourierBasis basis, double q_val, arma::mat R_mat, arma::mat Q_mat, double t0_val, double tf_val, double dt_val, double eps_val, double beta_val);
+            iLQRController(ErgodicMeasure ergodicMes, fourierBasis basis, Model model_agent, double q_val, arma::mat R_mat, arma::mat Q_mat, double t0_val, double tf_val, double dt_val, double eps_val, double beta_val);
 
             arma::mat calc_b(const arma::mat& u_mat);
 
             arma::mat calc_a(const arma::mat& x_mat);
-
-            arma::vec integrate(const arma::vec& x_mat, const arma::vec& u_mat);
-
-            arma::vec dynamics(const arma::vec& x_mat, const arma::vec& u_mat);
 
             std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(const arma::mat& at, const arma::mat& bt);
 
@@ -36,13 +33,12 @@ namespace ergodiclib
 
             double DJ(std::pair<arma::mat, arma::mat> zeta_pair, const arma::mat& at, const arma::mat& bt);
 
-            arma::mat make_trajec(arma::vec x0, arma::mat ut);
-
-            int gradient_descent();
+            int gradient_descent(arma::vec x0);
 
         private:
             ErgodicMeasure ergodicMeasure;
             fourierBasis Basis;
+            Model model;
             const double q;
             const arma::mat R; 
             const arma::mat Q;
