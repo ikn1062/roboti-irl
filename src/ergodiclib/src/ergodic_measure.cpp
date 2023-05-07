@@ -7,11 +7,11 @@ ErgodicMeasure::ErgodicMeasure(
   std::vector<int> demo_weights, 
   double dt_demo, fourierBasis basis)
 : D_mat(demonstrations),
+  Basis(basis),
   E_vec(demo_weights),
   dt(dt_demo),
   n_dim(demonstrations[0].n_rows),
-  m_demo(demonstrations.size()),
-  Basis(basis)
+  m_demo(demonstrations.size())
 {
   if (demonstrations.size() != E_vec.size()) {
     throw std::invalid_argument("Length of Demonstration unequal to length of demonstration weights");

@@ -9,8 +9,7 @@
 #include <string>
 #include <vector>
 
-#include </opt/homebrew/include/armadillo>
-
+#include<armadillo>
 namespace ergodiclib
 {
 constexpr double PI = 3.14159265358979323846;

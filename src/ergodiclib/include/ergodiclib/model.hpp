@@ -6,7 +6,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include </opt/homebrew/include/armadillo>
+#include<armadillo>
+
+#define UNUSED(x) (void)(x)
 
 class Model
 {
@@ -17,12 +19,20 @@ class Model
         arma::mat getB() 
         {return B_mat;};
 
-        arma::vec setx0(arma::vec x0_input)
+        void setx0(arma::vec x0_input)
         {x0 = x0_input;};
 
-        virtual std::pair<arma::mat, arma::mat> createTrajectory() {};
+        virtual std::pair<arma::mat, arma::mat> createTrajectory() 
+        {
+            return {arma::mat(1, 1, arma::fill::zeros), arma::mat(1, 1, arma::fill::zeros)};
+        };
 
-        virtual arma::mat createTrajectory(arma::vec x0_input, arma::mat ut_input) {};
+        virtual arma::mat createTrajectory(arma::vec x0_input, arma::mat ut_input) 
+        {
+            UNUSED(x0_input); 
+            UNUSED(ut_input); 
+            return arma::mat(1, 1, arma::fill::zeros);
+        };
 
     private:
         arma::vec integrate(const arma::vec& x_vec, const arma::vec& u_vec)
@@ -41,9 +51,19 @@ class Model
             return A * x_vec + B * u_vec;
         }
 
-        virtual arma::mat calculateA(arma::vec xt, arma::vec ut) {};
+        virtual arma::mat calculateA(arma::vec xt, arma::vec ut)
+        {
+            UNUSED(xt); 
+            UNUSED(ut); 
+            return arma::mat(1, 1, arma::fill::zeros);
+        };
 
-        virtual arma::mat calculateB(arma::vec xt, arma::vec ut) {};
+        virtual arma::mat calculateB(arma::vec xt, arma::vec ut)
+        {
+            UNUSED(xt); 
+            UNUSED(ut); 
+            return arma::mat(1, 1, arma::fill::zeros);
+        };
 
         arma::mat A_mat;
         arma::mat B_mat;

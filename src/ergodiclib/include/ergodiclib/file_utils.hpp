@@ -12,8 +12,7 @@
 #include <filesystem>
 #include <algorithm>
 #include <regex>
-#include </opt/homebrew/include/armadillo>
-
+#include<armadillo>
 /// \brief
 /// \param demonstration_file_list_path
 /// \param n_dimension

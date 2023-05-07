@@ -9,9 +9,9 @@ namespace ergodiclib
    q(q_val),
    R(R_mat),
    Q(Q_mat),
-   t0(t0),
-   tf(tf),
-   dt(dt),
+   t0(t0_val),
+   tf(tf_val),
+   dt(dt_val),
    eps(eps_val),
    beta(beta_val)
    {
@@ -21,7 +21,7 @@ namespace ergodiclib
    arma::mat iLQRController::calc_b(const arma::mat& u_mat) 
    {
       arma::mat b_mat(u_mat.n_cols, u_mat.n_rows, arma::fill::zeros); // Transposed
-      for (int i = 0; i < u_mat.n_cols; i++) {
+      for (unsigned int i = 0; i < u_mat.n_cols; i++) {
          b_mat.col(i) = u_mat.col(i).t() * R;
       }
       return b_mat;
@@ -37,10 +37,10 @@ namespace ergodiclib
       arma::mat phi = ergodicMeasure.get_PhiK();
       
       arma::vec dfk; 
-      for (int i = 0; i < K_series.size(); i++) {
+      for (unsigned int i = 0; i < K_series.size(); i++) {
          double ck = ergodicMeasure.calculateCk(x_mat, K_series[i], i);
 
-         for (int t = 0; t < x_mat.n_cols; t++) {
+         for (unsigned int t = 0; t < x_mat.n_cols; t++) {
             dfk = Basis.calculateDFk(x_mat.col(t), K_series[i]);
             ak_mat = lambda[i] * (2 * (ck - phi[i]) * ((1/tf) * dfk));
             a_mat.row(t) = ak_mat;
@@ -152,5 +152,7 @@ namespace ergodiclib
          ut = ut + beta * vega;
          xt = model.createTrajectory(x0, ut);
       }
+
+      return 1;
    }
 }

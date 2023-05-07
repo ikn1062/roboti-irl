@@ -9,8 +9,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include </opt/homebrew/include/armadillo>
-
+#include<armadillo>
 #include <ergodiclib/ergodic_measure.hpp>
 #include <ergodiclib/num_utils.hpp>
 #include <ergodiclib/fourier_basis.hpp>

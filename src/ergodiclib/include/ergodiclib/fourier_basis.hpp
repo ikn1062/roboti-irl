@@ -8,8 +8,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include </opt/homebrew/include/armadillo>
-
+#include<armadillo>
 #include <ergodiclib/num_utils.hpp>
 
 namespace ergodiclib

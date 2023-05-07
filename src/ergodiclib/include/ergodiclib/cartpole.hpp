@@ -6,8 +6,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include </opt/homebrew/include/armadillo>
-
+#include<armadillo>
 #include <ergodiclib/model.hpp>
 #include <ergodiclib/num_utils.hpp>
 
@@ -15,18 +14,20 @@
 CAN I OPTIMIZE THIS WITH CONST EXPR?
 */
 
+#define UNUSED(x) (void)(x)
+
 /// @brief 
 class CartPole : public Model
 {
     public:
         CartPole() : 
+        A_mat(4, 4, arma::fill::zeros),
+        B_mat(4, 1, arma::fill::zeros),
         x0({0.0, 0.0, ergodiclib::PI, 0.0}),
         u0({0.0}),
         dt(0.1),
         t0(0.0),
         tf(15.0),
-        A_mat(4, 4, arma::fill::zeros),
-        B_mat(4, 1, arma::fill::zeros),
         M(10.0),
         m(5.0),
         g(9.81),
@@ -106,6 +107,7 @@ class CartPole : public Model
 
         virtual arma::mat calculateB(arma::vec xt, arma::vec ut) 
         {
+            UNUSED(ut);
             arma::mat B(4, 1, arma::fill::zeros);
             double t = xt(2);
 

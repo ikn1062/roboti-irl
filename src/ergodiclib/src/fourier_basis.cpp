@@ -4,8 +4,8 @@
 namespace ergodiclib
 {
     fourierBasis::fourierBasis(std::vector<std::pair<double, double>> L_dim, int num_dim, int K) : 
-    L(L_dim),
-    n_dim(num_dim)
+    n_dim(num_dim),
+    L(L_dim)
     {
         K_series = create_K_series(K, num_dim);
         hK_vec.resize(K_series.size());

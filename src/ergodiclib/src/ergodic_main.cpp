@@ -1,8 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include </opt/homebrew/include/armadillo>
-
+#include<armadillo>
 #include <ergodiclib/file_utils.hpp>
 #include <ergodiclib/num_utils.hpp>
 #include <ergodiclib/ergodic_measure.hpp>
