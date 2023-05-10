@@ -13,7 +13,7 @@ find_package(Armadillo REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-add_library(${PROJECT_NAME} src/ergodic_measure.cpp src/num_utils.cpp src/file_utils.cpp src/controller.cpp src/fourier_basis.cpp)
+add_library(${PROJECT_NAME} src/ergodic_measure.cpp src/num_utils.cpp src/file_utils.cpp src/controller.cpp src/fourier_basis.cpp src/controller.cpp)
 
 target_include_directories(${PROJECT_NAME}
   PUBLIC
@@ -32,7 +32,11 @@ add_executable(ergodic_main src/ergodic_main.cpp)
 ament_target_dependencies(ergodic_main Armadillo)
 target_link_libraries(ergodic_main ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
 
-install(TARGETS ergodic_test ergodic_main DESTINATION lib/${PROJECT_NAME})
+add_executable(controller_test src/controller_test.cpp)
+ament_target_dependencies(controller_test Armadillo)
+target_link_libraries(controller_test ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
+
+install(TARGETS ergodic_test ergodic_main controller_test DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
 install(TARGETS ergodic_test ergodic_main ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
 install(EXPORT ${PROJECT_NAME}-targets

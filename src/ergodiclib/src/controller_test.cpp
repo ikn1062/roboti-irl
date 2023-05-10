@@ -12,8 +12,7 @@ using namespace ergodiclib;
 int main() 
 {
     Model cartpole = CartPole();
-    arma::vec x0({0.0, 0.0, PI, 0.0});
-    arma::mat r;
+    arma::vec x0({0.0, 0.0, ergodiclib::PI, 0.0});
 
     arma::mat Q(4, 4, arma::fill::eye);
     Q(2,2) = 10;

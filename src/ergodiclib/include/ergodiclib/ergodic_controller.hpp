@@ -23,16 +23,30 @@
 
 namespace ergodiclib
 {
-    class iLQRController
+    class ergController
     {
         public:
-            iLQRController(ErgodicMeasure ergodicMes, fourierBasis basis, Model model_agent, double q_val, arma::mat R_mat, arma::mat Q_mat, double t0_val, double tf_val, double dt_val, double eps_val, double beta_val);
+            ergController(ErgodicMeasure ergodicMes, fourierBasis basis, Model model_agent, double q_val, arma::mat R_mat, arma::mat Q_mat, double t0_val, double tf_val, double dt_val, double eps_val, double beta_val) : 
+            ergodicMeasure(ergodicMes), 
+            Basis(basis),
+            model(model_agent),
+            q(q_val),
+            R(R_mat),
+            Q(Q_mat),
+            t0(t0_val),
+            tf(tf_val),
+            dt(dt_val),
+            eps(eps_val),
+            beta(beta_val)
+            {
+                n_iter = (int) ((tf - t0)/ dt);
+            };
 
             arma::mat calc_b(const arma::mat& u_mat);
 
             arma::mat calc_a(const arma::mat& x_mat);
 
-            std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(const arma::mat& at, const arma::mat& bt);
+            std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(arma::mat xt, arma::mat ut, const arma::mat& at, const arma::mat& bt);
 
             std::pair<arma::mat, arma::mat> descentDirection(arma::mat xt, arma::mat ut, std::vector<arma::mat> listP, std::vector<arma::mat> listr, arma::mat bt); 
 
@@ -44,15 +58,15 @@ namespace ergodiclib
             ErgodicMeasure ergodicMeasure;
             fourierBasis Basis;
             Model model;
-            const double q;
-            const arma::mat R; 
-            const arma::mat Q;
+            double q;
+            arma::mat R; 
+            arma::mat Q;
             double t0;
             double tf;
             double dt;
-            int n_iter;
             double eps;
             double beta;
+            int n_iter;
     };
 }
 

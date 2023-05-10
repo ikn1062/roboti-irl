@@ -18,12 +18,14 @@
 #include <armadillo>
 #endif
 
+namespace ergodiclib
+{
 class ilqrController 
 {
     public:
         ilqrController(Model model_in, arma::vec x0_in, arma::mat Q, arma::mat R, arma::mat P, arma::mat r, double dt_in, double t0_in, double tf_in, double a, double b, double e);
 
-        void ilqrController::ILQR();
+        void ILQR();
 
     private:
         double objectiveJ(arma::mat Xt, arma::mat Ut, arma::mat P1);
@@ -32,7 +34,7 @@ class ilqrController
 
         std::pair<arma::mat, arma::mat> calculateZeta(arma::mat Xt, arma::mat Ut);
 
-        std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ilqrController::calculatePr(arma::mat Xt, arma::mat Ut, arma::mat aT, arma::mat bT);
+        std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(arma::mat Xt, arma::mat Ut, arma::mat aT, arma::mat bT);
 
         arma::mat calculate_aT(arma::mat Xt);
         
@@ -54,5 +56,6 @@ class ilqrController
         double eps;
 
 };
+}
 
 #endif

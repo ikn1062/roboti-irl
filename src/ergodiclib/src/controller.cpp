@@ -1,5 +1,7 @@
 #include <ergodiclib/controller.hpp>
 
+namespace ergodiclib
+{
 ilqrController::ilqrController(Model model_in, arma::vec x0_in, arma::mat Q, arma::mat R, arma::mat P, arma::mat r, double dt_in, double t0_in, double tf_in, double a, double b, double e) :
 model(model_in),
 x0(x0_in),
@@ -173,4 +175,4 @@ arma::mat ilqrController::calculate_bT(arma::mat Ut)
 
     return bT;
 }
-
+}
