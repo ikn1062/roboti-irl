@@ -16,9 +16,6 @@
 #include <armadillo>
 #endif
 
-/*
-CAN I OPTIMIZE THIS WITH CONST EXPR?
-*/
 
 #define UNUSED(x) (void)(x)
 
@@ -31,9 +28,9 @@ class CartPole : public Model
         B_mat(4, 1, arma::fill::zeros),
         x0({0.0, 0.0, ergodiclib::PI, 0.0}),
         u0({0.0}),
-        dt(0.1),
+        dt(0.0005),
         t0(0.0),
-        tf(15.0),
+        tf(10.0),
         M(10.0),
         m(5.0),
         g(9.81),
@@ -42,7 +39,7 @@ class CartPole : public Model
             n_iter = (int) ((tf - t0)/ dt);
         };
 
-        virtual std::pair<arma::mat, arma::mat> createTrajectory() 
+        virtual std::pair<arma::mat, arma::mat> createTrajectory()
         {
             arma::mat x_traj(x0.n_elem, n_iter, arma::fill::zeros);
             arma::mat u_traj(u0.n_elem, n_iter, arma::fill::zeros);
@@ -52,7 +49,7 @@ class CartPole : public Model
 
             arma::mat x_new;
             for (int i = 1; i < n_iter; i++) {
-                x_new = integrate(x_traj.col(i-1), u0);
+                x_new = integrate(x_traj.col(i-1), u0, dt);
                 x_new(2) = ergodiclib::normalizeAngle(x_new(2));
                 x_traj.col(i) = x_new;
                 u_traj.col(i) = u0;
@@ -69,7 +66,7 @@ class CartPole : public Model
 
             arma::mat x_new;
             for (int i = 1; i < n_iter; i++) {
-                x_new = integrate(x_traj.col(i-1), ut_input.col(i-1));
+                x_new = integrate(x_traj.col(i-1), ut_input.col(i-1), dt);
                 x_new(2) = ergodiclib::normalizeAngle(x_new(2));
                 x_traj.col(i) = x_new;
             }

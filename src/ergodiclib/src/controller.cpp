@@ -2,24 +2,7 @@
 
 namespace ergodiclib
 {
-ilqrController::ilqrController(Model model_in, arma::vec x0_in, arma::mat Q, arma::mat R, arma::mat P, arma::mat r, double dt_in, double t0_in, double tf_in, double a, double b, double e) :
-model(model_in),
-x0(x0_in),
-Q_mat(Q),
-R_mat(R),
-P_mat(P),
-r_mat(r),
-dt(dt_in),
-t0(t0_in),
-tf(tf_in),
-alpha(a),
-beta(b),
-eps(e)
-{
-    num_iter = (int) ((tf - t0) / dt);
-}
-
-void ilqrController::ILQR()
+void ilqrController::iLQR()
 {
     std::pair<arma::mat, arma::mat> trajectory, descentDirection;
     arma::mat X, U, X_new, U_new, zeta, vega;
@@ -39,8 +22,8 @@ void ilqrController::ILQR()
         vega = descentDirection.second;
 
         n = 0;
-        J_new = J;
-        while (J_new > J + alpha * gamma * trajectoryJ(X, U)) {
+        J_new = J+J;
+        while (J_new > J + alpha * gamma * trajectoryJ(X, U) && n < 30) {
             U_new = U + gamma * vega;
             X_new = model.createTrajectory(x0, U_new);
 
@@ -51,16 +34,20 @@ void ilqrController::ILQR()
 
             X = X_new;
             U = U_new;
+
+            std::string x_file = "trajectory_" + i;
+            //X.save(x_file, arma::csv_ascii);
+            std::string u_file = "control_" + i;
+            //U.save(u_file, arma::csv_ascii);
+
+            (X.col(X.n_cols - 1)).print("End X: ");
+            std::cout << "J: " << abs(J_new) << std::endl;
         }
-
+        J = J_new;
         trajectory = {X, U};
-    }
 
-    std::string x_file = "trajectory_" + i;
-    std::string u_file = "control_" + i;
-    X.save(x_file, arma::csv_ascii);
-    U.save(u_file, arma::csv_ascii);
-    i += 1;
+        i += 1;
+    }
 }
 
 double ilqrController::objectiveJ(arma::mat Xt, arma::mat Ut, arma::mat P1)
@@ -107,7 +94,8 @@ std::pair<arma::mat, arma::mat> ilqrController::calculateZeta(arma::mat Xt, arma
     arma::mat A = model.getA(Xt.col(0), Ut.col(0));
     arma::mat B = model.getB(Xt.col(0), Ut.col(0));   
     arma::vec z = - Plist[0] * rlist[0];
-    arma::vec v = - R_mat.i() * B.t() * Plist[0] * z - R_mat.i() * B * rlist[0] - R_mat.t() * bT.col(0);
+
+    arma::vec v = - R_mat.i() * B.t() * Plist[0] * z - R_mat.i() * B.t() * rlist[0] - R_mat.i() * bT.row(0).t();
     zeta.col(0) = z;
     vega.col(0) = v;
 
@@ -118,7 +106,7 @@ std::pair<arma::mat, arma::mat> ilqrController::calculateZeta(arma::mat Xt, arma
 
         zdot = A * z + B * v;
         z = z + dt * zdot;
-        v = - R_mat.i() * B.t() * Plist[i] * z - R_mat.i() * B * rlist[i] - R_mat.t() * bT.col(i); 
+        v = - R_mat.i() * B.t() * Plist[i] * z - R_mat.i() * B.t() * rlist[i] - R_mat.t() * bT.row(i).t(); 
 
         zeta.col(i) = z;
         vega.col(i) = v; 
@@ -131,7 +119,7 @@ std::pair<arma::mat, arma::mat> ilqrController::calculateZeta(arma::mat Xt, arma
 std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ilqrController::calculatePr(arma::mat Xt, arma::mat Ut, arma::mat aT, arma::mat bT)
 {
     std::vector<arma::mat> Plist, rlist;
-    arma::mat P = P_mat;
+    arma::mat P(4, 4, arma::fill::zeros);
     arma::mat r = r_mat;
     Plist.push_back(P);
     rlist.push_back(r);
@@ -141,8 +129,10 @@ std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ilqrController::calcul
         A = model.getA(Xt.col(i), Ut.col(i));
         B = model.getB(Xt.col(i), Ut.col(i));
 
+        arma::mat Rinv = R_mat.i();
+
         Pdot = - P * A - A.t() * P + P * B * R_mat.i() * B.t() * P - Q_mat;
-        rdot = - (A - B * R_mat.i() * B.t() * P).t() * r - aT.t() + P * B * R_mat.i() * bT.t();
+        rdot = - (A - B * R_mat.i() * B.t() * P).t() * r - aT.row(i).t() + P * B * R_mat.i() * bT.row(i).t();
 
         P = P + dt * Pdot;
         r = r + dt * rdot;
@@ -150,7 +140,7 @@ std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ilqrController::calcul
         Plist.push_back(P);
         rlist.push_back(r);
     }
-    P_mat = P;
+    //P_mat = P;
 
     std::pair<std::vector<arma::mat>, std::vector<arma::mat>> list_pair = {Plist, rlist}; 
     return list_pair;
@@ -162,7 +152,6 @@ arma::mat ilqrController::calculate_aT(arma::mat Xt)
     for (unsigned int i = 0; i < Xt.n_cols; i++) {
         aT.row(i) = Xt.col(i).t() * Q_mat;
     }
-
     return aT;
 }
 
@@ -172,7 +161,6 @@ arma::mat ilqrController::calculate_bT(arma::mat Ut)
     for (unsigned int i = 0; i < Ut.n_cols; i++) {
         bT.row(i) = Ut.col(i).t() * R_mat;
     }
-
     return bT;
 }
 }

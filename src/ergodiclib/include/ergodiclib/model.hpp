@@ -20,14 +20,12 @@ class Model
     public:
         arma::mat getA(const arma::vec& xt, const arma::vec& ut) 
         {
-            calculateA(xt, ut);
-            return A_mat;
+            return calculateA(xt, ut);
         };
 
         arma::mat getB(const arma::vec& xt, const arma::vec& ut) 
         {
-            calculateB(xt, ut);
-            return B_mat;
+            return calculateB(xt, ut);
         };
 
         void setx0(arma::vec x0_input)
@@ -46,20 +44,25 @@ class Model
         };
 
     private:
-        arma::vec integrate(const arma::vec& x_vec, const arma::vec& u_vec)
+        arma::vec integrate(arma::vec x_vec, const arma::vec& u_vec, const double dt_in)
         {
             arma::vec k1 = dynamics(x_vec, u_vec);
-            arma::vec k2 = dynamics(x_vec + 0.5 * dt * k1, u_vec);
-            arma::vec k3 = dynamics(x_vec + 0.5 * dt * k2, u_vec);
-            arma::vec k4 = dynamics(x_vec + dt * k3, u_vec);
-            return x_vec + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
+            arma::vec k2 = dynamics(x_vec + 0.5 * dt_in * k1, u_vec);
+            arma::vec k3 = dynamics(x_vec + 0.5 * dt_in * k2, u_vec);
+            arma::vec k4 = dynamics(x_vec + dt_in * k3, u_vec);
+
+            arma::vec k_sum = (dt_in / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
+            arma::vec res = x_vec + (dt_in / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
+
+            return res;
         }
 
         arma::vec dynamics(const arma::vec& x_vec, const arma::vec& u_vec)
         {
             arma::mat A = calculateA(x_vec, u_vec);
-            arma::mat B = calculateB(x_vec, u_vec); 
-            return A * x_vec + B * u_vec;
+            arma::mat B = calculateB(x_vec, u_vec);
+            arma::vec xdot = A * x_vec + B * u_vec;
+            return xdot;
         }
 
         virtual arma::mat calculateA(const arma::vec& xt, const arma::vec& ut)
