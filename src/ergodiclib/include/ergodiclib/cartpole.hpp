@@ -6,9 +6,15 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include<armadillo>
+
 #include <ergodiclib/model.hpp>
 #include <ergodiclib/num_utils.hpp>
+
+#if defined(__APPLE__)
+#include </opt/homebrew/include/armadillo>
+#else
+#include <armadillo>
+#endif
 
 /*
 CAN I OPTIMIZE THIS WITH CONST EXPR?
@@ -56,7 +62,7 @@ class CartPole : public Model
             return pair_trajec;
         };
 
-        virtual arma::mat createTrajectory(arma::vec x0_input, arma::mat ut_input) 
+        virtual arma::mat createTrajectory(const arma::vec& x0_input, const arma::mat& ut_input) 
         {
             arma::mat x_traj(x0.n_elem, n_iter, arma::fill::zeros);
             x_traj.col(0) = x0_input;
@@ -72,7 +78,7 @@ class CartPole : public Model
         };
 
     private:
-        virtual arma::mat calculateA(arma::vec xt, arma::vec ut)
+        virtual arma::mat calculateA(const arma::vec& xt, const arma::vec& ut)
         {
             arma::mat A(4, 4, arma::fill::zeros);
             double t = xt(2);
@@ -105,7 +111,7 @@ class CartPole : public Model
             return A;
         };
 
-        virtual arma::mat calculateB(arma::vec xt, arma::vec ut) 
+        virtual arma::mat calculateB(const arma::vec& xt, const arma::vec& ut) 
         {
             UNUSED(ut);
             arma::mat B(4, 1, arma::fill::zeros);

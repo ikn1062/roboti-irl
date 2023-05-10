@@ -8,9 +8,13 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include<armadillo>
 #include <ergodiclib/num_utils.hpp>
 
+#if defined(__APPLE__)
+#include </opt/homebrew/include/armadillo>
+#else
+#include <armadillo>
+#endif
 namespace ergodiclib
 {
     class fourierBasis

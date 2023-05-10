@@ -8,7 +8,6 @@
 
 using namespace ergodiclib;
 
-
 int main()
 {
   std::cout << "Ergodic Main FIle" << std::endl << std::endl;

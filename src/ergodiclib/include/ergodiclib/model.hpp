@@ -6,18 +6,29 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include<armadillo>
+
+#if defined(__APPLE__)
+#include </opt/homebrew/include/armadillo>
+#else
+#include <armadillo>
+#endif
 
 #define UNUSED(x) (void)(x)
 
 class Model
 {
     public:
-        arma::mat getA() 
-        {return A_mat;};
+        arma::mat getA(const arma::vec& xt, const arma::vec& ut) 
+        {
+            calculateA(xt, ut);
+            return A_mat;
+        };
 
-        arma::mat getB() 
-        {return B_mat;};
+        arma::mat getB(const arma::vec& xt, const arma::vec& ut) 
+        {
+            calculateB(xt, ut);
+            return B_mat;
+        };
 
         void setx0(arma::vec x0_input)
         {x0 = x0_input;};
@@ -27,7 +38,7 @@ class Model
             return {arma::mat(1, 1, arma::fill::zeros), arma::mat(1, 1, arma::fill::zeros)};
         };
 
-        virtual arma::mat createTrajectory(arma::vec x0_input, arma::mat ut_input) 
+        virtual arma::mat createTrajectory(const arma::vec& x0_input, const arma::mat& ut_input) 
         {
             UNUSED(x0_input); 
             UNUSED(ut_input); 
@@ -51,14 +62,14 @@ class Model
             return A * x_vec + B * u_vec;
         }
 
-        virtual arma::mat calculateA(arma::vec xt, arma::vec ut)
+        virtual arma::mat calculateA(const arma::vec& xt, const arma::vec& ut)
         {
             UNUSED(xt); 
             UNUSED(ut); 
             return arma::mat(1, 1, arma::fill::zeros);
         };
 
-        virtual arma::mat calculateB(arma::vec xt, arma::vec ut)
+        virtual arma::mat calculateB(const arma::vec& xt, const arma::vec& ut)
         {
             UNUSED(xt); 
             UNUSED(ut); 

@@ -1,158 +1,176 @@
-#include <ergodiclib/ergodic_controller.hpp>
+#include <ergodiclib/controller.hpp>
 
-namespace ergodiclib
+ilqrController::ilqrController(Model model_in, arma::vec x0_in, arma::mat Q, arma::mat R, arma::mat P, arma::mat r, double dt_in, double t0_in, double tf_in, double a, double b, double e) :
+model(model_in),
+x0(x0_in),
+Q_mat(Q),
+R_mat(R),
+P_mat(P),
+r_mat(r),
+dt(dt_in),
+t0(t0_in),
+tf(tf_in),
+alpha(a),
+beta(b),
+eps(e)
 {
-   iLQRController::iLQRController(ErgodicMeasure ergodicMes, fourierBasis basis, Model model_agent, double q_val, arma::mat R_mat, arma::mat Q_mat, double t0_val, double tf_val, double dt_val, double eps_val, double beta_val):
-   ergodicMeasure(ergodicMes),
-   Basis(basis),
-   model(model_agent),
-   q(q_val),
-   R(R_mat),
-   Q(Q_mat),
-   t0(t0_val),
-   tf(tf_val),
-   dt(dt_val),
-   eps(eps_val),
-   beta(beta_val)
-   {
-      n_iter = (int) ((tf - t0)/ dt);
-   }
-
-   arma::mat iLQRController::calc_b(const arma::mat& u_mat) 
-   {
-      arma::mat b_mat(u_mat.n_cols, u_mat.n_rows, arma::fill::zeros); // Transposed
-      for (unsigned int i = 0; i < u_mat.n_cols; i++) {
-         b_mat.col(i) = u_mat.col(i).t() * R;
-      }
-      return b_mat;
-   }
-
-   arma::mat iLQRController::calc_a(const arma::mat& x_mat)
-   {
-      arma::mat a_mat(x_mat.n_cols, x_mat.n_rows, arma::fill::zeros);
-      arma::rowvec ak_mat(x_mat.n_rows, arma::fill::zeros); // should be 1 for time in row dim
-
-      const std::vector<std::vector<int> > K_series = Basis.get_K_series();
-      arma::mat lambda = ergodicMeasure.get_LambdaK();
-      arma::mat phi = ergodicMeasure.get_PhiK();
-      
-      arma::vec dfk; 
-      for (unsigned int i = 0; i < K_series.size(); i++) {
-         double ck = ergodicMeasure.calculateCk(x_mat, K_series[i], i);
-
-         for (unsigned int t = 0; t < x_mat.n_cols; t++) {
-            dfk = Basis.calculateDFk(x_mat.col(t), K_series[i]);
-            ak_mat = lambda[i] * (2 * (ck - phi[i]) * ((1/tf) * dfk));
-            a_mat.row(t) = ak_mat;
-         }
-      }
-
-      a_mat = q * a_mat;
-      return a_mat;
-   }
-
-   std::pair<std::vector<arma::mat>, std::vector<arma::mat>> iLQRController::calculatePr(const arma::mat& at_mat, const arma::mat& bt_mat)
-   {
-      arma::mat A = model.getA();
-      arma::mat B = model.getB();
-
-      std::vector<arma::mat> listP, listr;
-      arma::mat Rinv = R.i();
-
-      arma::mat P, r, at, bt, Pdot, rdot;
-      for (int i = 1; i < n_iter; i++) {
-         // A and B here have to be solved from the model
-         P = listP[i-1];
-         r = listr[i-1];
-
-         at = at_mat.row(i).t();
-         bt = bt_mat.row(i).t();
-
-         Pdot = P * B * Rinv * B.t() * P - Q - P * A - A.t() * P;
-
-         arma::mat rdot_int = A - B * Rinv * B.t() * P;
-         rdot = - 1.0 * rdot_int.t() * r - at + P * B * Rinv * bt;
-
-         listP[i] = dt * Pdot + P;
-         listr[i] = dt * rdot + r;
-      }
-
-      std::pair<std::vector<arma::mat>, std::vector<arma::mat>> list_pair = {listP, listr};
-      return list_pair; 
-   }
-
-   std::pair<arma::mat, arma::mat> iLQRController::descentDirection(arma::mat xt, arma::mat ut, std::vector<arma::mat> listP, std::vector<arma::mat> listr, arma::mat bt)
-   {
-      arma::mat A = model.getA();
-      arma::mat B = model.getB();
-
-      arma::mat zeta(xt.n_rows, xt.n_cols, arma::fill::zeros);
-      arma::mat vega(ut.n_rows, ut.n_cols, arma::fill::zeros);
-      arma::mat Rinv = R.i();
-
-      arma::mat P, r, b;
-      arma::vec zdot;
-      for (int i = 1; i < n_iter; i++) {
-         P = listP[i];
-         r = listr[i];
-         b = bt.row(i);
-
-         vega.col(i) = -1.0 * Rinv * B.t() * P * zeta.col(i-1) - Rinv * B.t() * r - Rinv * b;
-         zdot = A * zeta.col(i-1) + B * vega.col(i);
-         zeta.col(i) = zeta.col(i-1) + zdot * dt;
-      }
-
-      std::pair<arma::mat, arma::mat> zeta_pair = {zeta, vega};
-      return zeta_pair;
-   }
-
-   double iLQRController::DJ(std::pair<arma::mat, arma::mat> zeta_pair, const arma::mat& at, const arma::mat& bt) 
-   {
-      arma::vec J(n_iter, 1, arma::fill::zeros);
-      arma::mat zeta = zeta_pair.first;
-      arma::mat vega = zeta_pair.second;
-
-      arma::mat a_T, b_T;
-
-      for (int i = 0; i < n_iter; i++) {
-         a_T = at.row(i).t();
-         b_T = bt.row(i).t();
-
-         J.row(i) = a_T * zeta.row(i) + b_T * vega.row(i);
-      }
-
-      // integrate and return J
-      double J_integral = integralTrapz(J, dt);
-      return J_integral;
-   }
-
-   int iLQRController::gradient_descent(arma::vec x0) 
-   {
-      std::pair<arma::mat, arma::mat> xtut = model.createTrajectory();
-      arma::mat xt = xtut.first;
-      arma::mat ut = xtut.second; 
-      model.setx0(x0);
-      
-      double dj = 2e31;
-
-      arma::mat at, bt;
-      std::pair<arma::mat, arma::mat> zeta_pair;
-      std::pair<std::vector<arma::mat>, std::vector<arma::mat>> listPr;
-      while (abs(dj) > eps) {
-         at = calc_a(xt);
-         bt = calc_b(ut);
-
-         listPr = calculatePr(at, bt);
-         
-         zeta_pair = descentDirection(xt, ut, listPr.first, listPr.second, bt);
-
-         dj = DJ(zeta_pair, at, bt);
-
-         arma::mat vega = zeta_pair.second;
-         ut = ut + beta * vega;
-         xt = model.createTrajectory(x0, ut);
-      }
-
-      return 1;
-   }
+    num_iter = (int) ((tf - t0) / dt);
 }
+
+void ilqrController::ILQR()
+{
+    std::pair<arma::mat, arma::mat> trajectory, descentDirection;
+    arma::mat X, U, X_new, U_new, zeta, vega;
+    double J, J_new, gamma;
+
+    trajectory = model.createTrajectory();
+    X = trajectory.first;
+    U = trajectory.second;
+    J = objectiveJ(X, U, P_mat);
+    
+    int n = 0;
+    int i = 0;
+    gamma = beta;
+    while (abs(J) > eps) {
+        descentDirection = calculateZeta(X, U);
+        zeta = descentDirection.first;
+        vega = descentDirection.second;
+
+        n = 0;
+        J_new = J;
+        while (J_new > J + alpha * gamma * trajectoryJ(X, U)) {
+            U_new = U + gamma * vega;
+            X_new = model.createTrajectory(x0, U_new);
+
+            J_new = objectiveJ(X_new, U_new, P_mat);
+
+            n += 1;
+            gamma = pow(beta, n);
+
+            X = X_new;
+            U = U_new;
+        }
+
+        trajectory = {X, U};
+    }
+
+    std::string x_file = "trajectory_" + i;
+    std::string u_file = "control_" + i;
+    X.save(x_file, arma::csv_ascii);
+    U.save(u_file, arma::csv_ascii);
+    i += 1;
+}
+
+double ilqrController::objectiveJ(arma::mat Xt, arma::mat Ut, arma::mat P1)
+{
+    int X_cols = Xt.n_cols-1;
+    arma::vec x_tf = Xt.col(X_cols);
+    arma::mat finalcost_mat = x_tf.t() * P1 * x_tf; 
+    double final_cost = finalcost_mat(0, 0);
+
+    double trajectory_cost = trajectoryJ(Xt, Ut);
+
+    return final_cost + trajectory_cost;
+}
+
+double ilqrController::trajectoryJ(arma::mat Xt, arma::mat Ut)
+{
+    arma::vec trajecJ(Xt.n_cols, arma::fill::zeros);
+
+    arma::vec Xt_i, Ut_i;
+    arma::mat cost;
+    for (unsigned int i = 0; i < Xt.n_cols; i++) {
+        Xt_i = Xt.col(i);
+        Ut_i = Ut.col(i);
+        cost = Xt_i.t() * Q_mat * Xt_i + Ut_i.t() * R_mat * Ut_i;
+        trajecJ(i) = cost(0, 0);
+    }
+
+    double trajec_cost = ergodiclib::integralTrapz(trajecJ, dt);
+    return trajec_cost;
+}
+
+std::pair<arma::mat, arma::mat> ilqrController::calculateZeta(arma::mat Xt, arma::mat Ut)
+{
+    arma::mat aT = calculate_aT(Xt);
+    arma::mat bT = calculate_bT(Ut);
+    
+    std::pair<std::vector<arma::mat>, std::vector<arma::mat>> listPr = calculatePr(Xt, Ut, aT, bT); 
+    std::vector<arma::mat> Plist = listPr.first;
+    std::vector<arma::mat> rlist = listPr.second;
+
+    arma::mat zeta(Xt.n_rows, Xt.n_cols, arma::fill::zeros);
+    arma::mat vega(Ut.n_rows, Ut.n_cols, arma::fill::zeros);
+    
+    arma::mat A = model.getA(Xt.col(0), Ut.col(0));
+    arma::mat B = model.getB(Xt.col(0), Ut.col(0));   
+    arma::vec z = - Plist[0] * rlist[0];
+    arma::vec v = - R_mat.i() * B.t() * Plist[0] * z - R_mat.i() * B * rlist[0] - R_mat.t() * bT.col(0);
+    zeta.col(0) = z;
+    vega.col(0) = v;
+
+    arma::vec zdot;
+    for (unsigned int i = 1; i < Xt.n_cols; i++) {
+        A = model.getA(Xt.col(i), Ut.col(i));
+        B = model.getB(Xt.col(i), Ut.col(i));
+
+        zdot = A * z + B * v;
+        z = z + dt * zdot;
+        v = - R_mat.i() * B.t() * Plist[i] * z - R_mat.i() * B * rlist[i] - R_mat.t() * bT.col(i); 
+
+        zeta.col(i) = z;
+        vega.col(i) = v; 
+    } 
+
+    std::pair<arma::mat, arma::mat> descDir = {zeta, vega};
+    return descDir;
+}
+
+std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ilqrController::calculatePr(arma::mat Xt, arma::mat Ut, arma::mat aT, arma::mat bT)
+{
+    std::vector<arma::mat> Plist, rlist;
+    arma::mat P = P_mat;
+    arma::mat r = r_mat;
+    Plist.push_back(P);
+    rlist.push_back(r);
+
+    arma::mat A, B, Pdot, rdot;
+    for (unsigned int i = 1; i < Xt.n_cols; i++) {
+        A = model.getA(Xt.col(i), Ut.col(i));
+        B = model.getB(Xt.col(i), Ut.col(i));
+
+        Pdot = - P * A - A.t() * P + P * B * R_mat.i() * B.t() * P - Q_mat;
+        rdot = - (A - B * R_mat.i() * B.t() * P).t() * r - aT.t() + P * B * R_mat.i() * bT.t();
+
+        P = P + dt * Pdot;
+        r = r + dt * rdot;
+
+        Plist.push_back(P);
+        rlist.push_back(r);
+    }
+    P_mat = P;
+
+    std::pair<std::vector<arma::mat>, std::vector<arma::mat>> list_pair = {Plist, rlist}; 
+    return list_pair;
+}
+
+arma::mat ilqrController::calculate_aT(arma::mat Xt)
+{
+    arma::mat aT(Xt.n_cols, Xt.n_rows, arma::fill::zeros);
+    for (unsigned int i = 0; i < Xt.n_cols; i++) {
+        aT.row(i) = Xt.col(i).t() * Q_mat;
+    }
+
+    return aT;
+}
+
+arma::mat ilqrController::calculate_bT(arma::mat Ut)
+{
+    arma::mat bT(Ut.n_cols, Ut.n_rows, arma::fill::zeros);
+    for (unsigned int i = 0; i < Ut.n_cols; i++) {
+        bT.row(i) = Ut.col(i).t() * R_mat;
+    }
+
+    return bT;
+}
+

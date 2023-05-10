@@ -12,7 +12,13 @@
 #include <filesystem>
 #include <algorithm>
 #include <regex>
-#include<armadillo>
+
+#if defined(__APPLE__)
+#include </opt/homebrew/include/armadillo>
+#else
+#include <armadillo>
+#endif
+
 /// \brief
 /// \param demonstration_file_list_path
 /// \param n_dimension

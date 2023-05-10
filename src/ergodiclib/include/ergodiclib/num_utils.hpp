@@ -9,7 +9,11 @@
 #include <string>
 #include <vector>
 
-#include<armadillo>
+#if defined(__APPLE__)
+#include </opt/homebrew/include/armadillo>
+#else
+#include <armadillo>
+#endif
 namespace ergodiclib
 {
 constexpr double PI = 3.14159265358979323846;
