@@ -33,6 +33,7 @@ int main()
     double beta = 0.85;
     double eps = 0.01;
 
-    
+    ilqrController controller = ilqrController(cartpole, x0, Q, R, P, r, dt, t0, tf, alpha, beta, eps);
 
+    controller.ILQR();
 }
