@@ -7,23 +7,27 @@ void ilqrController::iLQR()
     std::pair<arma::mat, arma::mat> trajectory, descentDirection;
     arma::mat X, U, X_new, U_new, zeta, vega;
     double J, J_new, gamma;
-
+    std::cout << "create trajec" << std::endl;
     trajectory = model.createTrajectory();
     X = trajectory.first;
     U = trajectory.second;
     J = objectiveJ(X, U, P_mat);
+
+    (X.col(X.n_cols - 1)).print("End X0: ");
+    std::cout << "obj: " << J << std::endl;
     
     int n = 0;
     int i = 0;
     gamma = beta;
     while (abs(J) > eps) {
+        std::cout << "calc zeta" << std::endl;
         descentDirection = calculateZeta(X, U);
         zeta = descentDirection.first;
         vega = descentDirection.second;
 
         n = 0;
         J_new = J+J;
-        while (J_new > J + alpha * gamma * trajectoryJ(X, U) && n < 30) {
+        while (J_new > J + alpha * gamma * trajectoryJ(X, U) && n < 10) {
             U_new = U + gamma * vega;
             X_new = model.createTrajectory(x0, U_new);
 
@@ -35,18 +39,20 @@ void ilqrController::iLQR()
             X = X_new;
             U = U_new;
 
-            std::string x_file = "trajectory_" + i;
+            //std::string x_file = "trajectory_" + i;
             //X.save(x_file, arma::csv_ascii);
-            std::string u_file = "control_" + i;
+            //std::string u_file = "control_" + i;
             //U.save(u_file, arma::csv_ascii);
 
-            (X.col(X.n_cols - 1)).print("End X: ");
-            std::cout << "J: " << abs(J_new) << std::endl;
+            //std::cout << "J_new (Desc Dir): " << abs(J_new) << std::endl;
         }
         J = J_new;
         trajectory = {X, U};
 
         i += 1;
+
+        (X.col(X.n_cols - 1)).print("End X: ");
+        std::cout << "J: " << abs(J) << std::endl;
     }
 }
 
@@ -59,6 +65,10 @@ double ilqrController::objectiveJ(arma::mat Xt, arma::mat Ut, arma::mat P1)
 
     double trajectory_cost = trajectoryJ(Xt, Ut);
     double cost = 0.5 * (final_cost + trajectory_cost);
+
+    std::cout << "final cost: " << final_cost << std::endl;
+    std::cout << "trajectory cost: " << trajectory_cost << std::endl;
+
     return cost;
 }
 
@@ -106,7 +116,7 @@ std::pair<arma::mat, arma::mat> ilqrController::calculateZeta(arma::mat Xt, arma
 
         zdot = A * z + B * v;
         z = z + dt * zdot;
-        v = - R_mat.i() * B.t() * Plist[i] * z - R_mat.i() * B.t() * rlist[i] - R_mat.t() * bT.row(i).t(); 
+        v = - R_mat.i() * B.t() * Plist[i] * z - R_mat.i() * B.t() * rlist[i] - R_mat.i() * bT.row(i).t(); 
 
         zeta.col(i) = z;
         vega.col(i) = v; 
@@ -118,29 +128,37 @@ std::pair<arma::mat, arma::mat> ilqrController::calculateZeta(arma::mat Xt, arma
 
 std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ilqrController::calculatePr(arma::mat Xt, arma::mat Ut, arma::mat aT, arma::mat bT)
 {
-    std::vector<arma::mat> Plist, rlist;
-    arma::mat P(4, 4, arma::fill::zeros);
+    std::cout << "calc PR" << std::endl;
+    arma::mat P = P_mat;
     arma::mat r = r_mat;
-    Plist.push_back(P);
-    rlist.push_back(r);
+    std::vector<arma::mat> Plist(Xt.n_cols, P);
+    std::vector<arma::mat> rlist(Xt.n_cols, r);
+    Plist[Xt.n_cols-1] = P;
+    rlist[Xt.n_cols-1] = r;
 
+    arma::mat Rinv = R_mat.i();
+
+    unsigned int idx;
     arma::mat A, B, Pdot, rdot;
-    for (unsigned int i = 1; i < Xt.n_cols; i++) {
-        A = model.getA(Xt.col(i), Ut.col(i));
-        B = model.getB(Xt.col(i), Ut.col(i));
+    for (unsigned int i = 0; i < Xt.n_cols - 2; i++) {
+        idx = Xt.n_cols - 2 - i;
 
-        arma::mat Rinv = R_mat.i();
+        A = model.getA(Xt.col(idx), Ut.col(idx));
+        B = model.getB(Xt.col(idx), Ut.col(idx));
 
         Pdot = - P * A - A.t() * P + P * B * R_mat.i() * B.t() * P - Q_mat;
-        rdot = - (A - B * R_mat.i() * B.t() * P).t() * r - aT.row(i).t() + P * B * R_mat.i() * bT.row(i).t();
+        rdot = - (A - B * R_mat.i() * B.t() * P).t() * r - aT.row(idx).t() + P * B * R_mat.i() * bT.row(idx).t();
 
-        P = P + dt * Pdot;
-        r = r + dt * rdot;
+        P = P - dt * Pdot;
+        r = r - dt * rdot;
 
-        Plist.push_back(P);
-        rlist.push_back(r);
+        Plist[idx] = P;
+        rlist[idx] = r;
+        //A.print("A: ");
+        //B.print("B: ");
+        //P.print("P: ");
+        //r.print("r: ");
     }
-    //P_mat = P;
 
     std::pair<std::vector<arma::mat>, std::vector<arma::mat>> list_pair = {Plist, rlist}; 
     return list_pair;

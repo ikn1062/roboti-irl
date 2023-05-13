@@ -158,7 +158,7 @@ class CartPole : public Model
 
         virtual arma::vec dynamics(const arma::vec& x_vec, const arma::vec& u_vec)
         {
-            double x = x_vec(0);
+            //double x = x_vec(0);
             double dx = x_vec(1);
             double t = x_vec(2);
             double dt = x_vec(3);

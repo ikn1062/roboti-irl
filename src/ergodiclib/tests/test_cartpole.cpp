@@ -11,6 +11,34 @@
 #include <ergodiclib/model.hpp>
 #include <ergodiclib/num_utils.hpp>
 
+TEST_CASE("Normalize Angle", "[NumUtils]")
+{
+    double angle_0 = ergodiclib::PI;
+    double angle_0_norm = ergodiclib::normalizeAngle(angle_0);
+    double angle_0_test = ergodiclib::PI;
+    REQUIRE(ergodiclib::almost_equal(angle_0_norm, angle_0_test, 1e-6));
+
+    double angle_1 = -1.0 * ergodiclib::PI;
+    double angle_1_norm = ergodiclib::normalizeAngle(angle_1);
+    double angle_1_test = ergodiclib::PI;
+    REQUIRE(ergodiclib::almost_equal(angle_1_norm, angle_1_test, 1e-6));
+
+    double angle_2 = 0.0;
+    double angle_2_norm = ergodiclib::normalizeAngle(angle_2);
+    double angle_2_test = 0.0;
+    REQUIRE(ergodiclib::almost_equal(angle_2_norm, angle_2_test, 1e-6));
+
+    double angle_3 = ergodiclib::PI/4;
+    double angle_3_norm = ergodiclib::normalizeAngle(angle_3);
+    double angle_3_test = ergodiclib::PI/4;
+    REQUIRE(ergodiclib::almost_equal(angle_3_norm, angle_3_test, 1e-6));
+
+    double angle_4 = -1.0 * ergodiclib::PI/4;
+    double angle_4_norm = ergodiclib::normalizeAngle(angle_4);
+    double angle_4_test = -1.0 * ergodiclib::PI/4;
+    REQUIRE(ergodiclib::almost_equal(angle_4_norm, angle_4_test, 1e-6));
+}
+
 TEST_CASE("Cartpole Calculate A Matrix", "[CartPole]")
 {
     // Linearized around x = {0.0, 0.0, 0.0, 0.0}

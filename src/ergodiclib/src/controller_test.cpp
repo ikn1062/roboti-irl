@@ -11,33 +11,34 @@ using namespace ergodiclib;
 
 int main() 
 {
-    std::cout << "Start Cartpole Config" << std::endl;
-    CartPole cartpole = CartPole();
-    std::cout << "End Cartpole Config" << std::endl;
-
-    arma::vec x0({0.0, 0.0, ergodiclib::PI, 0.0});
+    arma::vec x0({0.0, 0.0, PI/2.0, 0.0});
+    arma::vec u0({0.0});
 
     arma::mat Q(4, 4, arma::fill::eye);
-    Q(0,0) = 0.1;
-    Q(1,1) = 0.1;
-    Q(2,2) = 10;
-    Q(3,3) = 1;
+    Q(0,0) = 0.0;
+    Q(1,1) = 0.0;
+    Q(2,2) = 25.0;
+    Q(3,3) = 1.0;
 
     arma::mat R(1, 1, arma::fill::eye);
-    R(0, 0) = 1;
+    R(0, 0) = 0.01;
 
     arma::mat P(4, 4, arma::fill::eye);
-    P = 100 * P;
+    P(0,0) = 0.0001;
+    P(1,1) = 0.0001;
+    P(2,2) = 1000;
+    P(3,3) = 2;
 
     arma::mat r(4, 1, arma::fill::zeros);
 
-    double dt = 0.0005;
+    double dt = 0.005;
     double t0 = 0.0;
-    double tf = 10.0;
+    double tf = 5.0;
     double alpha = 0.40;
     double beta = 0.85;
     double eps = 0.01;
 
+    CartPole cartpole = CartPole(x0, u0, dt, t0, tf, 10.0, 5.0, 2.0);
     ilqrController controller = ilqrController(cartpole, x0, Q, R, P, r, dt, t0, tf, alpha, beta, eps);
     controller.iLQR();
 

@@ -25,12 +25,11 @@ double normalizeAngle(double rad)
   }
   return new_rad;
   */
-  while (! (almost_equal(rad, PI)) && rad >= PI) {
+  rad = fmod(rad, 2*PI);
+  rad = fmod(rad + 2*PI, 2*PI);
+  if (rad > PI) {
     rad -= 2*PI;
-  } 
-  while (rad < -PI) {
-    rad += 2*PI;
-  } 
+  }
   return rad;
 }
 
