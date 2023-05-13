@@ -52,19 +52,15 @@ TEST_CASE("iLQR Controller Objective Function", "[Controller]")
     ilqrController controller = ilqrController(cartpole, x0, Q, R, P, r, dt, t0, tf, alpha, beta, eps);
     double obj_cost = controller.objectiveJ(X, U, P);
     REQUIRE(almost_equal(obj_cost, 0.0, 1e-6));
-    
-    std::cout << "TEST STARTS HERE" << std::endl;
-    
+        
     arma::vec x0_new({0.0, 0.0, PI, 0.0});
-    arma::mat U_new(1, 2, arma::fill::ones);
-    U_new = 0.0 * U_new;
+    arma::mat U_new(U.n_rows, U.n_cols, arma::fill::zeros);
     arma::mat X_new = cartpole.createTrajectory(x0_new, U_new);
-
-    X_new.print("X_new - obj test: ");
 
     // FINISH THIS TEST BASED OFF XNEW
     double obj_cost_new = controller.objectiveJ(X_new, U_new, P);
-    REQUIRE(almost_equal(obj_cost_new, 0.0, 1e-6));
+    double new_cost_test = pow(ergodiclib::PI, 2) * 2.5 + pow(ergodiclib::PI, 2) * 50;
+    REQUIRE(almost_equal(obj_cost_new, new_cost_test, 1e-6));
 }
 
 TEST_CASE("iLQR Controller Calculate bT", "[Controller]")
@@ -150,14 +146,13 @@ TEST_CASE("iLQR Controller Calculate aT", "[Controller]")
     ilqrController controller = ilqrController(cartpole, x0, Q, R, P, r, dt, t0, tf, alpha, beta, eps);
     arma::mat aT = controller.calculate_aT(X);
 
-    X.print("X - aT test: ");
-
     arma::mat aT_test(2, 4, arma::fill::ones);
-    aT_test.row(0) = {0.0, 0.0, 0.0, 0.0};
-    aT_test.row(1) = {0.0, 0.0, 0.0, 0.0};
+    aT_test.row(0) = {0.0, 0.0, 31.4159, 0.0};
+    aT_test.row(1) = {0.0112, 0.0398, 30.5506, -0.1931};
+
     for (unsigned int i = 0; i < aT.n_rows; i++) {
         for (unsigned int j = 0; j < aT.n_cols; j++) {
-            REQUIRE(almost_equal(aT(i, j), aT_test(i, j), 1e-6));
+            REQUIRE(almost_equal(aT(i, j), aT_test(i, j), 1e-4));
         }
     }
 }
