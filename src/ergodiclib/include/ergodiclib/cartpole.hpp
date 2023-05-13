@@ -122,12 +122,12 @@ class CartPole : public Model
             double d2x_t_a = (m * g * (cos2t - sin2t) - l * m * pow(dt, 2) * cost) / (M + m * (1 - cos2t));
             double d2x_t_b = (2 * m * sint * cost * (f + g*m*sint*cost - l*m*pow(dt, 2)*sint)) / pow((M + m * (1 - cos2t)), 2);
             double d2x_t = d2x_t_a - d2x_t_b;
-            double d2x_dt = (2 * l * m * dt * sin(t)) / (M + m * (1 - cos2t));
+            double d2x_dt = (-2 * l * m * dt * sin(t)) / (M + m * (1 - cos2t)); // adding a minus sign
             
             double d2t_t_a = (-f * sint + g * (m + M) * cost + l * m * pow(dt, 2) * (sin2t - cos2t)) / (l * (M + m * (1 - cos2t)));
             double d2t_t_b = (2 * m * sint * cost * (f*cost + (m+M)*g*sint - l*m*pow(dt,2)*sint*cost)) / (l * pow(M + m * (1 - cos2t), 2));
             double d2t_t = d2t_t_a - d2t_t_b;
-            double d2t_dt = (2 * m * dt * sint * cost) / (M + m * (1 - cos2t)); 
+            double d2t_dt = (-2 * m * dt * sint * cost) / (M + m * (1 - cos2t)); // adding a minus sign
 
             A(0, 1) = 1.0;
             A(1, 2) = d2x_t;
@@ -155,6 +155,28 @@ class CartPole : public Model
             B_mat = B;
             return B;
         };
+
+        virtual arma::vec dynamics(const arma::vec& x_vec, const arma::vec& u_vec)
+        {
+            double x = x_vec(0);
+            double dx = x_vec(1);
+            double t = x_vec(2);
+            double dt = x_vec(3);
+
+            double f = u_vec(0);
+
+            double sint = sin(t);
+            double cost = cos(t);
+            double cos2t = pow(cost, 2);
+
+            arma::vec xdot(4, 1, arma::fill::zeros);
+            xdot(0) = dx;
+            xdot(1) = (-m*l*sint*pow(dt,2) + f + m*g*cost*sint) / (M + m * (1 - cos2t));
+            xdot(2) = dt;
+            xdot(3) = (-m*l*cost*sint*pow(dt,2) + f*cost + (M+m)*g*sint) / (l * (M + m * (1 - cos2t)));
+
+            return xdot;
+        }
 
         arma::mat A_mat;
         arma::mat B_mat;

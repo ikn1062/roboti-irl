@@ -52,21 +52,17 @@ class Model
             arma::vec k4 = dynamics(x_vec + dt_in * k3, u_vec);
 
             arma::vec k_sum = (dt_in / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
-            arma::vec res = x_vec + (dt_in / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
+            arma::vec res = x_vec + k_sum;
 
             return res;
         }
 
-        arma::vec dynamics(const arma::vec& x_vec, const arma::vec& u_vec)
+        virtual arma::vec dynamics(const arma::vec& x_vec, const arma::vec& u_vec)
         {
+            std::cout << "WRONG DYNAMICS" << std::endl;
             arma::mat A = calculateA(x_vec, u_vec);
             arma::mat B = calculateB(x_vec, u_vec);
             arma::vec xdot = A * x_vec + B * u_vec;
-            A.print("A: ");
-            x_vec.print("x_vec: ");
-            B.print("B: ");
-            u_vec.print("u_vec: ");
-            xdot.print("xdot: ");
             return xdot;
         }
 
