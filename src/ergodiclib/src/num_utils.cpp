@@ -15,6 +15,7 @@ double integralTrapz(const arma::vec& y_trajec, double dx)
 
 double normalizeAngle(double rad) 
 {
+  /*
   double new_rad = std::fmod(rad, 2.0 * PI);
   if (new_rad <= -1.0 * PI) {
     new_rad += 2.0 * PI;
@@ -23,6 +24,14 @@ double normalizeAngle(double rad)
     new_rad -= 2.0 * PI;
   }
   return new_rad;
+  */
+  while (! (almost_equal(rad, PI)) && rad >= PI) {
+    rad -= 2*PI;
+  } 
+  while (rad < -PI) {
+    rad += 2*PI;
+  } 
+  return rad;
 }
 
 double l2_norm(const std::vector<int> & v)

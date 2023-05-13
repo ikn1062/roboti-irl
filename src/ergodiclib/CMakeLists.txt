@@ -63,9 +63,13 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-# include(CTest)
-# add_executable(ergodiclib_test tests/tests.cpp)
-# target_link_libraries(ergodiclib_test ${PROJECT_NAME} Catch2::Catch2WithMain)
-# add_test(NAME Test_of_Ergodic_lib COMMAND ergodiclib_test)
+include(CTest)
+add_executable(test_cartpole tests/test_cartpole.cpp)
+target_link_libraries(test_cartpole ${PROJECT_NAME} Catch2::Catch2WithMain ${ARMADILLO_LIBRARIES})
+add_test(NAME Test_of_Cartpole_Model COMMAND test_cartpole)
+
+add_executable(test_ilqr_controller tests/test_ilqr_controller.cpp)
+target_link_libraries(test_ilqr_controller ${PROJECT_NAME} Catch2::Catch2WithMain ${ARMADILLO_LIBRARIES})
+add_test(NAME Test_of_iLQR_Control COMMAND test_ilqr_controller)
 
 ament_package()

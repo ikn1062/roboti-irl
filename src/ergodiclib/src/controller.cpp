@@ -59,7 +59,8 @@ double ilqrController::objectiveJ(arma::mat Xt, arma::mat Ut, arma::mat P1)
 
     double trajectory_cost = trajectoryJ(Xt, Ut);
 
-    return final_cost + trajectory_cost;
+    double cost = 0.5 * (final_cost + trajectory_cost);
+    return cost;
 }
 
 double ilqrController::trajectoryJ(arma::mat Xt, arma::mat Ut)

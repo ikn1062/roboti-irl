@@ -62,6 +62,11 @@ class Model
             arma::mat A = calculateA(x_vec, u_vec);
             arma::mat B = calculateB(x_vec, u_vec);
             arma::vec xdot = A * x_vec + B * u_vec;
+            A.print("A: ");
+            x_vec.print("x_vec: ");
+            B.print("B: ");
+            u_vec.print("u_vec: ");
+            xdot.print("xdot: ");
             return xdot;
         }
 
