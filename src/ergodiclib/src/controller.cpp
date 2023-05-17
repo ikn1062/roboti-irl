@@ -19,7 +19,7 @@ void ilqrController::iLQR()
     int n = 0;
     int i = 0;
     gamma = beta;
-    while (abs(J) > eps) {
+    while (abs(J) > eps && i < 4000) {
         std::cout << "calc zeta" << std::endl;
         descentDirection = calculateZeta(X, U);
         zeta = descentDirection.first;
@@ -39,11 +39,6 @@ void ilqrController::iLQR()
             X = X_new;
             U = U_new;
 
-            //std::string x_file = "trajectory_" + i;
-            //X.save(x_file, arma::csv_ascii);
-            //std::string u_file = "control_" + i;
-            //U.save(u_file, arma::csv_ascii);
-
             //std::cout << "J_new (Desc Dir): " << abs(J_new) << std::endl;
         }
         J = J_new;
@@ -52,8 +47,15 @@ void ilqrController::iLQR()
         i += 1;
 
         (X.col(X.n_cols - 1)).print("End X: ");
+        std::cout << "i: " << i << std::endl;
         std::cout << "J: " << abs(J) << std::endl;
     }
+    std::string x_file = "trajectory_out";
+    arma::mat XT = X.t();
+    XT.save(x_file, arma::csv_ascii);
+    arma::mat UT = U.t();
+    std::string u_file = "control_out";
+    UT.save(u_file, arma::csv_ascii);
 }
 
 double ilqrController::objectiveJ(arma::mat Xt, arma::mat Ut, arma::mat P1)
