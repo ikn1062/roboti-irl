@@ -83,7 +83,7 @@ class CartPole
             return calculateB(xt, ut);
         };
 
-        virtual std::pair<arma::mat, arma::mat> createTrajectory()
+        virtual std::pair<arma::mat, arma::mat> createTrajectory() const
         {
             arma::mat x_traj(x0.n_elem, n_iter, arma::fill::zeros);
             arma::mat u_traj(u0.n_elem, n_iter, arma::fill::zeros);

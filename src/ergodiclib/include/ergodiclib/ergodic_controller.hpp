@@ -69,6 +69,150 @@ namespace ergodiclib
             double beta;
             int n_iter;
     };
+
+    template <class ModelTemplate>
+    arma::mat ergController<ModelTemplate>::calc_b(const arma::mat& u_mat) 
+    {
+        arma::mat b_mat(u_mat.n_cols, u_mat.n_rows, arma::fill::zeros); // Transposed
+        for (unsigned int i = 0; i < u_mat.n_cols; i++) {
+            b_mat.col(i) = u_mat.col(i).t() * R;
+        }
+        return b_mat;
+    }
+
+    template <class ModelTemplate>
+    arma::mat ergController<ModelTemplate>::calc_a(const arma::mat& x_mat)
+    {
+        arma::mat a_mat(x_mat.n_cols, x_mat.n_rows, arma::fill::zeros);
+        arma::rowvec ak_mat(x_mat.n_rows, arma::fill::zeros); // should be 1 for time in row dim
+
+        const std::vector<std::vector<int> > K_series = Basis.get_K_series();
+        arma::mat lambda = ergodicMeasure.get_LambdaK();
+        arma::mat phi = ergodicMeasure.get_PhiK();
+        
+        arma::vec dfk; 
+        for (unsigned int i = 0; i < K_series.size(); i++) {
+            double ck = ergodicMeasure.calculateCk(x_mat, K_series[i], i);
+
+            for (unsigned int t = 0; t < x_mat.n_cols; t++) {
+                dfk = Basis.calculateDFk(x_mat.col(t), K_series[i]);
+                ak_mat = lambda[i] * (2 * (ck - phi[i]) * ((1/tf) * dfk));
+                a_mat.row(t) = ak_mat;
+            }
+        }
+
+        a_mat = q * a_mat;
+        return a_mat;
+    }
+
+    template <class ModelTemplate>
+    std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ergController<ModelTemplate>::calculatePr(arma::mat xt, arma::mat ut, const arma::mat& at_mat, const arma::mat& bt_mat)
+    {
+        arma::mat A = model.getA(xt, ut);
+        arma::mat B = model.getB(xt, ut);
+
+        std::vector<arma::mat> listP, listr;
+        arma::mat Rinv = R.i();
+
+        arma::mat P, r, at, bt, Pdot, rdot;
+        for (int i = 1; i < n_iter; i++) {
+            // A and B here have to be solved from the model
+            P = listP[i-1];
+            r = listr[i-1];
+
+            at = at_mat.row(i).t();
+            bt = bt_mat.row(i).t();
+
+            Pdot = P * B * Rinv * B.t() * P - Q - P * A - A.t() * P;
+
+            arma::mat rdot_int = A - B * Rinv * B.t() * P;
+            rdot = - 1.0 * rdot_int.t() * r - at + P * B * Rinv * bt;
+
+            listP[i] = dt * Pdot + P;
+            listr[i] = dt * rdot + r;
+        }
+
+        std::pair<std::vector<arma::mat>, std::vector<arma::mat>> list_pair = {listP, listr};
+        return list_pair; 
+    }
+
+    template <class ModelTemplate>
+    std::pair<arma::mat, arma::mat> ergController<ModelTemplate>::descentDirection(arma::mat xt, arma::mat ut, std::vector<arma::mat> listP, std::vector<arma::mat> listr, arma::mat bt)
+    {
+        arma::mat A = model.getA(xt, ut);
+        arma::mat B = model.getB(xt, ut);
+
+        arma::mat zeta(xt.n_rows, xt.n_cols, arma::fill::zeros);
+        arma::mat vega(ut.n_rows, ut.n_cols, arma::fill::zeros);
+        arma::mat Rinv = R.i();
+
+        arma::mat P, r, b;
+        arma::vec zdot;
+        for (int i = 1; i < n_iter; i++) {
+            P = listP[i];
+            r = listr[i];
+            b = bt.row(i);
+
+            vega.col(i) = -1.0 * Rinv * B.t() * P * zeta.col(i-1) - Rinv * B.t() * r - Rinv * b;
+            zdot = A * zeta.col(i-1) + B * vega.col(i);
+            zeta.col(i) = zeta.col(i-1) + zdot * dt;
+        }
+
+        std::pair<arma::mat, arma::mat> zeta_pair = {zeta, vega};
+        return zeta_pair;
+    }
+
+    template <class ModelTemplate>
+    double ergController<ModelTemplate>::DJ(std::pair<arma::mat, arma::mat> zeta_pair, const arma::mat& at, const arma::mat& bt) 
+    {
+        arma::vec J(n_iter, 1, arma::fill::zeros);
+        arma::mat zeta = zeta_pair.first;
+        arma::mat vega = zeta_pair.second;
+
+        arma::mat a_T, b_T;
+
+        for (int i = 0; i < n_iter; i++) {
+            a_T = at.row(i).t();
+            b_T = bt.row(i).t();
+
+            J.row(i) = a_T * zeta.row(i) + b_T * vega.row(i);
+        }
+
+        // integrate and return J
+        double J_integral = integralTrapz(J, dt);
+        return J_integral;
+    }
+
+    template <class ModelTemplate>
+    int ergController<ModelTemplate>::gradient_descent(arma::vec x0) 
+    {
+        std::pair<arma::mat, arma::mat> xtut = model.createTrajectory();
+        arma::mat xt = xtut.first;
+        arma::mat ut = xtut.second; 
+        model.setx0(x0);
+        
+        double dj = 2e31;
+
+        arma::mat at, bt;
+        std::pair<arma::mat, arma::mat> zeta_pair;
+        std::pair<std::vector<arma::mat>, std::vector<arma::mat>> listPr;
+        while (abs(dj) > eps) {
+            at = calc_a(xt);
+            bt = calc_b(ut);
+
+            listPr = calculatePr(xt, ut, at, bt);
+            
+            zeta_pair = descentDirection(xt, ut, listPr.first, listPr.second, bt);
+
+            dj = DJ(zeta_pair, at, bt);
+
+            arma::mat vega = zeta_pair.second;
+            ut = ut + beta * vega;
+            xt = model.createTrajectory(x0, ut);
+        }
+
+        return 1;
+    }
 }
 
 
