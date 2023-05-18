@@ -19,6 +19,8 @@
 
 #define UNUSED(x) (void)(x)
 
+namespace ergodiclib
+{
 /// @brief 
 class CartPole
 {
@@ -205,8 +207,8 @@ class CartPole
         double l;
         double n_iter;
 };
+}
 
-
-static_assert(ModelConcept<CartPole>);
+static_assert(ModelConcept<ergodiclib::CartPole>);
 
 #endif

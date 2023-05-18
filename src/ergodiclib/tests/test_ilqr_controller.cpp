@@ -8,7 +8,6 @@
 #define private public
 
 #include <ergodiclib/cartpole.hpp>
-#include <ergodiclib/model.hpp>
 #include <ergodiclib/num_utils.hpp>
 #include <ergodiclib/controller.hpp>
 
@@ -49,7 +48,7 @@ TEST_CASE("iLQR Controller Objective Function", "[Controller]")
     arma::mat X = trajectory.first;
     arma::mat U = trajectory.second;
 
-    ilqrController controller = ilqrController(cartpole, x0, Q, R, P, r, dt, t0, tf, alpha, beta, eps);
+    ilqrController controller = ilqrController(cartpole, Q, R, P, r, 4000, alpha, beta, eps);
     double obj_cost = controller.objectiveJ(X, U, P);
     REQUIRE(almost_equal(obj_cost, 0.0, 1e-6));
         
@@ -98,7 +97,7 @@ TEST_CASE("iLQR Controller Calculate bT", "[Controller]")
     arma::mat X = trajectory.first;
     arma::mat U = trajectory.second;
 
-    ilqrController controller = ilqrController(cartpole, x0, Q, R, P, r, dt, t0, tf, alpha, beta, eps);
+    ilqrController controller = ilqrController(cartpole, Q, R, P, r, 4000, alpha, beta, eps);
     arma::mat bT = controller.calculate_bT(U);
 
     arma::mat bT_test(2, 1, arma::fill::ones);
@@ -143,7 +142,7 @@ TEST_CASE("iLQR Controller Calculate aT", "[Controller]")
     arma::mat X = trajectory.first;
     arma::mat U = trajectory.second;
 
-    ilqrController controller = ilqrController(cartpole, x0, Q, R, P, r, dt, t0, tf, alpha, beta, eps);
+    ilqrController controller = ilqrController(cartpole, Q, R, P, r, 4000, alpha, beta, eps);
     arma::mat aT = controller.calculate_aT(X);
 
     arma::mat aT_test(2, 4, arma::fill::ones);
@@ -192,7 +191,7 @@ TEST_CASE("iLQR Controller Calculate List P/r", "[Controller]")
     arma::mat X = trajectory.first;
     arma::mat U = trajectory.second;
 
-    ilqrController controller = ilqrController(cartpole, x0, Q, R, P, r, dt, t0, tf, alpha, beta, eps);
+    ilqrController controller = ilqrController(cartpole, Q, R, P, r, 4000, alpha, beta, eps);
     arma::mat aT = controller.calculate_aT(X);
     arma::mat bT = controller.calculate_bT(U);
 
@@ -257,7 +256,7 @@ TEST_CASE("iLQR Controller Calculate List Zeta", "[Controller]")
     arma::mat X = trajectory.first;
     arma::mat U = trajectory.second;
 
-    ilqrController controller = ilqrController(cartpole, x0, Q, R, P, r, dt, t0, tf, alpha, beta, eps);
+    ilqrController controller = ilqrController(cartpole, Q, R, P, r, 4000, alpha, beta, eps);
     arma::mat aT = controller.calculate_aT(X);
     arma::mat bT = controller.calculate_bT(U);
 

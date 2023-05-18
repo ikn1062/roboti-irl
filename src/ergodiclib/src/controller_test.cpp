@@ -39,7 +39,7 @@ int main()
     double eps = 0.01;
 
     CartPole cartpole = CartPole(x0, u0, dt, t0, tf, 10.0, 5.0, 2.0);
-    ilqrController controller = ilqrController(cartpole, x0, Q, R, P, r, dt, t0, tf, alpha, beta, eps);
+    ilqrController controller = ilqrController(cartpole, Q, R, P, r, 4000, alpha, beta, eps);
     controller.iLQR();
 
     return 1;

@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.9)
 project(ergodiclib)
 
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 20)
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -13,7 +17,7 @@ find_package(Armadillo REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-add_library(${PROJECT_NAME} src/ergodic_measure.cpp src/num_utils.cpp src/file_utils.cpp src/controller.cpp src/fourier_basis.cpp src/controller.cpp)
+add_library(${PROJECT_NAME} src/ergodic_measure.cpp src/num_utils.cpp src/file_utils.cpp src/fourier_basis.cpp)
 
 target_include_directories(${PROJECT_NAME}
   PUBLIC

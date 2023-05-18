@@ -8,8 +8,9 @@
 #define private public
 
 #include <ergodiclib/cartpole.hpp>
-#include <ergodiclib/model.hpp>
 #include <ergodiclib/num_utils.hpp>
+
+using namespace ergodiclib;
 
 TEST_CASE("Normalize Angle", "[NumUtils]")
 {
