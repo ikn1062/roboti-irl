@@ -1,8 +1,12 @@
+#ifndef CONTROLLER_INCLUDE_GUARD_CPP
+#define CONTROLLER_INCLUDE_GUARD_CPP
+
 #include <ergodiclib/controller.hpp>
 
 namespace ergodiclib
 {
-void ilqrController::iLQR()
+template <class ModelTemplate>
+void ilqrController<ModelTemplate>::iLQR()
 {
     std::pair<arma::mat, arma::mat> trajectory, descentDirection;
     arma::mat X, U, X_new, U_new, zeta, vega;
@@ -58,7 +62,8 @@ void ilqrController::iLQR()
     UT.save(u_file, arma::csv_ascii);
 }
 
-double ilqrController::objectiveJ(arma::mat Xt, arma::mat Ut, arma::mat P1)
+template <class ModelTemplate>
+double ilqrController<ModelTemplate>::objectiveJ(arma::mat Xt, arma::mat Ut, arma::mat P1)
 {
     int X_cols = Xt.n_cols-1;
     arma::vec x_tf = Xt.col(X_cols);
@@ -74,7 +79,8 @@ double ilqrController::objectiveJ(arma::mat Xt, arma::mat Ut, arma::mat P1)
     return cost;
 }
 
-double ilqrController::trajectoryJ(arma::mat Xt, arma::mat Ut)
+template <class ModelTemplate>
+double ilqrController<ModelTemplate>::trajectoryJ(arma::mat Xt, arma::mat Ut)
 {
     arma::vec trajecJ(Xt.n_cols, arma::fill::zeros);
 
@@ -91,7 +97,8 @@ double ilqrController::trajectoryJ(arma::mat Xt, arma::mat Ut)
     return trajec_cost;
 }
 
-std::pair<arma::mat, arma::mat> ilqrController::calculateZeta(arma::mat Xt, arma::mat Ut)
+template <class ModelTemplate>
+std::pair<arma::mat, arma::mat> ilqrController<ModelTemplate>::calculateZeta(arma::mat Xt, arma::mat Ut)
 {
     arma::mat aT = calculate_aT(Xt);
     arma::mat bT = calculate_bT(Ut);
@@ -128,7 +135,8 @@ std::pair<arma::mat, arma::mat> ilqrController::calculateZeta(arma::mat Xt, arma
     return descDir;
 }
 
-std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ilqrController::calculatePr(arma::mat Xt, arma::mat Ut, arma::mat aT, arma::mat bT)
+template <class ModelTemplate>
+std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ilqrController<ModelTemplate>::calculatePr(arma::mat Xt, arma::mat Ut, arma::mat aT, arma::mat bT)
 {
     std::cout << "calc PR" << std::endl;
     arma::mat P = P_mat;
@@ -166,7 +174,8 @@ std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ilqrController::calcul
     return list_pair;
 }
 
-arma::mat ilqrController::calculate_aT(arma::mat Xt)
+template <class ModelTemplate>
+arma::mat ilqrController<ModelTemplate>::calculate_aT(arma::mat Xt)
 {
     arma::mat aT(Xt.n_cols, Xt.n_rows, arma::fill::zeros);
     for (unsigned int i = 0; i < Xt.n_cols; i++) {
@@ -175,7 +184,8 @@ arma::mat ilqrController::calculate_aT(arma::mat Xt)
     return aT;
 }
 
-arma::mat ilqrController::calculate_bT(arma::mat Ut)
+template <class ModelTemplate>
+arma::mat ilqrController<ModelTemplate>::calculate_bT(arma::mat Ut)
 {
     arma::mat bT(Ut.n_cols, Ut.n_rows, arma::fill::zeros);
     for (unsigned int i = 0; i < Ut.n_cols; i++) {
@@ -184,3 +194,5 @@ arma::mat ilqrController::calculate_bT(arma::mat Ut)
     return bT;
 }
 }
+
+#endif

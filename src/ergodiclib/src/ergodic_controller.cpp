@@ -1,3 +1,7 @@
+#ifndef ERG_CON_INCLUDE_GUARD_CPP
+#define ERG_CON_INCLUDE_GUARD_CPP
+
+
 #include <ergodiclib/ergodic_controller.hpp>
 
 namespace ergodiclib
@@ -18,7 +22,8 @@ namespace ergodiclib
    //       n_iter = (int) ((tf - t0)/ dt);
    // };
 
-   arma::mat ergController::calc_b(const arma::mat& u_mat) 
+   template <class ModelTemplate>
+   arma::mat ergController<ModelTemplate>::calc_b(const arma::mat& u_mat) 
    {
       arma::mat b_mat(u_mat.n_cols, u_mat.n_rows, arma::fill::zeros); // Transposed
       for (unsigned int i = 0; i < u_mat.n_cols; i++) {
@@ -27,7 +32,8 @@ namespace ergodiclib
       return b_mat;
    }
 
-   arma::mat ergController::calc_a(const arma::mat& x_mat)
+   template <class ModelTemplate>
+   arma::mat ergController<ModelTemplate>::calc_a(const arma::mat& x_mat)
    {
       arma::mat a_mat(x_mat.n_cols, x_mat.n_rows, arma::fill::zeros);
       arma::rowvec ak_mat(x_mat.n_rows, arma::fill::zeros); // should be 1 for time in row dim
@@ -51,7 +57,8 @@ namespace ergodiclib
       return a_mat;
    }
 
-   std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ergController::calculatePr(arma::mat xt, arma::mat ut, const arma::mat& at_mat, const arma::mat& bt_mat)
+   template <class ModelTemplate>
+   std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ergController<ModelTemplate>::calculatePr(arma::mat xt, arma::mat ut, const arma::mat& at_mat, const arma::mat& bt_mat)
    {
       arma::mat A = model.getA(xt, ut);
       arma::mat B = model.getB(xt, ut);
@@ -81,7 +88,8 @@ namespace ergodiclib
       return list_pair; 
    }
 
-   std::pair<arma::mat, arma::mat> ergController::descentDirection(arma::mat xt, arma::mat ut, std::vector<arma::mat> listP, std::vector<arma::mat> listr, arma::mat bt)
+   template <class ModelTemplate>
+   std::pair<arma::mat, arma::mat> ergController<ModelTemplate>::descentDirection(arma::mat xt, arma::mat ut, std::vector<arma::mat> listP, std::vector<arma::mat> listr, arma::mat bt)
    {
       arma::mat A = model.getA(xt, ut);
       arma::mat B = model.getB(xt, ut);
@@ -106,7 +114,8 @@ namespace ergodiclib
       return zeta_pair;
    }
 
-   double ergController::DJ(std::pair<arma::mat, arma::mat> zeta_pair, const arma::mat& at, const arma::mat& bt) 
+   template <class ModelTemplate>
+   double ergController<ModelTemplate>::DJ(std::pair<arma::mat, arma::mat> zeta_pair, const arma::mat& at, const arma::mat& bt) 
    {
       arma::vec J(n_iter, 1, arma::fill::zeros);
       arma::mat zeta = zeta_pair.first;
@@ -126,7 +135,8 @@ namespace ergodiclib
       return J_integral;
    }
 
-   int ergController::gradient_descent(arma::vec x0) 
+   template <class ModelTemplate>
+   int ergController<ModelTemplate>::gradient_descent(arma::vec x0) 
    {
       std::pair<arma::mat, arma::mat> xtut = model.createTrajectory();
       arma::mat xt = xtut.first;
@@ -156,3 +166,5 @@ namespace ergodiclib
       return 1;
    }
 }
+
+#endif

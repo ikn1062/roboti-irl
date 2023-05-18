@@ -21,7 +21,7 @@
 
 namespace ergodiclib
 {
-template <typename ModelTemplate>
+template <class ModelTemplate>
 class ilqrController 
 {
     public:

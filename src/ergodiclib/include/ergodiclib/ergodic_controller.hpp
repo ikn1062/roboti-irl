@@ -23,7 +23,7 @@
 
 namespace ergodiclib
 {
-    template <typename ModelTemplate>
+    template <class ModelTemplate>
     class ergController
     {
         public:
