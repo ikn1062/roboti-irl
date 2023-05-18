@@ -23,10 +23,11 @@
 
 namespace ergodiclib
 {
+    template <typename ModelTemplate>
     class ergController
     {
         public:
-            ergController(ErgodicMeasure ergodicMes, fourierBasis basis, Model model_agent, double q_val, arma::mat R_mat, arma::mat Q_mat, double t0_val, double tf_val, double dt_val, double eps_val, double beta_val) : 
+            ergController(ErgodicMeasure ergodicMes, fourierBasis basis, ModelTemplate model_agent, double q_val, arma::mat R_mat, arma::mat Q_mat, double t0_val, double tf_val, double dt_val, double eps_val, double beta_val) : 
             ergodicMeasure(ergodicMes), 
             Basis(basis),
             model(model_agent),
@@ -57,7 +58,7 @@ namespace ergodiclib
         private:
             ErgodicMeasure ergodicMeasure;
             fourierBasis Basis;
-            Model model;
+            ModelTemplate model;
             double q;
             arma::mat R; 
             arma::mat Q;

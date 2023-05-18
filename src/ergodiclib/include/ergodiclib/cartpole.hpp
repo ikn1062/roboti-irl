@@ -20,12 +20,16 @@
 #define UNUSED(x) (void)(x)
 
 /// @brief 
-class CartPole : public Model
+class CartPole
 {
     public:
+        arma::vec x0;
+        arma::vec u0;
+        double dt;
+        double t0;
+        double tf;
+
         CartPole() : 
-        A_mat(4, 4, arma::fill::zeros),
-        B_mat(4, 1, arma::fill::zeros),
         x0({0.0, 0.0, ergodiclib::PI, 0.0}),
         u0({0.0}),
         dt(0.0005),
@@ -40,8 +44,6 @@ class CartPole : public Model
         };
 
         CartPole(arma::vec x0_in, arma::vec u0_in, double dt_in, double t0_in, double tf_in, double cart_mass, double pole_mass, double pole_len) : 
-        A_mat(4, 4, arma::fill::zeros),
-        B_mat(4, 1, arma::fill::zeros),
         x0(x0_in),
         u0(u0_in),
         dt(dt_in),
@@ -56,8 +58,6 @@ class CartPole : public Model
         };
 
         CartPole(double cart_mass, double pole_mass, double pole_len) : 
-        A_mat(4, 4, arma::fill::zeros),
-        B_mat(4, 1, arma::fill::zeros),
         x0({0.0, 0.0, ergodiclib::PI, 0.0}),
         u0({0.0}),
         dt(0.0005),
@@ -69,6 +69,16 @@ class CartPole : public Model
         l(pole_len)
         {
             n_iter = (int) ((tf - t0)/ dt);
+        };
+
+        arma::mat getA(const arma::vec& xt, const arma::vec& ut) const
+        {
+            return calculateA(xt, ut);
+        };
+
+        arma::mat getB(const arma::vec& xt, const arma::vec& ut) const
+        {
+            return calculateB(xt, ut);
         };
 
         virtual std::pair<arma::mat, arma::mat> createTrajectory()
@@ -91,7 +101,7 @@ class CartPole : public Model
             return pair_trajec;
         };
 
-        virtual arma::mat createTrajectory(const arma::vec& x0_input, const arma::mat& ut_input) 
+        virtual arma::mat createTrajectory(const arma::vec& x0_input, const arma::mat& ut_input) const
         {
             arma::mat x_traj(x0.n_elem, n_iter, arma::fill::zeros);
             x_traj.col(0) = x0_input;
@@ -107,7 +117,7 @@ class CartPole : public Model
         };
 
     private:
-        virtual arma::mat calculateA(const arma::vec& xt, const arma::vec& ut)
+        virtual arma::mat calculateA(const arma::vec& xt, const arma::vec& ut) const
         {
             arma::mat A(4, 4, arma::fill::zeros);
             double t = xt(2);
@@ -136,11 +146,10 @@ class CartPole : public Model
             A(3, 2) = d2t_t;
             A(3, 3) = d2t_dt;
 
-            A_mat = A;
             return A;
         };
 
-        virtual arma::mat calculateB(const arma::vec& xt, const arma::vec& ut) 
+        virtual arma::mat calculateB(const arma::vec& xt, const arma::vec& ut) const
         {
             UNUSED(ut);
             arma::mat B(4, 1, arma::fill::zeros);
@@ -152,11 +161,10 @@ class CartPole : public Model
             B(1, 0) = 1.0 / (M + m * (1 - cos2t));
             B(3, 0) = cost / (l * (M + m * (1 - cos2t)));
 
-            B_mat = B;
             return B;
         };
 
-        virtual arma::vec dynamics(const arma::vec& x_vec, const arma::vec& u_vec)
+        virtual arma::vec dynamics(const arma::vec& x_vec, const arma::vec& u_vec) const
         {
             //double x = x_vec(0);
             double dx = x_vec(1);
@@ -178,13 +186,19 @@ class CartPole : public Model
             return xdot;
         }
 
-        arma::mat A_mat;
-        arma::mat B_mat;
-        arma::vec x0;
-        arma::vec u0;
-        double dt;
-        double t0;
-        double tf;
+        arma::vec integrate(arma::vec x_vec, const arma::vec& u_vec, const double dt_in) const
+        {
+            arma::vec k1 = dynamics(x_vec, u_vec);
+            arma::vec k2 = dynamics(x_vec + 0.5 * dt_in * k1, u_vec);
+            arma::vec k3 = dynamics(x_vec + 0.5 * dt_in * k2, u_vec);
+            arma::vec k4 = dynamics(x_vec + dt_in * k3, u_vec);
+
+            arma::vec k_sum = (dt_in / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
+            arma::vec res = x_vec + k_sum;
+
+            return res;
+        }
+
         double M;
         double m;
         double g;
@@ -192,5 +206,7 @@ class CartPole : public Model
         double n_iter;
 };
 
+
+static_assert(ModelConcept<CartPole>);
 
 #endif
