@@ -1,7 +1,7 @@
 #ifndef ERG_MES_INCLUDE_GUARD_HPP
 #define ERG_MES_INCLUDE_GUARD_HPP
 /// \file
-/// \brief
+/// \brief Calculates Ergodic Measurements from demonstrations
 
 
 #include <iosfwd>
@@ -39,11 +39,11 @@ public:
 
   /// \brief Returns Spatial distribution of demonstrations for each series coefficient
   /// \return PhiK Vector
-  arma::vec get_PhiK();
+  arma::vec get_PhiK() const;
 
   /// \brief Returns lambda_k which places larger weights on lower coefficients of information for each series coefficient
   /// \return LambdaK Vector
-  arma::vec get_LambdaK();
+  arma::vec get_LambdaK() const;
 
   /// \brief Calculates spacial statistics for a given trajectory and series coefficient value
   ///        ck is given by:

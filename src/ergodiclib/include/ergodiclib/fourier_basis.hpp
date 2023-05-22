@@ -18,6 +18,7 @@
 
 namespace ergodiclib
 {
+    /// \brief Class containing methods for calculating the fourier basis of a trajectory
     class fourierBasis
     {
         public:

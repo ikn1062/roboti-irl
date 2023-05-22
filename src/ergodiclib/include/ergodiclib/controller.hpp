@@ -1,7 +1,7 @@
 #ifndef CONTROLLER_INCLUDE_GUARD_HPP
 #define CONTROLLER_INCLUDE_GUARD_HPP
 /// \file
-/// \brief 
+/// \brief Contains a Controller class for an iLQR controller
 
 #include <iosfwd>
 #include <cmath>
@@ -21,10 +21,22 @@
 
 namespace ergodiclib
 {
+/// \brief iLQR Controller for a given dynamic system
+/// \tparam ModelTemplate Template for Dynamic Model
 template <class ModelTemplate>
 class ilqrController 
 {
     public:
+        /// \brief Constructor for iLQR Controller 
+        /// \param model_in Model input following Concept Template
+        /// \param Q Q Matrix (Trajectory Penalty)
+        /// \param R R Matrix (Control Penalty)
+        /// \param P P Matrix (Final Trajectory Penalty)
+        /// \param r r Matrix (Final Control Penalty)
+        /// \param max_iter_in Max iteration for control descent
+        /// \param a Alpha - Controller multiplier
+        /// \param b Beta - Controller multiplier for armijo line search
+        /// \param e Epsilon - Convergence Value for Objective Function
         ilqrController(ModelTemplate model_in, arma::mat Q, arma::mat R, arma::mat P, arma::mat r, unsigned int max_iter_in, double a, double b, double e) :
         model(model_in),
         Q_mat(Q),
@@ -40,34 +52,81 @@ class ilqrController
             dt = model_in.dt;
             num_iter = (int) ((model_in.tf - model_in.t0) / dt);
         };
-
+        
+        /// \brief Begins iLQR controller - returns none
         void iLQR();
 
     private:
-        double objectiveJ(arma::mat Xt, arma::mat Ut, arma::mat P1);
+        /// \brief Calculates the objective function given Trajectory and Control
+        /// \param Xt State trajectory over time Horizon
+        /// \param Ut Control over time horizon
+        /// \return Objective value
+        double objectiveJ(const arma::mat &Xt, const arma::mat &Ut) const;
 
-        double trajectoryJ(arma::mat Xt, arma::mat Ut);
+        /// \brief Calculates the objective value of the trajectory
+        /// \param Xt State trajectory over time Horizon
+        /// \param Ut Control over time horizon 
+        /// \return Objective value for trajectory
+        double trajectoryJ(const arma::mat &Xt, const arma::mat &Ut) const;
 
-        std::pair<arma::mat, arma::mat> calculateZeta(arma::mat Xt, arma::mat Ut);
+        /// \brief Calculates zeta and vega matrix for controller
+        /// \param Xt State trajectory over time Horizon
+        /// \param Ut Control over time horizon  
+        /// \return Returns zeta and vega matrix for controller
+        std::pair<arma::mat, arma::mat> calculateZeta(const arma::mat& Xt, const arma::mat &Ut) const;
 
-        std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(arma::mat Xt, arma::mat Ut, arma::mat aT, arma::mat bT);
+        /// \brief Calculates P and r lists for solving ricatti equations
+        /// \param Xt State trajectory over time Horizon
+        /// \param Ut Control over time horizon 
+        /// \param aT aT Matrix 
+        /// \param bT bT Matrix
+        /// \return P and r lists over time horizon to calculate zeta
+        std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(const arma::mat &Xt, const arma::mat &Ut, const arma::mat &aT, const arma::mat &bT) const;
 
-        arma::mat calculate_aT(arma::mat Xt);
+        /// \brief Calculates aT matrix
+        /// \param Xt State trajectory over time Horizon
+        /// \return Retuns aT matrix
+        arma::mat calculate_aT(const arma::mat &Xt) const;
         
-        arma::mat calculate_bT(arma::mat Ut);
+        /// \brief Calculates bT matrix
+        /// \param Ut Control over time horizon 
+        /// \return Retuns bT matrix 
+        arma::mat calculate_bT(const arma::mat &Ut) const;
 
-
+        /// \brief Model following Concept Template
         ModelTemplate model;
+
+        /// \brief Initial State vector at time t=0
         arma::vec x0;
+
+        /// \brief Q Matrix (Trajectory Penalty)
         arma::mat Q_mat;
+
+        /// \brief R Matrix (Control Penalty)
         arma::mat R_mat;
+
+        /// \brief P Matrix (Final Trajectory Penalty)
         arma::mat P_mat;
+
+        /// \brief r Matrix (Final Control Penalty)
         arma::mat r_mat;
+
+        /// \brief Difference in time steps from model system
         double dt;
+
+        /// \brief Number of iterations for time horizon
         unsigned int num_iter;
+
+        /// \brief Max iteration for control descent
         unsigned int max_iter;
+
+        /// \brief Alpha - Controller multiplier
         double alpha;
+
+        /// \brief Beta - Controller multiplier for armijo line search
         double beta;
+
+        /// \brief Epsilon - Convergence Value for Objective Function
         double eps;
 
 };
@@ -82,7 +141,7 @@ void ilqrController<ModelTemplate>::iLQR()
     trajectory = model.createTrajectory();
     X = trajectory.first;
     U = trajectory.second;
-    J = objectiveJ(X, U, P_mat);
+    J = objectiveJ(X, U);
 
     (X.col(X.n_cols - 1)).print("End X0: ");
     std::cout << "obj: " << J << std::endl;
@@ -105,7 +164,7 @@ void ilqrController<ModelTemplate>::iLQR()
             U_new = U + gamma * vega;
             X_new = model.createTrajectory(x0, U_new);
 
-            J_new = objectiveJ(X_new, U_new, P_mat);
+            J_new = objectiveJ(X_new, U_new);
 
             n += 1;
             gamma = pow(beta, n);
@@ -133,11 +192,11 @@ void ilqrController<ModelTemplate>::iLQR()
 }
 
 template <class ModelTemplate>
-double ilqrController<ModelTemplate>::objectiveJ(arma::mat Xt, arma::mat Ut, arma::mat P1)
+double ilqrController<ModelTemplate>::objectiveJ(const arma::mat &Xt, const arma::mat &Ut) const
 {
     int X_cols = Xt.n_cols-1;
     arma::vec x_tf = Xt.col(X_cols);
-    arma::mat finalcost_mat = x_tf.t() * P1 * x_tf; 
+    arma::mat finalcost_mat = x_tf.t() * P_mat * x_tf; 
     double final_cost = finalcost_mat(0, 0);
 
     double trajectory_cost = trajectoryJ(Xt, Ut);
@@ -150,7 +209,7 @@ double ilqrController<ModelTemplate>::objectiveJ(arma::mat Xt, arma::mat Ut, arm
 }
 
 template <class ModelTemplate>
-double ilqrController<ModelTemplate>::trajectoryJ(arma::mat Xt, arma::mat Ut)
+double ilqrController<ModelTemplate>::trajectoryJ(const arma::mat &Xt, const arma::mat &Ut) const
 {
     arma::vec trajecJ(Xt.n_cols, arma::fill::zeros);
 
@@ -168,7 +227,7 @@ double ilqrController<ModelTemplate>::trajectoryJ(arma::mat Xt, arma::mat Ut)
 }
 
 template <class ModelTemplate>
-std::pair<arma::mat, arma::mat> ilqrController<ModelTemplate>::calculateZeta(arma::mat Xt, arma::mat Ut)
+std::pair<arma::mat, arma::mat> ilqrController<ModelTemplate>::calculateZeta(const arma::mat &Xt, const arma::mat &Ut) const
 {
     arma::mat aT = calculate_aT(Xt);
     arma::mat bT = calculate_bT(Ut);
@@ -206,7 +265,7 @@ std::pair<arma::mat, arma::mat> ilqrController<ModelTemplate>::calculateZeta(arm
 }
 
 template <class ModelTemplate>
-std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ilqrController<ModelTemplate>::calculatePr(arma::mat Xt, arma::mat Ut, arma::mat aT, arma::mat bT)
+std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ilqrController<ModelTemplate>::calculatePr(const arma::mat &Xt, const arma::mat &Ut, const arma::mat &aT, const arma::mat &bT) const
 {
     std::cout << "calc PR" << std::endl;
     arma::mat P = P_mat;
@@ -245,7 +304,7 @@ std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ilqrController<ModelTe
 }
 
 template <class ModelTemplate>
-arma::mat ilqrController<ModelTemplate>::calculate_aT(arma::mat Xt)
+arma::mat ilqrController<ModelTemplate>::calculate_aT(const arma::mat &Xt) const
 {
     arma::mat aT(Xt.n_cols, Xt.n_rows, arma::fill::zeros);
     for (unsigned int i = 0; i < Xt.n_cols; i++) {
@@ -255,7 +314,7 @@ arma::mat ilqrController<ModelTemplate>::calculate_aT(arma::mat Xt)
 }
 
 template <class ModelTemplate>
-arma::mat ilqrController<ModelTemplate>::calculate_bT(arma::mat Ut)
+arma::mat ilqrController<ModelTemplate>::calculate_bT(const arma::mat &Ut) const
 {
     arma::mat bT(Ut.n_cols, Ut.n_rows, arma::fill::zeros);
     for (unsigned int i = 0; i < Ut.n_cols; i++) {

@@ -1,4 +1,3 @@
-
 #include <ergodiclib/fourier_basis.hpp>
 
 
@@ -103,7 +102,7 @@ namespace ergodiclib
     std::vector<std::vector<int>> fourierBasis::create_K_series(const int &K, const int &n_dim)
     {
         std::vector<int> input_k;
-        for (unsigned int k = 0; k < K + 1; k++) {
+        for (int k = 0; k < K + 1; k++) {
             input_k.push_back(k);
         }
         std::vector<int> permutation(n_dim);

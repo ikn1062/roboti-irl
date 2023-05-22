@@ -1,5 +1,7 @@
 #ifndef CARTPOLE_INCLUDE_GUARD_HPP
 #define CARTPOLE_INCLUDE_GUARD_HPP
+/// \file
+/// \brief Definition for Cartpole Model
 
 #include <iosfwd>
 #include <cmath>
@@ -21,16 +23,26 @@
 
 namespace ergodiclib
 {
-/// @brief 
+/// \brief CartPole Dynamics model class 
 class CartPole
 {
     public:
+        /// \brief Position vector of Cartpole Model at t=0
         arma::vec x0;
+
+        /// \brief Control vector of Cartpole Model at t=0
         arma::vec u0;
+
+        /// \brief Time difference for model dynamics (< 0.05)
         double dt;
+
+        /// \brief Initial Time Step
         double t0;
+
+        /// \brief Final Time Step
         double tf;
 
+        /// \brief Basic Class Constructor for the CartPole Model
         CartPole() : 
         x0({0.0, 0.0, ergodiclib::PI, 0.0}),
         u0({0.0}),
@@ -45,6 +57,15 @@ class CartPole
             n_iter = (int) ((tf - t0)/ dt);
         };
 
+        /// \brief Class Constructor for the CartPole Model
+        /// \param x0_in Position vector of Cartpole Model at t=0 
+        /// \param u0_in Control vector of Cartpole Model at t=0
+        /// \param dt_in Time difference for model dynamics (< 0.05)
+        /// \param t0_in Initial Time Step
+        /// \param tf_in Final Time Step
+        /// \param cart_mass Mass of Cart 
+        /// \param pole_mass Mass of pole
+        /// \param pole_len Length of pole
         CartPole(arma::vec x0_in, arma::vec u0_in, double dt_in, double t0_in, double tf_in, double cart_mass, double pole_mass, double pole_len) : 
         x0(x0_in),
         u0(u0_in),
@@ -59,6 +80,10 @@ class CartPole
             n_iter = (int) ((tf - t0)/ dt);
         };
 
+        /// \brief Class Constructor for the CartPole Model
+        /// \param cart_mass Mass of Cart 
+        /// \param pole_mass Mass of pole
+        /// \param pole_len Length of pole
         CartPole(double cart_mass, double pole_mass, double pole_len) : 
         x0({0.0, 0.0, ergodiclib::PI, 0.0}),
         u0({0.0}),
@@ -72,17 +97,27 @@ class CartPole
         {
             n_iter = (int) ((tf - t0)/ dt);
         };
-
+        
+        /// \brief Get A (Dfx) Matrix from Model initialized at (xt, ut)
+        /// \param xt Position Vector state at time t
+        /// \param ut Control Vector state at time t
+        /// \return A (Dfx) Matrix 
         arma::mat getA(const arma::vec& xt, const arma::vec& ut) const
         {
             return calculateA(xt, ut);
         };
 
+        /// \brief Get B (Dfu) Matrix from Model initialized at (xt, ut)
+        /// \param xt Position Vector state at time t
+        /// \param ut Control Vector state at time t
+        /// \return B (Dfu) Matrix 
         arma::mat getB(const arma::vec& xt, const arma::vec& ut) const
         {
             return calculateB(xt, ut);
         };
 
+        /// \brief Creates an intial trajectory of model with x0 and u0
+        /// \return State Position and Control Trajectories over time horizon
         virtual std::pair<arma::mat, arma::mat> createTrajectory() const
         {
             arma::mat x_traj(x0.n_elem, n_iter, arma::fill::zeros);
@@ -93,7 +128,7 @@ class CartPole
 
             arma::mat x_new;
             for (int i = 1; i < n_iter; i++) {
-                x_new = integrate(x_traj.col(i-1), u0, dt);
+                x_new = integrate(x_traj.col(i-1), u0);
                 x_new(2) = ergodiclib::normalizeAngle(x_new(2));
                 x_traj.col(i) = x_new;
                 u_traj.col(i) = u0;
@@ -103,14 +138,18 @@ class CartPole
             return pair_trajec;
         };
 
-        virtual arma::mat createTrajectory(const arma::vec& x0_input, const arma::mat& ut_input) const
+        /// \brief Creates a trajectory given initial position vector x0 and control over time horizon
+        /// \param x0_input Position vector of Cartpole Model at t=0
+        /// \param ut_mat Control Matrix over time horizon
+        /// \return State Position Trajectory over time horizon
+        virtual arma::mat createTrajectory(const arma::vec& x0_input, const arma::mat& ut_mat) const
         {
             arma::mat x_traj(x0.n_elem, n_iter, arma::fill::zeros);
             x_traj.col(0) = x0_input;
 
             arma::mat x_new;
             for (int i = 1; i < n_iter; i++) {
-                x_new = integrate(x_traj.col(i-1), ut_input.col(i-1), dt);
+                x_new = integrate(x_traj.col(i-1), ut_mat.col(i-1));
                 x_new(2) = ergodiclib::normalizeAngle(x_new(2));
                 x_traj.col(i) = x_new;
             }
@@ -119,6 +158,19 @@ class CartPole
         };
 
     private:
+        /// \brief Mass of cart 
+        double M;
+
+        /// \brief Mass of pole
+        double m;
+        double g;
+        double l;
+        double n_iter;
+
+        /// \brief Calculates A (Dfx) Matrix from Model initialized at (xt, ut)
+        /// \param xt Position Vector state at time t
+        /// \param ut Control Vector state at time t
+        /// \return A (Dfx) Matrix 
         virtual arma::mat calculateA(const arma::vec& xt, const arma::vec& ut) const
         {
             arma::mat A(4, 4, arma::fill::zeros);
@@ -151,6 +203,10 @@ class CartPole
             return A;
         };
 
+        /// \brief Calculates B (Dfu) Matrix from Model initialized at (xt, ut)
+        /// \param xt Position Vector state at time t
+        /// \param ut Control Vector state at time t
+        /// \return B (Dfu) Matrix 
         virtual arma::mat calculateB(const arma::vec& xt, const arma::vec& ut) const
         {
             UNUSED(ut);
@@ -166,6 +222,10 @@ class CartPole
             return B;
         };
 
+        /// \brief Returns difference in state vector
+        /// \param x_vec State Vector state at a given time
+        /// \param u_vec Control Vector state at a given time
+        /// \return Change in state vector over time x_dot
         virtual arma::vec dynamics(const arma::vec& x_vec, const arma::vec& u_vec) const
         {
             //double x = x_vec(0);
@@ -188,27 +248,27 @@ class CartPole
             return xdot;
         }
 
-        arma::vec integrate(arma::vec x_vec, const arma::vec& u_vec, const double dt_in) const
+        /// \brief Integrates the state vector by one time step (dt) using rk4
+        /// \param x_vec State Vector state at a given time
+        /// \param u_vec Control Vector state at a given time
+        /// \return New state vector after one time step
+        arma::vec integrate(arma::vec x_vec, const arma::vec& u_vec) const
         {
             arma::vec k1 = dynamics(x_vec, u_vec);
-            arma::vec k2 = dynamics(x_vec + 0.5 * dt_in * k1, u_vec);
-            arma::vec k3 = dynamics(x_vec + 0.5 * dt_in * k2, u_vec);
-            arma::vec k4 = dynamics(x_vec + dt_in * k3, u_vec);
+            arma::vec k2 = dynamics(x_vec + 0.5 * dt * k1, u_vec);
+            arma::vec k3 = dynamics(x_vec + 0.5 * dt * k2, u_vec);
+            arma::vec k4 = dynamics(x_vec + dt * k3, u_vec);
 
-            arma::vec k_sum = (dt_in / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
+            arma::vec k_sum = (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
             arma::vec res = x_vec + k_sum;
 
             return res;
         }
-
-        double M;
-        double m;
-        double g;
-        double l;
-        double n_iter;
 };
+
+static_assert(ModelConcept<CartPole>);
+
 }
 
-static_assert(ModelConcept<ergodiclib::CartPole>);
 
 #endif

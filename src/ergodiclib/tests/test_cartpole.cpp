@@ -192,7 +192,7 @@ TEST_CASE("Cartpole Integrate Step", "[CartPole]")
     // Linearized around x = {10.0, 2.0, PI/4, 3.0}, F = {10.0}
     arma::vec x0({10.0, 2.0, ergodiclib::PI/4.0, 3.0});
     arma::vec u0({10.0});
-    arma::vec x1 = cartpole.integrate(x0, u0, dt);
+    arma::vec x1 = cartpole.integrate(x0, u0);
 
     arma::vec xdot_test({2.0, 0.21641558, 3.0, 7.0897464});
     arma::vec x1_test = x0 + dt * xdot_test;

@@ -1,5 +1,7 @@
 #ifndef MODEL_INCLUDE_GUARD_HPP
 #define MODEL_INCLUDE_GUARD_HPP
+/// \file
+/// \brief Model Template Concept defintion
 
 #if defined(__APPLE__)
 #include </opt/homebrew/include/armadillo>
@@ -7,6 +9,9 @@
 #include <armadillo>
 #endif
 
+namespace ergodiclib
+{
+/// The template interface for Dynamic Model Systems
 template<typename ModelTemplate>
 concept ModelConcept = requires(ModelTemplate modeltemplate)
 {
@@ -21,6 +26,7 @@ concept ModelConcept = requires(ModelTemplate modeltemplate)
     std::same_as<decltype(modeltemplate.t0), double>;
     std::same_as<decltype(modeltemplate.tf), double>;
 };
+}
 
 
 #endif

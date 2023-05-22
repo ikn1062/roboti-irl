@@ -9,17 +9,14 @@ if __name__ == "__main__":
     for i in range(np.shape(controls)[0]):
         time[i] = 0.005 * i
 
-    # Print Controls Over Time 
-    time = np.reshape(time, (1000,1))
-    controls = np.reshape(controls, (1000,1))
+    # Print Controls Over Time
+    time = np.reshape(time, (1000, 1))
+    controls = np.reshape(controls, (1000, 1))
     plt.plot(time, controls)
     plt.title('Controls Over Time')
     plt.xlabel("time - dt = 0.005 (s)")
     plt.ylabel("Controls (N)")
     plt.show()
-
-    # Print Trajectory Over Time
-
 
     # Print Theta and Theta Dot Trajectory Over Time
     plt.plot(time, trajectory[:, 2])
@@ -33,4 +30,3 @@ if __name__ == "__main__":
     plt.xlabel("time - dt = 0.005 (s)")
     plt.ylabel("Theta_dot (dRad/dt)")
     plt.show()
-

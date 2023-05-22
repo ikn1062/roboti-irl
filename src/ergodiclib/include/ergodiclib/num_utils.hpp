@@ -1,7 +1,7 @@
 #ifndef NUM_UTIL_INCLUDE_GUARD_HPP
 #define NUM_UTIL_INCLUDE_GUARD_HPP
 /// \file
-/// \brief
+/// \brief Contains number utility functions for library
 
 #include <iosfwd>
 #include <cmath>
@@ -14,6 +14,7 @@
 #else
 #include <armadillo>
 #endif
+
 namespace ergodiclib
 {
 constexpr double PI = 3.14159265358979323846;
@@ -22,19 +23,12 @@ constexpr double PI = 3.14159265358979323846;
 /// \param y_trajec Trajectory to perform integration over
 /// \param dx difference in x for each step of the trajectory
 /// \return Value of integral
-double integralTrapz(const arma::vec& y_trajec, double dx);
+double integralTrapz(const arma::vec& y_trajec, const double &dx);
 
-/// \brief Gets the L2 norm of a given vector
-/// \param v Vector of integers
-/// \return L2 Norm Value
-double l2_norm(const std::vector<int> & v);
-
-/// \brief Gets the L2 norm of a given vector
-/// \param v Vector of Double
-/// \return L2 Norm Value
-double l2_norm(const std::vector<double> & v);
-
-double normalizeAngle(double rad);
+/// \brief Normalizes angle between -pi and pi
+/// \param rad Input angle
+/// \return Normalized Angle
+double normalizeAngle(const double &rad);
 
 /// \brief approximately compare two floating-point numbers using
 ///        an absolute comparison
@@ -65,6 +59,21 @@ constexpr double rad2deg(double rad)
 {
   return rad * (180.0 / PI);
 }
+
+/// \brief Gets the L2 norm of a given vector
+/// \tparam T Type of vector
+/// \param v Vector of integers
+/// \return L2 Norm Value
+template <typename T>
+double l2_norm(const std::vector<T> &v)
+{
+  double sum = 0.0;
+  for (unsigned int i = 0; i < v.size(); i++) {
+    sum += pow(v[i], 2);
+  }
+  return sum;
+}
+
 }
 
 #endif

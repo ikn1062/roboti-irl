@@ -17,7 +17,7 @@ find_package(Armadillo REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-add_library(${PROJECT_NAME} src/ergodic_measure.cpp src/num_utils.cpp src/file_utils.cpp src/fourier_basis.cpp)
+add_library(${PROJECT_NAME} src/ergodic_measure.cpp src/file_utils.cpp src/fourier_basis.cpp src/num_utils.cpp)
 
 target_include_directories(${PROJECT_NAME}
   PUBLIC
@@ -25,7 +25,7 @@ target_include_directories(${PROJECT_NAME}
   $<INSTALL_INTERFACE:include/>
   ${ARMADILLO_INCLUDE_DIRS})
 
-target_compile_features(${PROJECT_NAME}  PUBLIC cxx_std_17)
+target_compile_features(${PROJECT_NAME}  PUBLIC cxx_std_20)
 target_compile_options(${PROJECT_NAME}  PUBLIC -Wall -Wextra -Wpedantic)
 
 add_executable(ergodic_test src/ergodic_test.cpp)

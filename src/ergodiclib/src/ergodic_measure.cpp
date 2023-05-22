@@ -25,12 +25,12 @@ ErgodicMeasure::ErgodicMeasure(
   lambdaK_vec.resize(K_series.size());
 }
 
-arma::vec ErgodicMeasure::get_PhiK()
+arma::vec ErgodicMeasure::get_PhiK() const
 {
   return PhiK_vec;
 }
 
-arma::vec ErgodicMeasure::get_LambdaK()
+arma::vec ErgodicMeasure::get_LambdaK() const
 {
   return lambdaK_vec;
 }

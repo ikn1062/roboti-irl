@@ -2,7 +2,6 @@
 #include <string>
 #include <vector>
 #include <ergodiclib/file_utils.hpp>
-#include <ergodiclib/num_utils.hpp>
 #include <ergodiclib/ergodic_measure.hpp>
 #include <ergodiclib/ergodic_controller.hpp>
 #include <ergodiclib/cartpole.hpp>

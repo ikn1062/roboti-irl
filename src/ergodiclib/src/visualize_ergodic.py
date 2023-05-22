@@ -341,7 +341,8 @@ def main():
     dt, E = ergodic_properties["dt"], ergodic_properties["E"]
     demonstration_list, D, new_E = [], [], []
 
-    input_demonstration = input("Please input the demonstrations you would like to use for training [list] "
+    input_demonstration = input("Please input the demonstrations you would like to use for \
+                                training [list] "
                                 "(if empty, all demonstrations are used) \ninput: ")
     if input_demonstration != "q" or len(input_demonstration) != 0:
         input_demonstration = input_demonstration.split(",")

@@ -3,7 +3,6 @@
 #include <vector>
 
 #include <ergodiclib/file_utils.hpp>
-#include <ergodiclib/num_utils.hpp>
 #include <ergodiclib/ergodic_measure.hpp>
 
 using namespace ergodiclib;
