@@ -54,7 +54,7 @@ public:
   /// \param k_idx The index of the series coefficient K_vec
   /// \return CK value, Spacial Statistics
   double calculateCk(
-    const arma::mat& x_trajectory,
+    const arma::mat & x_trajectory,
     const std::vector<int> & K_vec, int k_idx);
 
   void calcErgodic();

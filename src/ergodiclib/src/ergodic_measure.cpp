@@ -4,7 +4,7 @@ namespace ergodiclib
 {
 ErgodicMeasure::ErgodicMeasure(
   std::vector<arma::mat> demonstrations,
-  std::vector<int> demo_weights, 
+  std::vector<int> demo_weights,
   double dt_demo, fourierBasis basis)
 : D_mat(demonstrations),
   Basis(basis),
@@ -56,7 +56,7 @@ arma::vec ErgodicMeasure::calculatePhik()
 }
 
 double ErgodicMeasure::calculateCk(
-  const arma::mat& x_trajectory,
+  const arma::mat & x_trajectory,
   const std::vector<int> & K_vec, int k_idx)
 {
   int x_len = x_trajectory.n_cols;

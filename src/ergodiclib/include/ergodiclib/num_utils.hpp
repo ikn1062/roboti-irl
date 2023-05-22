@@ -23,12 +23,12 @@ constexpr double PI = 3.14159265358979323846;
 /// \param y_trajec Trajectory to perform integration over
 /// \param dx difference in x for each step of the trajectory
 /// \return Value of integral
-double integralTrapz(const arma::vec& y_trajec, const double &dx);
+double integralTrapz(const arma::vec & y_trajec, const double & dx);
 
 /// \brief Normalizes angle between -pi and pi
 /// \param rad Input angle
 /// \return Normalized Angle
-double normalizeAngle(const double &rad);
+double normalizeAngle(const double & rad);
 
 /// \brief approximately compare two floating-point numbers using
 ///        an absolute comparison
@@ -64,8 +64,8 @@ constexpr double rad2deg(double rad)
 /// \tparam T Type of vector
 /// \param v Vector of integers
 /// \return L2 Norm Value
-template <typename T>
-double l2_norm(const std::vector<T> &v)
+template<typename T>
+double l2_norm(const std::vector<T> & v)
 {
   double sum = 0.0;
   for (unsigned int i = 0; i < v.size(); i++) {

@@ -21,7 +21,7 @@ static bool compareStrings(const std::string & file_a, const std::string & file_
 namespace ergodiclib
 {
 std::vector<arma::mat> readDemonstrations(
-  const std::string & demonstration_dir_path, const int &n_dimension)
+  const std::string & demonstration_dir_path, const int & n_dimension)
 {
   std::vector<arma::mat> demonstrations;
 
@@ -65,10 +65,10 @@ std::vector<std::vector<std::vector<double>>> readDemonstrationsFileList(const s
 }
 */
 
-arma::mat readDemonstrationCSV(const std::string & csv_filepath, const int &n_dimension)
+arma::mat readDemonstrationCSV(const std::string & csv_filepath, const int & n_dimension)
 {
   arma::mat demonstration(0, 0, arma::fill::zeros);
-  std::ifstream demonstration_file(csv_filepath); 
+  std::ifstream demonstration_file(csv_filepath);
 
   std::vector<double> line_values;
   arma::vec col_vec;
@@ -84,9 +84,9 @@ arma::mat readDemonstrationCSV(const std::string & csv_filepath, const int &n_di
       number = std::stod(value);
       line_values.push_back(number);
     }
-    col_vec = arma::conv_to< arma::vec >::from(line_values);
+    col_vec = arma::conv_to<arma::vec>::from(line_values);
     demo_len = demonstration.n_cols;
-    demonstration.resize(col_vec.n_elem, demo_len+1);
+    demonstration.resize(col_vec.n_elem, demo_len + 1);
     demonstration.insert_cols(demo_len, col_vec);
   }
 

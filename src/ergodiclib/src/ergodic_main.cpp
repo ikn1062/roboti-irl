@@ -42,9 +42,13 @@ int main()
 
   std::cout << "Controller...  START" << std::endl;
   CartPole model = CartPole();
-  arma::mat R = 0.1 * arma::eye(1,1);
-  arma::mat Q = arma::eye(4,4);
-  ergController a = ergController(ergodicMeasure, Basis, model, 100.0, R, Q, 0.0, 30.0, 0.1, 0.01, 0.15);
-  ergController controller = ergController(ergodicMeasure, Basis, model, 100.0, R, Q, 0.0, 30.0, 0.1, 0.01, 0.15);
+  arma::mat R = 0.1 * arma::eye(1, 1);
+  arma::mat Q = arma::eye(4, 4);
+  ergController a = ergController(
+    ergodicMeasure, Basis, model, 100.0, R, Q, 0.0, 30.0, 0.1, 0.01,
+    0.15);
+  ergController controller = ergController(
+    ergodicMeasure, Basis, model, 100.0, R, Q, 0.0, 30.0,
+    0.1, 0.01, 0.15);
   std::cout << "Controller...  COMPLETE" << std::endl;
 }
