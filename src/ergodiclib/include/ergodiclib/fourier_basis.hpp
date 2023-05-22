@@ -1,7 +1,7 @@
 #ifndef BASIS_INCLUDE_GUARD_HPP
 #define BASIS_INCLUDE_GUARD_HPP
 /// \file
-/// \brief
+/// \brief Contains functions to calculate fourier basis
 
 #include <iosfwd>
 #include <cmath>
@@ -15,11 +15,16 @@
 #else
 #include <armadillo>
 #endif
+
 namespace ergodiclib
 {
     class fourierBasis
     {
         public:
+            /// \brief Constructor for Fourier Basis class
+            /// \param L_dim Length of Dimensions
+            /// \param num_dim Number of Dimensions
+            /// \param K Fourier Series Coefficient
             fourierBasis(std::vector<std::pair<double, double>> L_dim, int num_dim, int K);
 
             /// \brief Calculates normalized fourier coeffecient using basis function metric
@@ -31,18 +36,18 @@ namespace ergodiclib
             /// \param K_vec The series coefficient given as a list of length dimensions
             /// \param k_idx The index of the series coefficient K_vec
             /// \return Fk Value, normalized fourier coeffecient
-            double calculateFk(const arma::vec & x_i_trajectory, const std::vector<int> & K_vec, int k_idx);
+            double calculateFk(const arma::vec & x_i_trajectory, const std::vector<int> & K_vec, const int &k_idx);
 
             /// \brief WRITE COMMENT
-            arma::rowvec calculateDFk(const arma::colvec& xi_vec, const std::vector<int>& K_vec);
+            arma::rowvec calculateDFk(const arma::colvec& xi_vec, const std::vector<int>& K_vec) const;
 
             /// \brief Returns Normalizing factor for Fk for each series coefficient
             /// \return hK vector
-            std::vector<double> get_hK();
+            std::vector<double> get_hK() const;
 
-            /// \brief 
-            /// \return 
-            std::vector<std::vector<int>> get_K_series(); 
+            /// \brief Gets the fourier dimension series 
+            /// \return Fourier Dimension Series K vector of vector of int
+            std::vector<std::vector<int>> get_K_series() const; 
 
         private:
 
@@ -52,26 +57,16 @@ namespace ergodiclib
             /// \param K_vec The series coefficient given as a list of length dimensions
             /// \param k_idx The index of the series coefficient K_vec
             /// \return hk, normalizing factor for Fk
-            double calculateHk(const std::vector<int> & K_vec, int k_idx);
+            double calculateHk(const std::vector<int> & K_vec, const int &k_idx);
 
             /// \brief Creates the fourier series coefficients
             /// \param K Size of series coefficients
             /// \param n_dim Size of dimension for demonstrations
             /// \return List of Fourier Series Coefficients
-            std::vector<std::vector<int>> create_K_series(int K, int n_dim);
-
-            /// \brief Reccursive helper for fourier series coefficients
-            /// \param K_num Size of series coefficients
-            /// \param permutation Current Permutation in sequence
-            /// \param n_dim Size of dimension for demonstrations
-            /// \param idx Current idx of sequence in permutation
-            /// \return List of Fourier Series Coefficients
-            std::vector<std::vector<int>> create_K_helper(
-            std::vector<int> K_num, std::vector<int> permutation,
-            int n_dim, int idx);
+            std::vector<std::vector<int>> create_K_series(const int &K, const int &n_dim);
             
             /// \brief Length of dimension of a given trajectory
-            int n_dim;
+            unsigned int n_dim;
 
             /// \brief Size of boundaries for dimensions - [Lower boundary, Higher Boundary]
             std::vector<std::pair<double, double>> L;
