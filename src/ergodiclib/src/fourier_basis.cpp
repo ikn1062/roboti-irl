@@ -87,15 +87,26 @@ double fourierBasis::calculateHk(const std::vector<int> & K_vec, const int & k_i
 }
 
 arma::rowvec fourierBasis::calculateDFk(
-  const arma::colvec & xi_vec,
-  const std::vector<int> & K_vec) const
+  const arma::colvec & xt,
+  const std::vector<int> & K_vec, const int &k_idx) const
 {
-  arma::rowvec dfk(xi_vec.n_cols, arma::fill::zeros);
+  arma::rowvec dfk(xt.n_rows, arma::fill::zeros);
 
-  double ki = 0.0;
+  double hk = hK_vec[k_idx];
+  double ki, kj, dfk_val;
   for (unsigned int i = 0; i < n_dim; i++) {
+    dfk_val = 1.0;
     ki = (K_vec[i] * PI) / (L[i].first - L[i].second);
-    dfk(i) = (1 / hK_vec[i]) * (-1.0 * ki) * cos(ki * xi_vec(i)) * sin(ki * xi_vec(i));
+    dfk_val *= (1 / hk) * (-1.0 * ki) * sin(ki * xt(i));
+
+    for (unsigned int j = 0; j < n_dim; j++) {
+      if (i != j) {
+        kj = (K_vec[j] * PI) / (L[j].first - L[j].second);
+        dfk_val *= cos(kj * xt(j));
+      }
+    }
+
+    dfk(i) = dfk_val;
   }
 
   return dfk;
