@@ -29,28 +29,35 @@ class ergController
 public:
   ergController(
     ErgodicMeasure ergodicMes, fourierBasis basis, ModelTemplate model_agent,
-    double q_val, arma::mat R_mat, arma::mat Q_mat, double t0_val, double tf_val,
+    double q_val, arma::mat R, arma::mat Q, double t0_val, double tf_val,
     double dt_val, double eps_val, double beta_val)
   : ergodicMeasure(ergodicMes),
     Basis(basis),
     model(model_agent),
     q(q_val),
-    R(R_mat),
-    Q(Q_mat),
-    t0(t0_val),
-    tf(tf_val),
-    dt(dt_val),
-    eps(eps_val),
-    beta(beta_val)
+    Q_mat(Q),
+    R_mat(R),
+    P_mat(P),
+    r_mat(r),
+    max_iter(max_iter_in),
+    alpha(a),
+    beta(b),
+    eps(e)
   {
-    n_iter = (int) ((tf - t0) / dt);
-  }
-  double DJ(std::pair<arma::mat, arma::mat> zeta_pair, const arma::mat & at, const arma::mat & bt);
+    x0 = model_in.x0;
+    dt = model_in.dt;
+    tf = model_in.tf;
+    num_iter = (int) ((model_in.tf - model_in.t0) / dt);
+   }
 
-  int gradient_descent(arma::vec x0);
+  void iLQR();
 
 private:
-  std::pair<arma::mat, arma::mat> ergController<ModelTemplate>::calculateZeta(const arma::mat & Xt, const arma::mat & Ut) const;
+  double DJ(std::pair<arma::mat, arma::mat> const &zeta_pair, const arma::mat & at, const arma::mat & bt);
+ 
+  double objectiveJ(const arma::mat & Xt, const arma::mat & Ut);
+
+  std::pair<arma::mat, arma::mat> ergController<ModelTemplate>::calculateZeta(const arma::mat & Xt, const arma::mat & Ut, const arma::mat & aT, const arma::mat & bT) const;
 
   std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(arma::mat Xt, arma::mat Ut, const arma::mat & aT, const arma::mat & bT) const;
 
@@ -62,129 +69,141 @@ private:
   fourierBasis Basis;
   ModelTemplate model;
   double q;
-  arma::mat P_mat;
-  arma::mat r_mat;
+
+  /// \brief Initial State vector at time t=0
+  arma::vec x0;
+
+  /// \brief Q Matrix (Trajectory Penalty)
+  arma::mat Q_mat;
+
+  /// \brief R Matrix (Control Penalty)
   arma::mat R_mat;
-  arma::mat Q;
-  double t0;
-  double tf;
+
+  /// \brief P Matrix (Final Trajectory Penalty)
+  arma::mat P_mat;
+
+  /// \brief r Matrix (Final Control Penalty)
+  arma::mat r_mat;
+
+  /// \brief Difference in time steps from model system
   double dt;
-  double eps;
+
+  /// \brief Final Time
+  double tf;
+
+  /// \brief Number of iterations for time horizon
+  unsigned int num_iter;
+
+  /// \brief Max iteration for control descent
+  unsigned int max_iter;
+
+  /// \brief Alpha - Controller multiplier
+  double alpha;
+
+  /// \brief Beta - Controller multiplier for armijo line search
   double beta;
-  int n_iter;
+
+  /// \brief Epsilon - Convergence Value for Objective Function
+  double eps;
 };
 
+
 template<class ModelTemplate>
-int ergController<ModelTemplate>::gradient_descent(arma::vec x0)
+void ergController<ModelTemplate>::iLQR()
 {
-  std::pair<arma::mat, arma::mat> xtut = model.createTrajectory();
-  arma::mat xt = xtut.first;
-  arma::mat ut = xtut.second;
-  model.setx0(x0);
+  // Create variables for iLQR loop
+  std::pair<arma::mat, arma::mat> trajectory, descentDirection;
+  arma::mat X, U, zeta, vega, aT, bT;
+  double DJ, J, J_new, gamma;
+  int i, n;
 
-  double dj = 2e31;
+  // Get an initial trajectory
+  trajectory = model.createTrajectory();
+  X = trajectory.first;
+  U = trajectory.second;
+  DJ = 2e31;
 
-  arma::mat at, bt;
-  std::pair<arma::mat, arma::mat> zeta_pair;
-  std::pair<std::vector<arma::mat>, std::vector<arma::mat>> listPr;
-  while (abs(dj) > eps) {
-    at = calculate_aT(xt);
-    bt = calculate_bT(ut);
+  i = 0;
+  while (abs(DJ) > eps) {
+    aT = calculate_aT(X);
+    bT = calculate_bT(U);
+    descentDirection = calculateZeta(X, U, aT, bT);
+    zeta = descentDirection.first;
+    vega = descentDirection.second;
 
-    listPr = calculatePr(xt, ut, at, bt);
+    DJ = calculateDJ(descentDirection, aT, bT);
+    J = objectiveJ(X, U);
+    J_new = 2e31; 
+    gamma = beta;
 
-    zeta_pair = descentDirection(xt, ut, listPr.first, listPr.second, bt);
-
-    dj = DJ(zeta_pair, at, bt);
-
-    arma::mat vega = zeta_pair.second;
-    ut = ut + beta * vega;
-    xt = model.createTrajectory(x0, ut);
+    n = 1;
+    while (J_new > J + alpha * gamma * DJ) {
+      U = U + gamma * vega;
+      X = model.createTrajectory(x0, U_new);
+      J_new = objectiveJ(X, U);
+      gamma = pow(beta, n+1);
+    }
+    trajectory = {X, U};
+    i += 1;
   }
-
-  return 1;
-}template<class ModelTemplate>
-int ergController<ModelTemplate>::gradient_descent(arma::vec x0)
-{
-  std::pair<arma::mat, arma::mat> xtut = model.createTrajectory();
-  arma::mat xt = xtut.first;
-  arma::mat ut = xtut.second;
-  model.setx0(x0);
-
-  double dj = 2e31;
-
-  arma::mat at, bt;
-  std::pair<arma::mat, arma::mat> zeta_pair;
-  std::pair<std::vector<arma::mat>, std::vector<arma::mat>> listPr;
-  while (abs(dj) > eps) {
-    at = calculate_aT(xt);
-    bt = calculate_bT(ut);
-
-    listPr = calculatePr(xt, ut, at, bt);
-
-    zeta_pair = descentDirection(xt, ut, listPr.first, listPr.second, bt);
-
-    dj = DJ(zeta_pair, at, bt);
-
-    arma::mat vega = zeta_pair.second;
-    ut = ut + beta * vega;
-    xt = model.createTrajectory(x0, ut);
-  }
-
-  return 1;
 }
 
+
 template<class ModelTemplate>
-double ergController<ModelTemplate>::DJ(std::pair<arma::mat, arma::mat> zeta_pair, const arma::mat & at, const arma::mat & bt)
+double ergController<ModelTemplate>::DJ(std::pair<arma::mat, arma::mat> const &zeta_pair, const arma::mat & aT, const arma::mat & bT)
 {
-  arma::vec J(n_iter, 1, arma::fill::zeros);
+  arma::vec DJ(n_iter, 1, arma::fill::zeros);
   arma::mat zeta = zeta_pair.first;
   arma::mat vega = zeta_pair.second;
 
-  arma::mat a_T, b_T;
-
+  // Construct DJ Vector
   for (int i = 0; i < n_iter; i++) {
-    a_T = at.row(i).t();
-    b_T = bt.row(i).t();
-
-    J.row(i) = a_T * zeta.row(i) + b_T * vega.row(i);
+    DJ.row(i) = aT.row(i) * zeta.row(i) + bT.row(i) * vega.row(i);
   }
 
   // integrate and return J
-  double J_integral = integralTrapz(J, dt);
-  return J_integral;
+  double DJ_integral = integralTrapz(DJ, dt);
+  return DJ_integral;
 }
 
 template<class ModelTemplate>
-double ergController<ModelTemplate>::DJ(std::pair<arma::mat, arma::mat> zeta_pair, const arma::mat & at, const arma::mat & bt)
+double ergController<ModelTemplate>::objectiveJ(const arma::mat & Xt, const arma::mat & Ut) 
 {
-  arma::vec J(n_iter, 1, arma::fill::zeros);
-  arma::mat zeta = zeta_pair.first;
-  arma::mat vega = zeta_pair.second;
+  const std::vector<std::vector<int>> K_series = Basis.get_K_series();
+  arma::mat lambda = ergodicMeasure.get_LambdaK();
+  arma::mat phi = ergodicMeasure.get_PhiK();
 
-  arma::mat a_T, b_T;
+  double ergodicCost = 0.0;
 
-  for (int i = 0; i < n_iter; i++) {
-    a_T = at.row(i).t();
-    b_T = bt.row(i).t();
-
-    J.row(i) = a_T * zeta.row(i) + b_T * vega.row(i);
+  double ck;
+  for (unsigned int i = 0; i < K_series.size(); i++) {
+      ck = ergodicMeasure.calculateCk(Xt, K_series[i], i);
+      ergodicCost += lambda[i] * pow(ck - phi[i], 2);
   }
 
-  // integrate and return J
-  double J_integral = integralTrapz(J, dt);
-  return J_integral;
+  arma::vec trajecJ(Ut.n_cols, arma::fill::zeros);
+  arma::vec Ut_i;
+  arma::mat controlCost;
+  for (unsigned int i = 0; i < Ut.n_cols; i++) {
+    Ut_i = Ut.col(i);
+    controlCost = Ut_i.t() * R_mat * Ut_i;
+    trajecJ(i) = cost(0, 0);
+  }
+
+  double trajec_cost = ergodiclib::integralTrapz(trajecJ, dt);
+
+  double final_cost = trajec_cost + ergodicCost;
+  return final_cost;
 }
 
 template<class ModelTemplate>
 std::pair<arma::mat, arma::mat> ergController<ModelTemplate>::calculateZeta(
   const arma::mat & Xt,
-  const arma::mat & Ut)
+  const arma::mat & Ut,
+  const arma::mat & aT,
+  const arma::mat & bT)
 const
 {
-  arma::mat aT = calculate_aT(Xt);
-  arma::mat bT = calculate_bT(Ut);
-
   std::pair<std::vector<arma::mat>, std::vector<arma::mat>> listPr = calculatePr(Xt, Ut, aT, bT);
   std::vector<arma::mat> Plist = listPr.first;
   std::vector<arma::mat> rlist = listPr.second;
@@ -216,6 +235,7 @@ const
   std::pair<arma::mat, arma::mat> descDir = {zeta, vega};
   return descDir;
 }
+
 
 template<class ModelTemplate>
 std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ergController<ModelTemplate>::calculatePr(

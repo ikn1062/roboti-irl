@@ -154,11 +154,11 @@ void ilqrController<ModelTemplate>::iLQR()
 
   int n = 0;
   int i = 0;
-  gamma = beta;
+  gamma = beta; // This is not correct 
   std::cout << "Start loop" << std::endl;
   std::cout << "abs_J" << abs(J) << std::endl;
   std::cout << "eps" << eps << std::endl;
-  while (abs(J) > eps && i < 4000) {
+  while (abs(J) > eps && i < 4000) { // change 4000 to number of iterations
     std::cout << "calc zeta" << std::endl;
     descentDirection = calculateZeta(X, U);
     zeta = descentDirection.first;
@@ -166,7 +166,7 @@ void ilqrController<ModelTemplate>::iLQR()
 
     n = 0;
     J_new = J + J;
-    while (J_new > J + alpha * gamma * trajectoryJ(X, U) && n < 10) {
+    while (J_new > J + alpha * gamma * trajectoryJ(X, U) && n < 10) { // get rid of n < 10, fix trajectoryJ(X, U) to descent dir
       U_new = U + gamma * vega;
       X_new = model.createTrajectory(x0, U_new);
 
