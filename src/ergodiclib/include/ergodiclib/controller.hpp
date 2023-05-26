@@ -153,12 +153,12 @@ void ilqrController<ModelTemplate>::iLQR()
   std::cout << "obj: " << J << std::endl;
 
   int n = 0;
-  int i = 0;
+  unsigned int i = 0;
   gamma = beta; // This is not correct 
   std::cout << "Start loop" << std::endl;
   std::cout << "abs_J" << abs(J) << std::endl;
   std::cout << "eps" << eps << std::endl;
-  while (abs(J) > eps && i < 4000) { // change 4000 to number of iterations
+  while (abs(J) > eps && i < max_iter) {
     std::cout << "calc zeta" << std::endl;
     descentDirection = calculateZeta(X, U);
     zeta = descentDirection.first;

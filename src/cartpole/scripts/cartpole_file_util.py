@@ -35,7 +35,7 @@ def parse_text(cart_path, pole_path, output_path, parse_lines=True):
             cart_line_split = cart_line.split(", ")
             pole_line_split = pole_line.split(", ")
 
-            write_line = pole_line_split + cart_line_split
+            write_line = cart_line_split + pole_line_split
 
             output_writer.writerow(write_line)
 

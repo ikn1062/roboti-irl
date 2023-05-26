@@ -29,8 +29,8 @@ class ergController
 public:
   ergController(
     ErgodicMeasure ergodicMes, fourierBasis basis, ModelTemplate model_agent,
-    double q_val, arma::mat R, arma::mat Q, double t0_val, double tf_val,
-    double dt_val, double eps_val, double beta_val)
+    double q_val, arma::mat Q, arma::mat R, arma::mat P, arma::mat r,
+    int max_iter_in, double a, double b, double e)
   : ergodicMeasure(ergodicMes),
     Basis(basis),
     model(model_agent),
@@ -44,20 +44,20 @@ public:
     beta(b),
     eps(e)
   {
-    x0 = model_in.x0;
-    dt = model_in.dt;
-    tf = model_in.tf;
-    num_iter = (int) ((model_in.tf - model_in.t0) / dt);
+    x0 = model_agent.x0;
+    dt = model_agent.dt;
+    tf = model_agent.tf;
+    n_iter = (int) ((model_agent.tf - model_agent.t0) / dt);
    }
 
   void iLQR();
 
 private:
-  double DJ(std::pair<arma::mat, arma::mat> const &zeta_pair, const arma::mat & at, const arma::mat & bt);
+  double calculateDJ(std::pair<arma::mat, arma::mat> const &zeta_pair, const arma::mat & at, const arma::mat & bt);
  
   double objectiveJ(const arma::mat & Xt, const arma::mat & Ut);
 
-  std::pair<arma::mat, arma::mat> ergController<ModelTemplate>::calculateZeta(const arma::mat & Xt, const arma::mat & Ut, const arma::mat & aT, const arma::mat & bT) const;
+  std::pair<arma::mat, arma::mat> calculateZeta(const arma::mat & Xt, const arma::mat & Ut, const arma::mat & aT, const arma::mat & bT) const;
 
   std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(arma::mat Xt, arma::mat Ut, const arma::mat & aT, const arma::mat & bT) const;
 
@@ -92,7 +92,7 @@ private:
   double tf;
 
   /// \brief Number of iterations for time horizon
-  unsigned int num_iter;
+  unsigned int n_iter;
 
   /// \brief Max iteration for control descent
   unsigned int max_iter;
@@ -115,16 +115,19 @@ void ergController<ModelTemplate>::iLQR()
   std::pair<arma::mat, arma::mat> trajectory, descentDirection;
   arma::mat X, U, zeta, vega, aT, bT;
   double DJ, J, J_new, gamma;
-  int i, n;
+  unsigned int i, n;
 
   // Get an initial trajectory
+  std::cout << "create trajec" << std::endl;
   trajectory = model.createTrajectory();
   X = trajectory.first;
   U = trajectory.second;
-  DJ = 2e31;
+  DJ = 1000.0;
 
   i = 0;
-  while (abs(DJ) > eps) {
+  while (abs(DJ) > eps && i < max_iter) {
+    std::cout << "DJ: " << abs(DJ) << std::endl;
+    std::cout << "J: " << abs(J) << std::endl;
     aT = calculate_aT(X);
     bT = calculate_bT(U);
     descentDirection = calculateZeta(X, U, aT, bT);
@@ -139,25 +142,33 @@ void ergController<ModelTemplate>::iLQR()
     n = 1;
     while (J_new > J + alpha * gamma * DJ) {
       U = U + gamma * vega;
-      X = model.createTrajectory(x0, U_new);
+      X = model.createTrajectory(x0, U);
       J_new = objectiveJ(X, U);
       gamma = pow(beta, n+1);
     }
     trajectory = {X, U};
     i += 1;
+    std::cout << "i: " << i << std::endl;
+    (X.col(X.n_cols - 1)).print("End X: ");
   }
+  std::string x_file = "erg_trajectory_out";
+  arma::mat XT = X.t();
+  XT.save(x_file, arma::csv_ascii);
+  arma::mat UT = U.t();
+  std::string u_file = "erg_control_out";
+  UT.save(u_file, arma::csv_ascii);
 }
 
 
 template<class ModelTemplate>
-double ergController<ModelTemplate>::DJ(std::pair<arma::mat, arma::mat> const &zeta_pair, const arma::mat & aT, const arma::mat & bT)
+double ergController<ModelTemplate>::calculateDJ(std::pair<arma::mat, arma::mat> const &zeta_pair, const arma::mat & aT, const arma::mat & bT)
 {
   arma::vec DJ(n_iter, 1, arma::fill::zeros);
   arma::mat zeta = zeta_pair.first;
   arma::mat vega = zeta_pair.second;
 
   // Construct DJ Vector
-  for (int i = 0; i < n_iter; i++) {
+  for (unsigned int i = 0; i < n_iter; i++) {
     DJ.row(i) = aT.row(i) * zeta.row(i) + bT.row(i) * vega.row(i);
   }
 
@@ -187,7 +198,7 @@ double ergController<ModelTemplate>::objectiveJ(const arma::mat & Xt, const arma
   for (unsigned int i = 0; i < Ut.n_cols; i++) {
     Ut_i = Ut.col(i);
     controlCost = Ut_i.t() * R_mat * Ut_i;
-    trajecJ(i) = cost(0, 0);
+    trajecJ(i) = controlCost(0, 0);
   }
 
   double trajec_cost = ergodiclib::integralTrapz(trajecJ, dt);
@@ -251,6 +262,7 @@ std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ergController<ModelTem
   
   arma::mat Rinv = R_mat.i();
 
+  int idx;
   arma::mat A, B, Pdot, rdot;
   for (unsigned int i = 0; i < Xt.n_cols - 2; i++) {
     idx = Xt.n_cols - 2 - i;
@@ -302,7 +314,7 @@ arma::mat ergController<ModelTemplate>::calculate_bT(const arma::mat & Ut)
 {
   arma::mat bT(Ut.n_cols, Ut.n_rows, arma::fill::zeros);
   for (unsigned int i = 0; i < Ut.n_cols; i++) {
-    bT.row(i) = Ut.col(i).t() * R;
+    bT.row(i) = Ut.col(i).t() * R_mat;
   }
   return bT;
 }

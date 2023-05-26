@@ -11,7 +11,7 @@ using namespace ergodiclib;
 
 int main()
 {
-  arma::vec x0({0.0, 0.0, PI / 2.0, 0.0});
+  arma::vec x0({0.0, 0.0, PI, 0.0});
   arma::vec u0({0.0});
 
   arma::mat Q(4, 4, arma::fill::eye);
@@ -26,7 +26,7 @@ int main()
   arma::mat P(4, 4, arma::fill::eye);
   P(0, 0) = 0.0001;
   P(1, 1) = 0.0001;
-  P(2, 2) = 1000;
+  P(2, 2) = 100;
   P(3, 3) = 2;
 
   arma::mat r(4, 1, arma::fill::zeros);
@@ -39,8 +39,8 @@ int main()
   double eps = 0.01;
 
   CartPole cartpole = CartPole(x0, u0, dt, t0, tf, 10.0, 5.0, 2.0);
-  ilqrController controller = ilqrController(cartpole, Q, R, P, r, 4000, alpha, beta, eps);
+  ilqrController controller = ilqrController(cartpole, Q, R, P, r, 7500, alpha, beta, eps);
   controller.iLQR();
 
-  return 1;
+  return 0;
 }
