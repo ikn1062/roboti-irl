@@ -71,16 +71,28 @@ double fourierBasis::calculateHk(const std::vector<int> & K_vec, const int & k_i
   double l0, l1, ki;
 
   double hk = 1.0;
+  double dx = 0.1;
+  unsigned int integral_iter = 0;
   for (unsigned int i = 0; i < n_dim; i++) {
     l0 = L[i].first;
     l1 = L[i].second;
-    if (K_vec[i] == 0) {
-      hk *= (l1 - l0);
-      continue;
+    ki = (K_vec[i] * PI) / (l1 - l0);
+
+    // Calculating from integral:
+    // if (K_vec[i] == 0) {
+    //   hk *= (l1 - l0);
+    //   continue;
+    // }
+    // hk *= (2 * ki * (l1 - l0) - sin(2 * ki * l0) + sin(2 * ki * l1)) / (4 * ki);
+
+    integral_iter = (unsigned int) ((l1 - l0) / dx);
+    arma::vec integral(integral_iter, arma::fill::zeros);
+    for (unsigned int i = 0; i < integral_iter; i++) {
+      integral(i) = pow(cos(ki * (i * dx)), 2);
     }
-    ki = (K_vec[i] * PI) / l1;
-    hk *= (2 * ki * (l1 - l0) - sin(2 * ki * l0) + sin(2 * ki * l1)) / (4 * ki);
+    hk *= integralTrapz(integral, dx);
   }
+
   hk = sqrt(hk);
   hK_vec[k_idx] = hk;
   return hk;
@@ -91,6 +103,11 @@ arma::rowvec fourierBasis::calculateDFk(
   const std::vector<int> & K_vec, const int &k_idx) const
 {
   arma::rowvec dfk(xt.n_rows, arma::fill::zeros);
+  // std::cout << "hk_values" << std::endl;
+  // for (unsigned int i = 0; i < hK_vec.size(); i++) {
+  //   std::cout << hK_vec[i] << std::endl;
+  // }
+
 
   double hk = hK_vec[k_idx];
   double ki, kj, dfk_val;
@@ -108,7 +125,7 @@ arma::rowvec fourierBasis::calculateDFk(
 
     dfk(i) = dfk_val;
   }
-
+  //dfk.print("dfk: ");
   return dfk;
 }
 

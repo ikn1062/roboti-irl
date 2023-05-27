@@ -35,7 +35,7 @@ public:
   ErgodicMeasure(
     std::vector<arma::mat> demonstrations,
     std::vector<int> demo_weights,
-    double dt_demo, fourierBasis basis);
+    double dt_demo, fourierBasis& basis);
 
   /// \brief Returns Spatial distribution of demonstrations for each series coefficient
   /// \return PhiK Vector
@@ -77,7 +77,7 @@ private:
   std::vector<arma::mat> D_mat;
 
   /// Class that contains the fourier basis for the space
-  fourierBasis Basis;
+  fourierBasis& Basis;
 
   /// \brief Vector of weights for each Demonstration
   std::vector<int> E_vec;

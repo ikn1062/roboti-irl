@@ -28,7 +28,7 @@ class ergController
 {
 public:
   ergController(
-    ErgodicMeasure ergodicMes, fourierBasis basis, ModelTemplate model_agent,
+    ErgodicMeasure& ergodicMes, fourierBasis& basis, ModelTemplate model_agent,
     double q_val, arma::mat Q, arma::mat R, arma::mat P, arma::mat r,
     int max_iter_in, double a, double b, double e)
   : ergodicMeasure(ergodicMes),
@@ -65,8 +65,8 @@ private:
 
   arma::mat calculate_bT(const arma::mat & Ut);
 
-  ErgodicMeasure ergodicMeasure;
-  fourierBasis Basis;
+  ErgodicMeasure& ergodicMeasure;
+  fourierBasis& Basis;
   ModelTemplate model;
   double q;
 
@@ -125,30 +125,41 @@ void ergController<ModelTemplate>::iLQR()
   DJ = 1000.0;
 
   i = 0;
-  while (abs(DJ) > eps && i < max_iter) {
-    std::cout << "DJ: " << abs(DJ) << std::endl;
-    std::cout << "J: " << abs(J) << std::endl;
+  while (std::abs(DJ) > eps && i < max_iter) {
     aT = calculate_aT(X);
+    //aT.print("aT");
     bT = calculate_bT(U);
+    //bT.print("bT");
     descentDirection = calculateZeta(X, U, aT, bT);
     zeta = descentDirection.first;
     vega = descentDirection.second;
 
+    std::cout << "Calc DJ" << std::endl;
     DJ = calculateDJ(descentDirection, aT, bT);
+    std::cout << "Calc J" << std::endl;
     J = objectiveJ(X, U);
     J_new = 2e31; 
     gamma = beta;
 
     n = 1;
-    while (J_new > J + alpha * gamma * DJ) {
+    std::cout << "Armijo, J: " << J << std::endl;
+    while (J_new > J + alpha * gamma * DJ && n < 2) {
       U = U + gamma * vega;
       X = model.createTrajectory(x0, U);
       J_new = objectiveJ(X, U);
       gamma = pow(beta, n+1);
+      n += 1;
+      std::cout << "n: " << n << ", J: " << std::abs(J_new) << std::endl;
     }
     trajectory = {X, U};
     i += 1;
+
     std::cout << "i: " << i << std::endl;
+    std::cout << "DJ: " << std::abs(DJ) << std::endl;
+    std::cout << "J: " << std::abs(J) << std::endl;
+    if (std::isnan(std::abs(DJ))) {
+      DJ = 1000.0;
+    }
     (X.col(X.n_cols - 1)).print("End X: ");
   }
   std::string x_file = "erg_trajectory_out";
@@ -169,7 +180,7 @@ double ergController<ModelTemplate>::calculateDJ(std::pair<arma::mat, arma::mat>
 
   // Construct DJ Vector
   for (unsigned int i = 0; i < n_iter; i++) {
-    DJ.row(i) = aT.row(i) * zeta.row(i) + bT.row(i) * vega.row(i);
+    DJ.row(i) = aT.row(i) * zeta.col(i) + bT.row(i) * vega.col(i);
   }
 
   // integrate and return J
@@ -191,6 +202,7 @@ double ergController<ModelTemplate>::objectiveJ(const arma::mat & Xt, const arma
       ck = ergodicMeasure.calculateCk(Xt, K_series[i], i);
       ergodicCost += lambda[i] * pow(ck - phi[i], 2);
   }
+  ergodicCost = q * ergodicCost;
 
   arma::vec trajecJ(Ut.n_cols, arma::fill::zeros);
   arma::vec Ut_i;
@@ -215,6 +227,7 @@ std::pair<arma::mat, arma::mat> ergController<ModelTemplate>::calculateZeta(
   const arma::mat & bT)
 const
 {
+  std::cout << "calc Zeta" << std::endl;
   std::pair<std::vector<arma::mat>, std::vector<arma::mat>> listPr = calculatePr(Xt, Ut, aT, bT);
   std::vector<arma::mat> Plist = listPr.first;
   std::vector<arma::mat> rlist = listPr.second;
@@ -244,6 +257,7 @@ const
   }
 
   std::pair<arma::mat, arma::mat> descDir = {zeta, vega};
+  std::cout << "calc Zeta Complete" << std::endl;
   return descDir;
 }
 
@@ -281,6 +295,7 @@ std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ergController<ModelTem
   }
 
   std::pair<std::vector<arma::mat>, std::vector<arma::mat>> list_pair = {Plist, rlist};
+  std::cout << "calc PR Complete" << std::endl;
   return list_pair;
 }
 
@@ -294,14 +309,14 @@ arma::mat ergController<ModelTemplate>::calculate_aT(const arma::mat &Xt)
   arma::mat phi = ergodicMeasure.get_PhiK();
 
   arma::rowvec ak_mat(Xt.n_rows, arma::fill::zeros);
-  arma::vec dfk;
+  arma::rowvec dfk(Xt.n_rows, arma::fill::zeros);
   for (unsigned int i = 0; i < K_series.size(); i++) {
     double ck = ergodicMeasure.calculateCk(Xt, K_series[i], i);
 
     for (unsigned int t = 0; t < Xt.n_cols; t++) {
       dfk = Basis.calculateDFk(Xt.col(t), K_series[i], i);
       ak_mat = lambda[i] * (2 * (ck - phi[i]) * ((1 / tf) * dfk));
-      a_mat.row(t) += ak_mat;
+      a_mat.row(t) = a_mat.row(t) + ak_mat;
     }
   }
 

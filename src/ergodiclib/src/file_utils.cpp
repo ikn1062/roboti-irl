@@ -86,7 +86,7 @@ arma::mat readDemonstrationCSV(const std::string & csv_filepath, const int & n_d
     }
     col_vec = arma::conv_to<arma::vec>::from(line_values);
     demo_len = demonstration.n_cols;
-    demonstration.resize(col_vec.n_elem, demo_len + 1);
+    demonstration.resize(col_vec.n_elem, demo_len);
     demonstration.insert_cols(demo_len, col_vec);
   }
 
