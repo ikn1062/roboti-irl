@@ -71,7 +71,7 @@ double fourierBasis::calculateHk(const std::vector<int> & K_vec, const int & k_i
   double l0, l1, ki;
 
   double hk = 1.0;
-  double dx = 0.1;
+  double dx = 0.0001; // 
   unsigned int integral_iter = 0;
   for (unsigned int i = 0; i < n_dim; i++) {
     l0 = L[i].first;

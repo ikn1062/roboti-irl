@@ -76,4 +76,8 @@ add_executable(test_ilqr_controller tests/test_ilqr_controller.cpp)
 target_link_libraries(test_ilqr_controller ${PROJECT_NAME} Catch2::Catch2WithMain ${ARMADILLO_LIBRARIES})
 add_test(NAME Test_of_iLQR_Control COMMAND test_ilqr_controller)
 
+add_executable(test_ergodic tests/test_ergodic.cpp)
+target_link_libraries(test_ergodic ${PROJECT_NAME} Catch2::Catch2WithMain ${ARMADILLO_LIBRARIES})
+add_test(NAME Test_of_Ergoidic_Measure COMMAND test_ergodic)
+
 ament_package()

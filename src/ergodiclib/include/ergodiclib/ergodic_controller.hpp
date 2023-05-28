@@ -212,7 +212,6 @@ double ergController<ModelTemplate>::objectiveJ(const arma::mat & Xt, const arma
     controlCost = Ut_i.t() * R_mat * Ut_i;
     trajecJ(i) = controlCost(0, 0);
   }
-
   double trajec_cost = ergodiclib::integralTrapz(trajecJ, dt);
 
   double final_cost = trajec_cost + ergodicCost;
@@ -250,7 +249,7 @@ const
 
     zdot = A * z + B * v;
     z = z + dt * zdot;
-    v = -R_mat.i() * B.t() * Plist[i] * z - R_mat.i() * B.t() * rlist[i] - R_mat.i() * bT.row(i).t();
+    v = -R_mat.i() * B.t() * Plist[i] * z - R_mat.i() * B.t() * rlist[i] - R_mat.i() * bT.row(i).t(); // + R_mat.i() * B.t() * Plist[i] * z
 
     zeta.col(i) = z;
     vega.col(i) = v;
@@ -284,7 +283,7 @@ std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ergController<ModelTem
     A = model.getA(Xt.col(idx), Ut.col(idx));
     B = model.getB(Xt.col(idx), Ut.col(idx));
 
-    Pdot = -P * A - A.t() * P + P * B * R_mat.i() * B.t() * P - Q_mat;
+    Pdot = -P * A - A.t() * P + P * B * R_mat.i() * B.t() * P - Q_mat; // + P * AT
     rdot = -(A - B * R_mat.i() * B.t() * P).t() * r - aT.row(idx).t() + P * B * R_mat.i() * bT.row(idx).t();
 
     P = P - dt * Pdot;

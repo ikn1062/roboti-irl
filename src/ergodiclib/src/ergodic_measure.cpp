@@ -43,10 +43,10 @@ void ErgodicMeasure::calcErgodic()
 
 arma::vec ErgodicMeasure::calculatePhik()
 {
-  double PhiK_val = 0;
+  double PhiK_val = 0.0;
 
   for (unsigned int i = 0; i < K_series.size(); i++) {
-    PhiK_val = 0;
+    PhiK_val = 0.0;
     for (int j = 0; j < m_demo; j++) {
       PhiK_val += E_vec[j] * weight_vec[j] * calculateCk(D_mat[j], K_series[i], i);
     }
