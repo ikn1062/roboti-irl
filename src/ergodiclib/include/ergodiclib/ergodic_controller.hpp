@@ -127,16 +127,14 @@ void ergController<ModelTemplate>::iLQR()
   i = 0;
   while (std::abs(DJ) > eps && i < max_iter) {
     aT = calculate_aT(X);
-    //aT.print("aT");
+    //aT.print("aT: ");
     bT = calculate_bT(U);
-    //bT.print("bT");
+    //bT.print("bT: ");
     descentDirection = calculateZeta(X, U, aT, bT);
     zeta = descentDirection.first;
     vega = descentDirection.second;
 
-    std::cout << "Calc DJ" << std::endl;
     DJ = calculateDJ(descentDirection, aT, bT);
-    std::cout << "Calc J" << std::endl;
     J = objectiveJ(X, U);
     J_new = 2e31; 
     gamma = beta;
@@ -149,17 +147,14 @@ void ergController<ModelTemplate>::iLQR()
       J_new = objectiveJ(X, U);
       gamma = pow(beta, n+1);
       n += 1;
-      std::cout << "n: " << n << ", J: " << std::abs(J_new) << std::endl;
+      //std::cout << "n: " << n-1 << ", J: " << std::abs(J_new) << std::endl;
     }
     trajectory = {X, U};
     i += 1;
 
     std::cout << "i: " << i << std::endl;
     std::cout << "DJ: " << std::abs(DJ) << std::endl;
-    std::cout << "J: " << std::abs(J) << std::endl;
-    if (std::isnan(std::abs(DJ))) {
-      DJ = 1000.0;
-    }
+    std::cout << "J: " << std::abs(J_new) << std::endl;
     (X.col(X.n_cols - 1)).print("End X: ");
   }
   std::string x_file = "erg_trajectory_out";
@@ -226,7 +221,7 @@ std::pair<arma::mat, arma::mat> ergController<ModelTemplate>::calculateZeta(
   const arma::mat & bT)
 const
 {
-  std::cout << "calc Zeta" << std::endl;
+ //std::cout << "calc Zeta" << std::endl;
   std::pair<std::vector<arma::mat>, std::vector<arma::mat>> listPr = calculatePr(Xt, Ut, aT, bT);
   std::vector<arma::mat> Plist = listPr.first;
   std::vector<arma::mat> rlist = listPr.second;
@@ -256,7 +251,7 @@ const
   }
 
   std::pair<arma::mat, arma::mat> descDir = {zeta, vega};
-  std::cout << "calc Zeta Complete" << std::endl;
+  // std::cout << "calc Zeta Complete" << std::endl;
   return descDir;
 }
 
@@ -265,7 +260,7 @@ template<class ModelTemplate>
 std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ergController<ModelTemplate>::calculatePr(
   arma::mat Xt, arma::mat Ut, const arma::mat & aT, const arma::mat & bT) const
 {
-  std::cout << "calc PR" << std::endl;
+  // std::cout << "calc PR" << std::endl;
   arma::mat P = P_mat;
   arma::mat r = r_mat;
   std::vector<arma::mat> Plist(Xt.n_cols, P);
@@ -289,12 +284,15 @@ std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ergController<ModelTem
     P = P - dt * Pdot;
     r = r - dt * rdot;
 
+    //std::cout << "P" << P <<  std::endl;
+    //std::cout << "r" << r << std::endl;
+
     Plist[idx] = P;
     rlist[idx] = r;
   }
 
   std::pair<std::vector<arma::mat>, std::vector<arma::mat>> list_pair = {Plist, rlist};
-  std::cout << "calc PR Complete" << std::endl;
+  // std::cout << "calc PR Complete" << std::endl;
   return list_pair;
 }
 

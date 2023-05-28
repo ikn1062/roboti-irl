@@ -35,6 +35,9 @@ fourierBasis::fourierBasis(std::vector<std::pair<double, double>> L_dim, int num
 {
   K_series = create_K_series(K, num_dim);
   hK_vec.resize(K_series.size());
+  for (unsigned int i = 0; i < K_series.size(); i++) {
+    hK_vec[i] = calculateHk(K_series[i], i);
+  }
 }
 
 
@@ -52,7 +55,7 @@ double fourierBasis::calculateFk(
   const arma::vec & x_i_trajectory,
   const std::vector<int> & K_vec, const int & k_idx)
 {
-  double hk = calculateHk(K_vec, k_idx);
+  double hk = hK_vec[k_idx];
   double fourier_basis = 1.0;
   double upper, lower;
 
@@ -94,7 +97,6 @@ double fourierBasis::calculateHk(const std::vector<int> & K_vec, const int & k_i
   }
 
   hk = sqrt(hk);
-  hK_vec[k_idx] = hk;
   return hk;
 }
 
