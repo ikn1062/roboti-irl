@@ -36,7 +36,7 @@ class CartpoleControl : public rclcpp::Node
 {
 public:
   CartpoleControl()
-  : Node("cartpole_ctrl")
+  : Node("cartpole_key")
   {
     // CARTPOLE SIMULATION CONSTRUCTOR
     // Decalre Variables
@@ -159,7 +159,7 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
 
-  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Creating Cartpole Controller Node. ");
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Creating Cartpole Key Controller Node. ");
 
   rclcpp::spin(std::make_shared<CartpoleControl>());
 

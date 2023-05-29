@@ -15,12 +15,12 @@ find_package(sensor_msgs REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
-add_executable(cartpole_ctrl src/cartpole_ctrl.cpp)
-ament_target_dependencies(cartpole_ctrl rclcpp std_msgs geometry_msgs sensor_msgs)
-target_link_libraries(cartpole_ctrl ${rclcpp_LIBRARIES})
+add_executable(cartpole_key src/cartpole_key.cpp)
+ament_target_dependencies(cartpole_key rclcpp std_msgs geometry_msgs sensor_msgs)
+target_link_libraries(cartpole_key ${rclcpp_LIBRARIES})
 
 install(TARGETS
-  cartpole_ctrl
+  cartpole_key
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -14,7 +14,7 @@
 
     <node name="teleop_keyboard" pkg="turtlebot3_teleop" exec="teleop_keyboard" output="screen"  launch-prefix="xterm -e"/> 
     
-    <node name="cartpole_control" pkg="cartpole" exec="cartpole_ctrl" output = "screen"> 
+    <node name="cartpole_key_control" pkg="cartpole" exec="cartpole_key" output = "screen"> 
         <param from="$(find-pkg-share cartpole)/config/cartpole_controller.yaml" />
         <param name="scale" value="10.0" />
     </node>
