@@ -1,5 +1,9 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.9)
 project(ergodiclib)
+
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 20)
+endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -7,9 +11,49 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(Catch2 3 REQUIRED)
+find_package(Armadillo REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
+
+add_library(${PROJECT_NAME} src/ergodic_measure.cpp src/file_utils.cpp src/fourier_basis.cpp src/num_utils.cpp)
+
+target_include_directories(${PROJECT_NAME}
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
+  $<INSTALL_INTERFACE:include/>
+  ${ARMADILLO_INCLUDE_DIRS})
+
+target_compile_features(${PROJECT_NAME}  PUBLIC cxx_std_20)
+target_compile_options(${PROJECT_NAME}  PUBLIC -Wall -Wextra -Wpedantic)
+
+add_executable(ergodic_test src/ergodic_test.cpp)
+ament_target_dependencies(ergodic_test Armadillo)
+target_link_libraries(ergodic_test ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
+
+add_executable(ergodic_main src/ergodic_main.cpp)
+ament_target_dependencies(ergodic_main Armadillo)
+target_link_libraries(ergodic_main ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
+
+add_executable(controller_test src/controller_test.cpp)
+ament_target_dependencies(controller_test Armadillo)
+target_link_libraries(controller_test ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
+
+install(TARGETS ergodic_test ergodic_main controller_test DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
+install(TARGETS ergodic_test ergodic_main ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+install(EXPORT ${PROJECT_NAME}-targets
+        FILE ${PROJECT_NAME}-config.cmake
+        NAMESPACE ${PROJECT_NAME}::
+        DESTINATION lib/cmake/${PROJECT_NAME})
+ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
+
+#if (NOT CMAKE_CROSSCOMPILING)
+#  find_package(Doxygen)
+#  set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md) # Use the readme in your doxygen docs
+#  doxygen_add_docs(doxygen include/ src/ README.md ALL)
+#endif()
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -22,5 +66,18 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+include(CTest)
+add_executable(test_cartpole tests/test_cartpole.cpp)
+target_link_libraries(test_cartpole ${PROJECT_NAME} Catch2::Catch2WithMain ${ARMADILLO_LIBRARIES})
+add_test(NAME Test_of_Cartpole_Model COMMAND test_cartpole)
+
+add_executable(test_ilqr_controller tests/test_ilqr_controller.cpp)
+target_link_libraries(test_ilqr_controller ${PROJECT_NAME} Catch2::Catch2WithMain ${ARMADILLO_LIBRARIES})
+add_test(NAME Test_of_iLQR_Control COMMAND test_ilqr_controller)
+
+add_executable(test_ergodic tests/test_ergodic.cpp)
+target_link_libraries(test_ergodic ${PROJECT_NAME} Catch2::Catch2WithMain ${ARMADILLO_LIBRARIES})
+add_test(NAME Test_of_Ergoidic_Measure COMMAND test_ergodic)
 
 ament_package()
