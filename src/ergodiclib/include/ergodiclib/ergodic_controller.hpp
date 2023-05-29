@@ -9,6 +9,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <limits>
 
 #include <ergodiclib/ergodic_measure.hpp>
 #include <ergodiclib/num_utils.hpp>
@@ -51,6 +52,11 @@ public:
   }
 
   void iLQR();
+
+  std::pair<arma::mat, arma::mat> ModelPredictiveControl(
+    const arma::vec & x0, const arma::vec & u0,
+    const unsigned int & num_steps,
+    const unsigned int & max_iterations);
 
 private:
   double calculateDJ(
@@ -129,8 +135,8 @@ void ergController<ModelTemplate>::iLQR()
   trajectory = model.createTrajectory();
   X = trajectory.first;
   U = trajectory.second;
-  DJ = 1000.0;
 
+  DJ = 1000.0;
   i = 0;
   while (std::abs(DJ) > eps && i < max_iter) {
     aT = calculate_aT(X);
@@ -152,8 +158,8 @@ void ergController<ModelTemplate>::iLQR()
       U = U + gamma * vega;
       X = model.createTrajectory(x0, U);
       J_new = objectiveJ(X, U);
-      gamma = pow(beta, n + 1);
       n += 1;
+      gamma = pow(beta, n);
       //std::cout << "n: " << n-1 << ", J: " << std::abs(J_new) << std::endl;
     }
     trajectory = {X, U};
@@ -172,18 +178,63 @@ void ergController<ModelTemplate>::iLQR()
   UT.save(u_file, arma::csv_ascii);
 }
 
+template<class ModelTemplate>
+std::pair<arma::mat, arma::mat> ergController<ModelTemplate>::ModelPredictiveControl(
+  const arma::vec & x0, const arma::vec & u0, const unsigned int & num_steps,
+  const unsigned int & max_iterations)
+{
+  std::pair<arma::mat, arma::mat> trajectory, descentDirection;
+  arma::mat X, U, zeta, vega, aT, bT;
+  double DJ, J, J_new, gamma;
+  unsigned int i, n;
+
+  // Create Trajectory
+  U = arma::mat(u0.n_elem, num_steps, arma::fill::zeros);
+  U.each_col() = u0;
+  X = model.createTrajectory(x0, U, num_steps);
+
+  DJ = 1000.0;
+  i = 0;
+  while (std::abs(DJ) > eps && i < max_iterations) {
+    aT = calculate_aT(X);
+    bT = calculate_bT(U);
+    descentDirection = calculateZeta(X, U, aT, bT);
+    zeta = descentDirection.first;
+    vega = descentDirection.second;
+
+    DJ = calculateDJ(descentDirection, aT, bT);
+    J = objectiveJ(X, U);
+    J_new = std::numeric_limits<double>::max();
+
+    n = 1;
+    gamma = beta;
+    while (J_new > J + alpha * gamma * DJ && n < 10) { // fix trajectoryJ(X, U) to descent dir
+      U = U + gamma * vega;
+      X = model.createTrajectory(x0, U);
+      J_new = objectiveJ(X, U);
+      n += 1;
+      gamma = pow(beta, n);
+    }
+    trajectory = {X, U};
+    i += 1;
+  }
+
+  return trajectory;
+}
+
 
 template<class ModelTemplate>
 double ergController<ModelTemplate>::calculateDJ(
   std::pair<arma::mat, arma::mat> const & zeta_pair,
   const arma::mat & aT, const arma::mat & bT)
 {
-  arma::vec DJ(n_iter, 1, arma::fill::zeros);
+  const unsigned int num_iter = aT.n_rows;
+  arma::vec DJ(num_iter, 1, arma::fill::zeros);
   arma::mat zeta = zeta_pair.first;
   arma::mat vega = zeta_pair.second;
 
   // Construct DJ Vector
-  for (unsigned int i = 0; i < n_iter; i++) {
+  for (unsigned int i = 0; i < num_iter; i++) {
     DJ.row(i) = aT.row(i) * zeta.col(i) + bT.row(i) * vega.col(i);
   }
 

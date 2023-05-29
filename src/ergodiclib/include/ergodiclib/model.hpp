@@ -26,6 +26,10 @@ concept ModelConcept = requires(ModelTemplate modeltemplate)
   {modeltemplate.createTrajectory(
       std::declval<arma::vec>(),
       std::declval<arma::mat>())}->std::same_as<arma::mat>;
+  {modeltemplate.createTrajectory(
+      std::declval<arma::vec>(),
+      std::declval<arma::mat>(),
+      std::declval<unsigned int>())}->std::same_as<arma::mat>;
   std::same_as<decltype(modeltemplate.x0), arma::vec>;
   std::same_as<decltype(modeltemplate.u0), arma::vec>;
   std::same_as<decltype(modeltemplate.dt), double>;
