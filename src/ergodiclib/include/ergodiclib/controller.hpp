@@ -154,7 +154,7 @@ void ilqrController<ModelTemplate>::iLQR()
 
   int n = 0;
   unsigned int i = 0;
-  gamma = beta; // This is not correct 
+  gamma = beta; // This is not correct
   std::cout << "Start loop" << std::endl;
   std::cout << "abs_J" << abs(J) << std::endl;
   std::cout << "eps" << eps << std::endl;

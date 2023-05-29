@@ -74,7 +74,7 @@ double fourierBasis::calculateHk(const std::vector<int> & K_vec, const int & k_i
   double l0, l1, ki;
 
   double hk = 1.0;
-  double dx = 0.0001; // 
+  double dx = 0.0001; //
   unsigned int integral_iter = 0;
   for (unsigned int i = 0; i < n_dim; i++) {
     l0 = L[i].first;
@@ -97,12 +97,13 @@ double fourierBasis::calculateHk(const std::vector<int> & K_vec, const int & k_i
   }
 
   hk = sqrt(hk);
+  hK_vec[k_idx] = hk;
   return hk;
 }
 
 arma::rowvec fourierBasis::calculateDFk(
   const arma::colvec & xt,
-  const std::vector<int> & K_vec, const int &k_idx) const
+  const std::vector<int> & K_vec, const int & k_idx) const
 {
   arma::rowvec dfk(xt.n_rows, arma::fill::zeros);
   // std::cout << "hk_values" << std::endl;

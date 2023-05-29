@@ -28,7 +28,7 @@ class ergController
 {
 public:
   ergController(
-    ErgodicMeasure& ergodicMes, fourierBasis& basis, ModelTemplate model_agent,
+    ErgodicMeasure & ergodicMes, fourierBasis & basis, ModelTemplate model_agent,
     double q_val, arma::mat Q, arma::mat R, arma::mat P, arma::mat r,
     int max_iter_in, double a, double b, double e)
   : ergodicMeasure(ergodicMes),
@@ -48,25 +48,32 @@ public:
     dt = model_agent.dt;
     tf = model_agent.tf;
     n_iter = (int) ((model_agent.tf - model_agent.t0) / dt);
-   }
+  }
 
   void iLQR();
 
 private:
-  double calculateDJ(std::pair<arma::mat, arma::mat> const &zeta_pair, const arma::mat & at, const arma::mat & bt);
- 
+  double calculateDJ(
+    std::pair<arma::mat, arma::mat> const & zeta_pair, const arma::mat & at,
+    const arma::mat & bt);
+
   double objectiveJ(const arma::mat & Xt, const arma::mat & Ut);
 
-  std::pair<arma::mat, arma::mat> calculateZeta(const arma::mat & Xt, const arma::mat & Ut, const arma::mat & aT, const arma::mat & bT) const;
+  std::pair<arma::mat, arma::mat> calculateZeta(
+    const arma::mat & Xt, const arma::mat & Ut,
+    const arma::mat & aT, const arma::mat & bT) const;
 
-  std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(arma::mat Xt, arma::mat Ut, const arma::mat & aT, const arma::mat & bT) const;
+  std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(
+    arma::mat Xt, arma::mat Ut,
+    const arma::mat & aT,
+    const arma::mat & bT) const;
 
   arma::mat calculate_aT(const arma::mat & x_mat);
 
   arma::mat calculate_bT(const arma::mat & Ut);
 
-  ErgodicMeasure& ergodicMeasure;
-  fourierBasis& Basis;
+  ErgodicMeasure & ergodicMeasure;
+  fourierBasis & Basis;
   ModelTemplate model;
   double q;
 
@@ -136,7 +143,7 @@ void ergController<ModelTemplate>::iLQR()
 
     DJ = calculateDJ(descentDirection, aT, bT);
     J = objectiveJ(X, U);
-    J_new = 2e31; 
+    J_new = 2e31;
     gamma = beta;
 
     n = 1;
@@ -145,7 +152,7 @@ void ergController<ModelTemplate>::iLQR()
       U = U + gamma * vega;
       X = model.createTrajectory(x0, U);
       J_new = objectiveJ(X, U);
-      gamma = pow(beta, n+1);
+      gamma = pow(beta, n + 1);
       n += 1;
       //std::cout << "n: " << n-1 << ", J: " << std::abs(J_new) << std::endl;
     }
@@ -167,7 +174,9 @@ void ergController<ModelTemplate>::iLQR()
 
 
 template<class ModelTemplate>
-double ergController<ModelTemplate>::calculateDJ(std::pair<arma::mat, arma::mat> const &zeta_pair, const arma::mat & aT, const arma::mat & bT)
+double ergController<ModelTemplate>::calculateDJ(
+  std::pair<arma::mat, arma::mat> const & zeta_pair,
+  const arma::mat & aT, const arma::mat & bT)
 {
   arma::vec DJ(n_iter, 1, arma::fill::zeros);
   arma::mat zeta = zeta_pair.first;
@@ -184,7 +193,7 @@ double ergController<ModelTemplate>::calculateDJ(std::pair<arma::mat, arma::mat>
 }
 
 template<class ModelTemplate>
-double ergController<ModelTemplate>::objectiveJ(const arma::mat & Xt, const arma::mat & Ut) 
+double ergController<ModelTemplate>::objectiveJ(const arma::mat & Xt, const arma::mat & Ut)
 {
   const std::vector<std::vector<int>> K_series = Basis.get_K_series();
   arma::mat lambda = ergodicMeasure.get_LambdaK();
@@ -194,8 +203,8 @@ double ergController<ModelTemplate>::objectiveJ(const arma::mat & Xt, const arma
 
   double ck;
   for (unsigned int i = 0; i < K_series.size(); i++) {
-      ck = ergodicMeasure.calculateCk(Xt, K_series[i], i);
-      ergodicCost += lambda[i] * pow(ck - phi[i], 2);
+    ck = ergodicMeasure.calculateCk(Xt, K_series[i], i);
+    ergodicCost += lambda[i] * pow(ck - phi[i], 2);
   }
   ergodicCost = q * ergodicCost;
 
@@ -221,7 +230,7 @@ std::pair<arma::mat, arma::mat> ergController<ModelTemplate>::calculateZeta(
   const arma::mat & bT)
 const
 {
- //std::cout << "calc Zeta" << std::endl;
+  //std::cout << "calc Zeta" << std::endl;
   std::pair<std::vector<arma::mat>, std::vector<arma::mat>> listPr = calculatePr(Xt, Ut, aT, bT);
   std::vector<arma::mat> Plist = listPr.first;
   std::vector<arma::mat> rlist = listPr.second;
@@ -233,7 +242,8 @@ const
   arma::mat B = model.getB(Xt.col(0), Ut.col(0));
   arma::vec z(Xt.n_rows, arma::fill::zeros);
 
-  arma::vec v = -R_mat.i() * B.t() * Plist[0] * z - R_mat.i() * B.t() * rlist[0] - R_mat.i() * bT.row(0).t(); 
+  arma::vec v = -R_mat.i() * B.t() * Plist[0] * z - R_mat.i() * B.t() * rlist[0] - R_mat.i() *
+    bT.row(0).t();
   zeta.col(0) = z;
   vega.col(0) = v;
 
@@ -244,7 +254,8 @@ const
 
     zdot = A * z + B * v;
     z = z + dt * zdot;
-    v = -R_mat.i() * B.t() * Plist[i] * z - R_mat.i() * B.t() * rlist[i] - R_mat.i() * bT.row(i).t(); // + R_mat.i() * B.t() * Plist[i] * z
+    v = -R_mat.i() * B.t() * Plist[i] * z - R_mat.i() * B.t() * rlist[i] - R_mat.i() *
+      bT.row(i).t();                                                                                  // + R_mat.i() * B.t() * Plist[i] * z
 
     zeta.col(i) = z;
     vega.col(i) = v;
@@ -267,7 +278,7 @@ std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ergController<ModelTem
   std::vector<arma::mat> rlist(Xt.n_cols, r);
   Plist[Xt.n_cols - 1] = P;
   rlist[Xt.n_cols - 1] = r;
-  
+
   arma::mat Rinv = R_mat.i();
 
   int idx;
@@ -279,7 +290,8 @@ std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ergController<ModelTem
     B = model.getB(Xt.col(idx), Ut.col(idx));
 
     Pdot = -P * A - A.t() * P + P * B * R_mat.i() * B.t() * P - Q_mat; // + P * AT
-    rdot = -(A - B * R_mat.i() * B.t() * P).t() * r - aT.row(idx).t() + P * B * R_mat.i() * bT.row(idx).t();
+    rdot = -(A - B * R_mat.i() * B.t() * P).t() * r - aT.row(idx).t() + P * B * R_mat.i() * bT.row(
+      idx).t();
 
     P = P - dt * Pdot;
     r = r - dt * rdot;
@@ -297,7 +309,7 @@ std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ergController<ModelTem
 }
 
 template<class ModelTemplate>
-arma::mat ergController<ModelTemplate>::calculate_aT(const arma::mat &Xt)
+arma::mat ergController<ModelTemplate>::calculate_aT(const arma::mat & Xt)
 {
   arma::mat a_mat(Xt.n_cols, Xt.n_rows, arma::fill::zeros);
 

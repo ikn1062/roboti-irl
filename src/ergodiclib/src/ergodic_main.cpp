@@ -84,7 +84,9 @@ int main()
   double beta = 0.75;
   double eps = 0.000001;
 
-  ergController controller = ergController<CartPole>(ergodicMeasure, Basis, cartpole, q, Q, R, P, r, 500, alpha, beta, eps);
+  ergController controller = ergController<CartPole>(
+    ergodicMeasure, Basis, cartpole, q, Q, R, P, r,
+    500, alpha, beta, eps);
   controller.iLQR();
   return 0;
 }

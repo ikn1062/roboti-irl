@@ -42,7 +42,9 @@ public:
     const int & k_idx);
 
   /// \brief WRITE COMMENT
-  arma::rowvec calculateDFk(const arma::colvec & xt, const std::vector<int> & K_vec, const int &k_idx) const;
+  arma::rowvec calculateDFk(
+    const arma::colvec & xt, const std::vector<int> & K_vec,
+    const int & k_idx) const;
 
   /// \brief Returns Normalizing factor for Fk for each series coefficient
   /// \return hK vector
