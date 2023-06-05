@@ -28,6 +28,9 @@ template<class ModelTemplate>
 class ergController
 {
 public:
+  ergController()
+  {}
+
   ergController(
     ErgodicMeasure & ergodicMes, fourierBasis & basis, ModelTemplate model_agent,
     double q_val, arma::mat Q, arma::mat R, arma::mat P, arma::mat r,
@@ -169,6 +172,10 @@ void ergController<ModelTemplate>::iLQR()
     std::cout << "DJ: " << std::abs(DJ) << std::endl;
     std::cout << "J: " << std::abs(J_new) << std::endl;
     (X.col(X.n_cols - 1)).print("End X: ");
+
+    if (i%10 == 0) {
+      X.print("X: ");
+    }
   }
   std::string x_file = "erg_trajectory_out";
   arma::mat XT = X.t();
@@ -269,6 +276,7 @@ double ergController<ModelTemplate>::objectiveJ(const arma::mat & Xt, const arma
   }
   double trajec_cost = ergodiclib::integralTrapz(trajecJ, dt);
 
+  std::cout << "ergodicCost: " << ergodicCost << ", ctrlCost: " << trajec_cost << std::endl;
   double final_cost = trajec_cost + ergodicCost;
   return final_cost;
 }

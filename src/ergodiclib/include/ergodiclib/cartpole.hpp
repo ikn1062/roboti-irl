@@ -146,11 +146,12 @@ public:
   /// \return State Position Trajectory over time horizon
   arma::mat createTrajectory(const arma::vec & x0_input, const arma::mat & ut_mat) const
   {
-    arma::mat x_traj(x0.n_elem, n_iter, arma::fill::zeros);
+    const double num_iter = ut_mat.n_cols;
+    arma::mat x_traj(x0.n_elem, num_iter, arma::fill::zeros);
     x_traj.col(0) = x0_input;
 
     arma::mat x_new;
-    for (int i = 1; i < n_iter; i++) {
+    for (int i = 1; i < num_iter; i++) {
       x_new = integrate(x_traj.col(i - 1), ut_mat.col(i - 1));
       x_new(2) = ergodiclib::normalizeAngle(x_new(2));
       x_traj.col(i) = x_new;

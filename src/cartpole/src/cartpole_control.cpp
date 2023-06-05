@@ -26,6 +26,12 @@
 #include "std_msgs/msg/u_int64.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+#include "std_srvs/srv/trigger.hpp"
+
+#include <ergodiclib/file_utils.hpp>
+#include <ergodiclib/ergodic_measure.hpp>
+#include <ergodiclib/controller.hpp>
+#include <ergodiclib/cartpole.hpp>
 
 using namespace std::chrono;
 
@@ -37,13 +43,14 @@ public:
   {
     // CARTPOLE SIMULATION CONSTRUCTOR
     // Decalre Variables
-    declare_parameter("rate", 10.0);
-    declare_parameter("control_type", "MPC");
-    declare_parameter("control_file", "");
+    declare_parameter("rate", 100.0);
+    declare_parameter("control_type", "file");
+    declare_parameter("control_file", "erg_control_out.csv");
 
     // Get Variables
     rate_ = get_parameter("rate").as_double();
     auto duration_ = std::chrono::duration<double>(1.0 / rate_);
+    auto mpc_duration_ = std::chrono::duration<double>(1.0 / 10);
 
     control_type = get_parameter("control_type").as_string();
     control_file = get_parameter("control_file").as_string();
@@ -53,34 +60,45 @@ public:
     command_pub_ = create_publisher<std_msgs::msg::Float64>("/cartpole/cmd", 10);
     joint_state_sub_ = create_subscription<sensor_msgs::msg::JointState>("/cartpole/joint_state", 10, std::bind(&CartpoleControl::jointstate_cb_, this, std::placeholders::_1));
 
+    file_cntrl_trigger_ = create_service<std_srvs::srv::Trigger>("~/file_control_trigger_", std::bind(&CartpoleControl::fileController, this, std::placeholders::_1, std::placeholders::_2));
+    MPC_trigger_ = create_service<std_srvs::srv::Trigger>("~/mpc_trigger_", std::bind(&CartpoleControl::MPCTrigger, this, std::placeholders::_1, std::placeholders::_2));
+
     // Initial Variables
     timestep_.data = 0;
     timestep_pub_->publish(timestep_);
 
-    if (control_type == "MPC") {
-        Q(0, 0) = 0.0;
-        Q(1, 1) = 0.0;
-        Q(2, 2) = 25.0;
-        Q(3, 3) = 1.0;
+    x0 = arma::vec({0.0, 0.0, ergodiclib::PI, 0.0});
+    u0 = arma::vec({0.0});
+    Q = arma::mat(4, 4, arma::fill::eye);
+    R = arma::mat(1, 1, arma::fill::eye);
+    P = arma::mat(4, 4, arma::fill::eye);
+    r = arma::mat(4, 1, arma::fill::zeros);
 
-        R(0, 0) = 0.01;
+    mpc_trigger = false;
+    Q(0, 0) = 0.0;
+    Q(1, 1) = 0.0;
+    Q(2, 2) = 25.0;
+    Q(3, 3) = 1.0;
 
-        P(0, 0) = 0.0001;
-        P(1, 1) = 0.0001;
-        P(2, 2) = 100;
-        P(3, 3) = 2;
+    R(0, 0) = 0.01;
 
-        cartpole = ergodiclib::CartPole(x0, u0, dt, t0, tf, 10.0, 5.0, 2.0);
-        controller = ergodiclib::ilqrController(cartpole, Q, R, P, r, 7500, alpha, beta, eps);
-    }
+    P(0, 0) = 0.0001;
+    P(1, 1) = 0.0001;
+    P(2, 2) = 100;
+    P(3, 3) = 2;
+
+    cartpole = ergodiclib::CartPole(x0, u0, dt, t0, tf, 10.0, 5.0, 2.0);
+    controller = ergodiclib::ilqrController(cartpole, Q, R, P, r, 7500, alpha, beta, eps);
 
     // Create main callback
     timer_ = create_wall_timer(duration_, std::bind(&CartpoleControl::cartpole_main, this));
+    mpc_timer_ = create_wall_timer(mpc_duration_, std::bind(&CartpoleControl::ModelPredictiveControl, this));
   }
 
 private:
   // Main loop publisher and timer
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr mpc_timer_;
   double rate_;
   int err;
 
@@ -92,13 +110,14 @@ private:
   std_msgs::msg::Float64 force_cmd;
 
   // MPC Control Variables
+  bool mpc_trigger;
   double x_cart, v_cart, x_pole, v_pole;
-  arma::vec x0({0.0, 0.0, PI, 0.0});
-  arma::vec u0({0.0});
-  arma::mat Q(4, 4, arma::fill::eye);
-  arma::mat R(1, 1, arma::fill::eye);
-  arma::mat P(4, 4, arma::fill::eye);
-  arma::mat r(4, 1, arma::fill::zeros);
+  arma::vec x0;
+  arma::vec u0;
+  arma::mat Q;
+  arma::mat R;
+  arma::mat P;
+  arma::mat r;
 
   double dt = 0.01;
   double t0 = 0.0;
@@ -112,7 +131,7 @@ private:
   unsigned int max_iter = 5000;
 
   ergodiclib::CartPole cartpole;
-  ergodiclib::ilqrController controller;
+  ergodiclib::ilqrController<ergodiclib::CartPole> controller;
 
   std::pair<arma::mat, arma::mat> trajectories;
   arma::mat X;
@@ -121,6 +140,8 @@ private:
   // Create publishers and subscribers
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr command_pub_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr file_cntrl_trigger_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr MPC_trigger_;
 
   // Publishes the current timestep of the simulation
   std_msgs::msg::UInt64 timestep_;
@@ -128,14 +149,6 @@ private:
 
   void cartpole_main()
   {
-    if (control_type == "file") {
-        err = fileController();
-    }
-
-    if (control_type == "MPC") {
-        err = ModelPredictiveControl();
-    }
-
     timestep_.data += (1 / rate_) * 1000;       // converts to an int, note that this is in ms
     timestep_pub_->publish(timestep_);
   }
@@ -148,24 +161,26 @@ private:
       x_cart = cartpole_js.position[0];
       v_cart = cartpole_js.velocity[0];
     } else {
-      x_pole = ergodiclib::normalize_angle(cartpole_js.position[0]); 
+      x_pole = ergodiclib::normalizeAngle(cartpole_js.position[0]); 
       v_pole = cartpole_js.velocity[0];
     }
   }
 
-  int fileController()
+  void fileController(const std::shared_ptr<std_srvs::srv::Trigger::Request>, std::shared_ptr<std_srvs::srv::Trigger::Response> response)
   {
     std::vector<float> control_input;
     std::ifstream controls(control_file);
 
     if (!controls.is_open()) {
         RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Control file could not be open");
-        return -1;
+        response->success = false;
+        response->message = "Control File could not be opened";
+        return;
     }
     
     std::string line;
     float num;
-    while (std::getline(file, line)){
+    while (std::getline(controls, line)){
         std::istringstream iss(line);
         std::string value;
         while (std::getline(iss, value, ',')) {
@@ -176,30 +191,45 @@ private:
 
     controls.close();
 
-    for (unsigned int i = 0; i < control_input.size() i++){
+    for (unsigned int i = 0; i < control_input.size(); i++){
         force_cmd.data = control_input[i];
         command_pub_->publish(force_cmd);
     }
 
-    control_type = "";
-    return 0;
+    response->success = true;
+    response->message = "Control Passed";
+    return;
   }
 
-  int ModelPredictiveControl()
+  void ModelPredictiveControl()
   {
-    double controls;
-    arma::vec curr_pos({x_cart, v_cart, x_pole, v_pole});
-    trajectories = controller.ModelPredictiveControl(curr_pos, u0, 50, 100);
-    X = trajectories.first;
-    U = trajectories.second;
+    while (mpc_trigger) {
+      double controls;
+      arma::vec curr_pos({x_cart, v_cart, x_pole, v_pole});
+      trajectories = controller.ModelPredictiveControl(curr_pos, u0, 10, 100);
+      X = trajectories.first;
+      U = trajectories.second;
 
-    for (unsigned int i = 0; i < U.n_cols; i++) {
-        controls = U(0, 0);
-        force_cmd.data = controls;
-        command_pub_->publish(force_cmd);
+      for (unsigned int i = 0; i < U.n_cols; i++) {
+      controls = U(0, 0);
+      force_cmd.data = controls;
+      command_pub_->publish(force_cmd);
     }
+    }
+  }
 
-    return 0;
+  void MPCTrigger(const std::shared_ptr<std_srvs::srv::Trigger::Request>, std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+  {
+    if (mpc_trigger) {
+      mpc_trigger = false;
+      response->message = "Control Trigger - ON";
+    } else {
+      mpc_trigger = true;
+      response->message = "Control Trigger - OFF";
+    }
+    
+    response->success = true;
+    return;
   }
   
 };

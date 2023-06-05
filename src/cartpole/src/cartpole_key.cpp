@@ -140,16 +140,19 @@ private:
     }
   }
 
-  double normalize_angle(double rad)
+  double normalize_angle(const double & rad)
   {
     double const PI = 3.14159265359;
-    double new_rad = std::fmod(rad, 2.0 * PI);
-    if (new_rad <= -1.0 * PI) {
-      new_rad += 2.0 * PI;
-    }
+    double new_rad;
+
+    new_rad = fmod(rad, 2 * PI);
+    new_rad = fmod(new_rad + 2 * PI, 2 * PI);
     if (new_rad > PI) {
-      new_rad -= 2.0 * PI;
+      new_rad -= 2 * PI;
     }
+
+    new_rad = new_rad <= 0 ? (PI - abs(new_rad)) : -1 * (PI - abs(new_rad));
+
     return new_rad;
   }
 };

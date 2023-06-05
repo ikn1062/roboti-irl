@@ -28,6 +28,9 @@ template<class ModelTemplate>
 class ilqrController
 {
 public:
+  ilqrController()
+  {}
+
   /// \brief Constructor for iLQR Controller
   /// \param model_in Model input following Concept Template
   /// \param Q Q Matrix (Trajectory Penalty)
@@ -226,15 +229,18 @@ std::pair<arma::mat, arma::mat> ilqrController<ModelTemplate>::ModelPredictiveCo
   unsigned int i, n;
 
   // Create Trajectory
+  std::cout << "Create Trajectory" << std::endl;
   U = arma::mat(u0.n_elem, num_steps, arma::fill::zeros);
   U.each_col() = u0;
   X = model.createTrajectory(x0, U, num_steps);
 
   // Get Cost of the trajectory
+  std::cout << "Cost of Trajectory" << std::endl;
   J = objectiveJ(X, U);
 
+  DJ = 1000;
   i = 0;
-  while (abs(J) > eps && i < max_iterations) {
+  while (std::abs(DJ) > eps && i < max_iterations) {
     aT = calculate_aT(X);
     bT = calculate_bT(U);
     descentDirection = calculateZeta(X, U, aT, bT);
@@ -242,19 +248,20 @@ std::pair<arma::mat, arma::mat> ilqrController<ModelTemplate>::ModelPredictiveCo
     vega = descentDirection.second;
 
     DJ = calculateDJ(descentDirection, aT, bT);
+    std::cout << "Loop: " << i << ", J: " << J << ", DJ: " << DJ << std::endl;
 
     n = 1;
     J_new = std::numeric_limits<double>::max();
     gamma = beta;
-    while (J_new > J + alpha * gamma * DJ && n < 10) { // fix trajectoryJ(X, U) to descent dir
+    while (J_new > J + alpha * gamma * DJ && n < 10) { 
       U_new = U + gamma * vega;
       X_new = model.createTrajectory(x0, U_new);
-
       J_new = objectiveJ(X_new, U_new);
 
       n += 1;
       gamma = pow(beta, n);
     }
+
     J = J_new;
     X = X_new;
     U = U_new;
