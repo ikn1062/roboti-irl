@@ -11,11 +11,7 @@
     <node pkg="ros_gz_bridge" exec="parameter_bridge" name="ros2_gazebo_bridge" output="screen" args="/world/empty/model/cartpole/joint_state@sensor_msgs/msg/JointState@ignition.msgs.Model">
         <remap from="/world/empty/model/cartpole/joint_state" to="/cartpole/joint_state" />
     </node>
-
-    <node name="teleop_keyboard" pkg="turtlebot3_teleop" exec="teleop_keyboard" output="screen"  launch-prefix="xterm -e"/> 
     
-    <node name="cartpole_key_control" pkg="cartpole" exec="cartpole_key" output = "screen"> 
-        <param from="$(find-pkg-share cartpole)/config/cartpole_controller.yaml" />
-        <param name="scale" value="10.0" />
+    <node name="cartpole_ctrl" pkg="cartpole" exec="cartpole_ctrl" output = "screen"> 
     </node>
 </launch>

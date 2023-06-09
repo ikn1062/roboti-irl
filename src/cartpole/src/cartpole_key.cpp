@@ -8,7 +8,7 @@
 ///     cart_path (string): Path to save the cart joint position outputs
 ///     pole_path (string): Path to save the pole joint position outputs
 /// PUBLISHES:
-///     cartpole/timestep (std_msgs::msg::UInt64): Current Timestep of Simulation
+///     /cartpole/timestep (std_msgs::msg::UInt64): Current Timestep of Simulation
 ///     /cartpole/cmd (std_msgs::msg::Float64): Command Publisher for cartpole sim
 /// SUBSCRIBES:
 ///     /cmd_vel (geometry_msgs::msg::Twist): Subscribes to the Teleop Twist Keyboard
@@ -36,7 +36,7 @@ class CartpoleControl : public rclcpp::Node
 {
 public:
   CartpoleControl()
-  : Node("cartpole_ctrl")
+  : Node("cartpole_key")
   {
     // CARTPOLE SIMULATION CONSTRUCTOR
     // Decalre Variables
@@ -140,16 +140,19 @@ private:
     }
   }
 
-  double normalize_angle(double rad)
+  double normalize_angle(const double & rad)
   {
     double const PI = 3.14159265359;
-    double new_rad = std::fmod(rad, 2.0 * PI);
-    if (new_rad <= -1.0 * PI) {
-      new_rad += 2.0 * PI;
-    }
+    double new_rad;
+
+    new_rad = fmod(rad, 2 * PI);
+    new_rad = fmod(new_rad + 2 * PI, 2 * PI);
     if (new_rad > PI) {
-      new_rad -= 2.0 * PI;
+      new_rad -= 2 * PI;
     }
+
+    new_rad = new_rad <= 0 ? (PI - abs(new_rad)) : -1 * (PI - abs(new_rad));
+
     return new_rad;
   }
 };
@@ -159,7 +162,7 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
 
-  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Creating Cartpole Controller Node. ");
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Creating Cartpole Key Controller Node. ");
 
   rclcpp::spin(std::make_shared<CartpoleControl>());
 

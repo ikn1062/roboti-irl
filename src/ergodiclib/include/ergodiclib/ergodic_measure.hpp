@@ -27,6 +27,7 @@ class ErgodicMeasure
 public:
   /// \brief Constructor for Ergodic Measure Class
   /// \param demonstrations Vector of Demonstrations - Trajectories
+  /// \param demo_posneg Demonstration weights - length of demonstrations
   /// \param demo_weights Demonstration weights - length of demonstrations
   /// \param K_coeff Size of Series Coefficient
   /// \param L_dim Size of boundaries for dimensions
@@ -34,7 +35,7 @@ public:
   /// \param basis Fourier basis class for the demonstration
   ErgodicMeasure(
     std::vector<arma::mat> demonstrations,
-    std::vector<int> demo_weights,
+    std::vector<int> demo_posneg, std::vector<double> demo_weights,
     double dt_demo, fourierBasis & basis);
 
   /// \brief Returns Spatial distribution of demonstrations for each series coefficient

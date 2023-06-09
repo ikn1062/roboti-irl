@@ -120,7 +120,7 @@ public:
 
   /// \brief Creates an intial trajectory of model with x0 and u0
   /// \return State Position and Control Trajectories over time horizon
-  virtual std::pair<arma::mat, arma::mat> createTrajectory() const
+  std::pair<arma::mat, arma::mat> createTrajectory() const
   {
     arma::mat x_traj(x0.n_elem, n_iter, arma::fill::zeros);
     arma::mat u_traj(u0.n_elem, n_iter, arma::fill::zeros);
@@ -144,13 +144,36 @@ public:
   /// \param x0_input Position vector of Cartpole Model at t=0
   /// \param ut_mat Control Matrix over time horizon
   /// \return State Position Trajectory over time horizon
-  virtual arma::mat createTrajectory(const arma::vec & x0_input, const arma::mat & ut_mat) const
+  arma::mat createTrajectory(const arma::vec & x0_input, const arma::mat & ut_mat) const
   {
-    arma::mat x_traj(x0.n_elem, n_iter, arma::fill::zeros);
+    const double num_iter = ut_mat.n_cols;
+    arma::mat x_traj(x0.n_elem, num_iter, arma::fill::zeros);
     x_traj.col(0) = x0_input;
 
     arma::mat x_new;
-    for (int i = 1; i < n_iter; i++) {
+    for (int i = 1; i < num_iter; i++) {
+      x_new = integrate(x_traj.col(i - 1), ut_mat.col(i - 1));
+      x_new(2) = ergodiclib::normalizeAngle(x_new(2));
+      x_traj.col(i) = x_new;
+    }
+
+    return x_traj;
+  }
+
+  /// \brief Creates a trajectory given initial position vector x0 and control over time horizon
+  /// \param x0_input Position vector of Cartpole Model at t=0
+  /// \param ut_mat Control Matrix over time horizon
+  /// \param num_iter Number of time steps
+  /// \return State Position Trajectory over time horizon
+  arma::mat createTrajectory(
+    const arma::vec & x0_input, const arma::mat & ut_mat,
+    const unsigned int & num_iter) const
+  {
+    arma::mat x_traj(x0.n_elem, num_iter, arma::fill::zeros);
+    x_traj.col(0) = x0_input;
+
+    arma::mat x_new;
+    for (unsigned int i = 1; i < num_iter; i++) {
       x_new = integrate(x_traj.col(i - 1), ut_mat.col(i - 1));
       x_new(2) = ergodiclib::normalizeAngle(x_new(2));
       x_traj.col(i) = x_new;
@@ -173,7 +196,7 @@ private:
   /// \param xt Position Vector state at time t
   /// \param ut Control Vector state at time t
   /// \return A (Dfx) Matrix
-  virtual arma::mat calculateA(const arma::vec & xt, const arma::vec & ut) const
+  arma::mat calculateA(const arma::vec & xt, const arma::vec & ut) const
   {
     arma::mat A(4, 4, arma::fill::zeros);
     double t = xt(2);
@@ -216,7 +239,7 @@ private:
   /// \param xt Position Vector state at time t
   /// \param ut Control Vector state at time t
   /// \return B (Dfu) Matrix
-  virtual arma::mat calculateB(const arma::vec & xt, const arma::vec & ut) const
+  arma::mat calculateB(const arma::vec & xt, const arma::vec & ut) const
   {
     UNUSED(ut);
     arma::mat B(4, 1, arma::fill::zeros);
@@ -235,7 +258,7 @@ private:
   /// \param x_vec State Vector state at a given time
   /// \param u_vec Control Vector state at a given time
   /// \return Change in state vector over time x_dot
-  virtual arma::vec dynamics(const arma::vec & x_vec, const arma::vec & u_vec) const
+  arma::vec dynamics(const arma::vec & x_vec, const arma::vec & u_vec) const
   {
     //double x = x_vec(0);
     double dx = x_vec(1);

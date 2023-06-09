@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <limits>
 
 #include <ergodiclib/num_utils.hpp>
 #include <ergodiclib/model.hpp>
@@ -27,6 +28,9 @@ template<class ModelTemplate>
 class ilqrController
 {
 public:
+  ilqrController()
+  {}
+
   /// \brief Constructor for iLQR Controller
   /// \param model_in Model input following Concept Template
   /// \param Q Q Matrix (Trajectory Penalty)
@@ -58,6 +62,18 @@ public:
   /// \brief Begins iLQR controller - returns none
   void iLQR();
 
+
+  /// \brief Begins model predictive controller
+  /// @param x0 Initial State vector at time t=0 for controls
+  /// @param u0 Initial Control vector at time t=0
+  /// @param num_steps Number of time steps given model_dt
+  /// @param max_iterations Number of max iterations for gradient descent loop
+  /// @return Controller and State Trajectories over time horizon
+  std::pair<arma::mat, arma::mat> ModelPredictiveControl(
+    const arma::vec & x0, const arma::vec & u0,
+    const unsigned int & num_steps,
+    const unsigned int & max_iterations);
+
 private:
   /// \brief Calculates the objective function given Trajectory and Control
   /// \param Xt State trajectory over time Horizon
@@ -71,11 +87,24 @@ private:
   /// \return Objective value for trajectory
   double trajectoryJ(const arma::mat & Xt, const arma::mat & Ut) const;
 
+  /// \brief Calculates absolute value of descent direction
+  /// \param zeta_pair zeta and vega matrix for controller
+  /// \param at aT Matrix
+  /// \param bt bT Matrix
+  /// @return Descent direction as an double value
+  double calculateDJ(
+    std::pair<arma::mat, arma::mat> const & zeta_pair, const arma::mat & at,
+    const arma::mat & bt);
+
   /// \brief Calculates zeta and vega matrix for controller
   /// \param Xt State trajectory over time Horizon
   /// \param Ut Control over time horizon
+  /// \param aT aT Matrix
+  /// \param bT bT Matrix
   /// \return Returns zeta and vega matrix for controller
-  std::pair<arma::mat, arma::mat> calculateZeta(const arma::mat & Xt, const arma::mat & Ut) const;
+  std::pair<arma::mat, arma::mat> calculateZeta(
+    const arma::mat & Xt, const arma::mat & Ut,
+    const arma::mat & aT, const arma::mat & bT) const;
 
   /// \brief Calculates P and r lists for solving ricatti equations
   /// \param Xt State trajectory over time Horizon
@@ -141,8 +170,10 @@ template<class ModelTemplate>
 void ilqrController<ModelTemplate>::iLQR()
 {
   std::pair<arma::mat, arma::mat> trajectory, descentDirection;
-  arma::mat X, U, X_new, U_new, zeta, vega;
-  double J, J_new, gamma;
+  arma::mat X, U, X_new, U_new, zeta, vega, aT, bT;
+  double DJ, J, J_new, gamma;
+  unsigned int i, n;
+
   std::cout << "create trajec" << std::endl;
   trajectory = model.createTrajectory();
   X = trajectory.first;
@@ -152,21 +183,24 @@ void ilqrController<ModelTemplate>::iLQR()
   (X.col(X.n_cols - 1)).print("End X0: ");
   std::cout << "obj: " << J << std::endl;
 
-  int n = 0;
-  unsigned int i = 0;
-  gamma = beta; // This is not correct
+  i = 0;
   std::cout << "Start loop" << std::endl;
   std::cout << "abs_J" << abs(J) << std::endl;
   std::cout << "eps" << eps << std::endl;
   while (abs(J) > eps && i < max_iter) {
     std::cout << "calc zeta" << std::endl;
-    descentDirection = calculateZeta(X, U);
+    aT = calculate_aT(X);
+    bT = calculate_bT(U);
+    descentDirection = calculateZeta(X, U, aT, bT);
     zeta = descentDirection.first;
     vega = descentDirection.second;
 
-    n = 0;
-    J_new = J + J;
-    while (J_new > J + alpha * gamma * trajectoryJ(X, U) && n < 10) { // get rid of n < 10, fix trajectoryJ(X, U) to descent dir
+    DJ = calculateDJ(descentDirection, aT, bT);
+
+    n = 1;
+    gamma = beta;
+    J_new = std::numeric_limits<double>::max();
+    while (J_new > J + alpha * gamma * DJ && n < 10) { // get rid of n < 10, fix trajectoryJ(X, U) to descent dir
       U_new = U + gamma * vega;
       X_new = model.createTrajectory(x0, U_new);
 
@@ -189,12 +223,67 @@ void ilqrController<ModelTemplate>::iLQR()
     std::cout << "i: " << i << std::endl;
     std::cout << "J: " << abs(J) << std::endl;
   }
-  std::string x_file = "trajectory_out";
+  std::string x_file = "trajectory";
   arma::mat XT = X.t();
   XT.save(x_file, arma::csv_ascii);
   arma::mat UT = U.t();
-  std::string u_file = "control_out";
+  std::string u_file = "control";
   UT.save(u_file, arma::csv_ascii);
+}
+
+template<class ModelTemplate>
+std::pair<arma::mat, arma::mat> ilqrController<ModelTemplate>::ModelPredictiveControl(
+  const arma::vec & x0, const arma::vec & u0, const unsigned int & num_steps,
+  const unsigned int & max_iterations)
+{
+  std::pair<arma::mat, arma::mat> trajectory, descentDirection;
+  arma::mat X, U, X_new, U_new, zeta, vega, aT, bT;
+  double DJ, J, J_new, gamma;
+  unsigned int i, n;
+
+  // Create Trajectory
+  std::cout << "Create Trajectory" << std::endl;
+  U = arma::mat(u0.n_elem, num_steps, arma::fill::zeros);
+  U.each_col() = u0;
+  X = model.createTrajectory(x0, U, num_steps);
+
+  // Get Cost of the trajectory
+  std::cout << "Cost of Trajectory" << std::endl;
+  J = objectiveJ(X, U);
+
+  DJ = 1000;
+  i = 0;
+  while (std::abs(DJ) > eps && i < max_iterations) {
+    aT = calculate_aT(X);
+    bT = calculate_bT(U);
+    descentDirection = calculateZeta(X, U, aT, bT);
+    zeta = descentDirection.first;
+    vega = descentDirection.second;
+
+    DJ = calculateDJ(descentDirection, aT, bT);
+    std::cout << "Loop: " << i << ", J: " << J << ", DJ: " << DJ << std::endl;
+
+    n = 1;
+    J_new = std::numeric_limits<double>::max();
+    gamma = beta;
+    while (J_new > J + alpha * gamma * DJ && n < 10) {
+      U_new = U + gamma * vega;
+      X_new = model.createTrajectory(x0, U_new);
+      J_new = objectiveJ(X_new, U_new);
+
+      n += 1;
+      gamma = pow(beta, n);
+    }
+
+    J = J_new;
+    X = X_new;
+    U = U_new;
+    trajectory = {X, U};
+
+    i += 1;
+  }
+
+  return trajectory;
 }
 
 template<class ModelTemplate>
@@ -233,14 +322,31 @@ double ilqrController<ModelTemplate>::trajectoryJ(const arma::mat & Xt, const ar
 }
 
 template<class ModelTemplate>
+double ilqrController<ModelTemplate>::calculateDJ(
+  std::pair<arma::mat, arma::mat> const & zeta_pair,
+  const arma::mat & aT, const arma::mat & bT)
+{
+  const unsigned int num_it = aT.n_rows;
+  arma::vec DJ(num_it, 1, arma::fill::zeros);
+  arma::mat zeta = zeta_pair.first;
+  arma::mat vega = zeta_pair.second;
+
+  // Construct DJ Vector
+  for (unsigned int i = 0; i < num_it; i++) {
+    DJ.row(i) = aT.row(i) * zeta.col(i) + bT.row(i) * vega.col(i);
+  }
+
+  // integrate and return J
+  double DJ_integral = integralTrapz(DJ, dt);
+  return DJ_integral;
+}
+
+template<class ModelTemplate>
 std::pair<arma::mat, arma::mat> ilqrController<ModelTemplate>::calculateZeta(
   const arma::mat & Xt,
-  const arma::mat & Ut)
+  const arma::mat & Ut, const arma::mat & aT, const arma::mat & bT)
 const
 {
-  arma::mat aT = calculate_aT(Xt);
-  arma::mat bT = calculate_bT(Ut);
-
   std::pair<std::vector<arma::mat>, std::vector<arma::mat>> listPr = calculatePr(Xt, Ut, aT, bT);
   std::vector<arma::mat> Plist = listPr.first;
   std::vector<arma::mat> rlist = listPr.second;

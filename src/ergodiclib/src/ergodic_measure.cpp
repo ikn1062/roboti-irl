@@ -4,20 +4,21 @@ namespace ergodiclib
 {
 ErgodicMeasure::ErgodicMeasure(
   std::vector<arma::mat> demonstrations,
-  std::vector<int> demo_weights,
+  std::vector<int> demo_posneg, std::vector<double> demo_weights,
   double dt_demo, fourierBasis & basis)
 : D_mat(demonstrations),
   Basis(basis),
-  E_vec(demo_weights),
+  E_vec(demo_posneg),
   dt(dt_demo),
   n_dim(demonstrations[0].n_rows),
-  m_demo(demonstrations.size())
+  m_demo(demonstrations.size()),
+  weight_vec(demo_weights)
 {
-  if (demonstrations.size() != E_vec.size()) {
+  if (demonstrations.size() != E_vec.size() && demonstrations.size() != weight_vec.size()) {
     throw std::invalid_argument("Length of Demonstration unequal to length of demonstration weights");
   }
-  for (int i = 0; i < m_demo; i++) {
-    weight_vec.push_back(1 / m_demo);
+  if (!almost_equal(std::reduce(weight_vec.begin(), weight_vec.end()), 1.0)) {
+    throw std::invalid_argument("Sum of Weight Vector should be equal to 1.0");
   }
   K_series = basis.get_K_series();
 

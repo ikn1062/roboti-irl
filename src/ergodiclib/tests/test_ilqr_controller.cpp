@@ -261,7 +261,7 @@ TEST_CASE("iLQR Controller Calculate List Zeta", "[Controller]")
   arma::mat aT = controller.calculate_aT(X);
   arma::mat bT = controller.calculate_bT(U);
 
-  std::pair<arma::mat, arma::mat> descentDirection = controller.calculateZeta(X, U);
+  std::pair<arma::mat, arma::mat> descentDirection = controller.calculateZeta(X, U, aT, bT);
   arma::mat zeta = descentDirection.first;
   arma::mat vega = descentDirection.second;
 

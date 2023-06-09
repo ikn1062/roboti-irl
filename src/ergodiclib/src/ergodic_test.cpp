@@ -37,9 +37,10 @@ int main()
 
   std::cout << "Testing Ergodic Measure Functions...  START" << std::endl;
   std::vector<arma::mat> input_demonstration{demos[6]};
-  std::vector<int> demo_weights{1};
+  std::vector<int> demo_posneg{1};
+  std::vector<double> demo_weights{1.0};
 
-  ErgodicMeasure erg = ErgodicMeasure(input_demonstration, demo_weights, 0.1, Basis);
+  ErgodicMeasure erg = ErgodicMeasure(input_demonstration, demo_posneg, demo_weights, 0.1, Basis);
   erg.calcErgodic();
   arma::vec phik = erg.get_PhiK();
   arma::vec lambdaK = erg.get_LambdaK();

@@ -25,17 +25,20 @@ int main()
   std::vector<arma::mat> demonstrations = readDemonstrations(file_demonstration_path, 4);
 
   std::cout << "Ergodic Basis... START" << std::endl;
-  std::vector<int> demo_weights{1};
+  std::vector<int> demo_posneg{1, 1, -1, -1, -1, -1};
+  std::vector<double> demo_weights{0.6, 0.0, 0.1, 0.1, 0.1, 0.1};
 
-  std::pair<double, double> pair1(-5, 5);
-  std::pair<double, double> pair2(-10, 10);
+  std::pair<double, double> pair1(-15, 15);
+  std::pair<double, double> pair2(-15, 15);
   std::pair<double, double> pair3(-PI, PI);
   std::pair<double, double> pair4(-10, 10);
   std::vector<std::pair<double, double>> lengths{pair1, pair2, pair3, pair4};
-  fourierBasis Basis = fourierBasis(lengths, 4, 6);
+  fourierBasis Basis = fourierBasis(lengths, 4, 4);
 
   std::cout << "Ergodic Measurements... START" << std::endl;
-  ErgodicMeasure ergodicMeasure = ErgodicMeasure(demonstrations, demo_weights, 0.005, Basis);
+  ErgodicMeasure ergodicMeasure = ErgodicMeasure(
+    demonstrations, demo_posneg, demo_weights, 0.001,
+    Basis);
   ergodicMeasure.calcErgodic();
 
   // std::vector<double> hk = Basis.get_hK();
@@ -60,13 +63,13 @@ int main()
   // Q(1, 1) = 0.01;
   // Q(2, 2) = 20.0;
   // Q(3, 3) = 1.0;
-  Q(0, 0) = 0.01;
+  Q(0, 0) = 0.1;
   Q(1, 1) = 0.01;
-  Q(2, 2) = 1.0;
+  Q(2, 2) = 10.0;
   Q(3, 3) = 1.0;
 
   arma::mat R(1, 1, arma::fill::eye);
-  R(0, 0) = 0.01;
+  R(0, 0) = 0.001;
 
   arma::mat P(4, 4, arma::fill::eye);
   // P(0, 0) = 0.0001;
@@ -75,14 +78,14 @@ int main()
   // P(3, 3) = 2;
   P(0, 0) = 0.001;
   P(1, 1) = 0.001;
-  P(2, 2) = 1.0;
+  P(2, 2) = 10.0;
   P(3, 3) = 1.0;
 
   arma::mat r(4, 1, arma::fill::zeros);
 
   double alpha = 0.40;
   double beta = 0.75;
-  double eps = 0.000001;
+  double eps = 0.005;
 
   ergController controller = ergController<CartPole>(
     ergodicMeasure, Basis, cartpole, q, Q, R, P, r,

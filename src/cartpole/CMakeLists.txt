@@ -10,16 +10,28 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(ergodiclib REQUIRED)
+find_package(Armadillo REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
-add_executable(cartpole_ctrl src/cartpole_ctrl.cpp)
-ament_target_dependencies(cartpole_ctrl rclcpp std_msgs geometry_msgs sensor_msgs)
+
+add_executable(cartpole_key src/cartpole_key.cpp)
+ament_target_dependencies(cartpole_key rclcpp std_msgs geometry_msgs sensor_msgs Armadillo)
+target_link_libraries(cartpole_key ${rclcpp_LIBRARIES})
+target_link_libraries(cartpole_key ${ARMADILLO_LIBRARIES})
+
+add_executable(cartpole_ctrl src/cartpole_control.cpp)
+ament_target_dependencies(cartpole_ctrl rclcpp std_msgs geometry_msgs sensor_msgs std_srvs Armadillo)
 target_link_libraries(cartpole_ctrl ${rclcpp_LIBRARIES})
+target_link_libraries(cartpole_ctrl ${ARMADILLO_LIBRARIES})
+target_link_libraries(cartpole_ctrl ergodiclib::ergodiclib "${cpp_typesupport_target}")
 
 install(TARGETS
+  cartpole_key
   cartpole_ctrl
   DESTINATION lib/${PROJECT_NAME}
 )
