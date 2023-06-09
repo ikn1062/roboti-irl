@@ -1,12 +1,21 @@
 /// \file
-/// \brief Cartpole Controller File
+/// \brief Cartpole Controller
 ///
 /// PARAMETERS:
-///     name (type): desc
+///     rate (float): Rate of Main Loop
+///     control_type (string) : Name of Controller Type ('file' or 'MPC')
+///     control_file (string) : File path to controls given 'file' option
 /// PUBLISHES:
-///     name (type): desc
+///     /cartpole/timestep (std_msgs::msg::UInt64): Current Timestep of Simulation
+///     /cartpole/cmd (std_msgs::msg::Float64): Command Publisher for cartpole sim
 /// SUBSCRIBES:
-///     name (type): desc
+///     /cartpole/joint_state (sensor_msgs::msg::JointState): Receives joint states of cart and pole
+/// SERVERS:
+///     /cartpole/file_control_trigger (std_srvs::srv::Trigger) : Runs the file controller for 1 loop
+///     /cartpole/mpc_trigger (std_srvs::srv::Trigger) : Turns the MPC controller on
+
+
+
 
 
 #include <chrono>
@@ -63,7 +72,7 @@ public:
     joint_state_sub_ = create_subscription<sensor_msgs::msg::JointState>("/cartpole/joint_state", 10, std::bind(&CartpoleControl::jointstate_cb_, this, std::placeholders::_1));
 
     file_cntrl_trigger_ = create_service<std_srvs::srv::Trigger>("~/file_control_trigger", std::bind(&CartpoleControl::fileController, this, std::placeholders::_1, std::placeholders::_2));
-    MPC_trigger_ = create_service<std_srvs::srv::Trigger>("~/mpc_trigger_", std::bind(&CartpoleControl::MPCTrigger, this, std::placeholders::_1, std::placeholders::_2));
+    MPC_trigger_ = create_service<std_srvs::srv::Trigger>("~/mpc_trigger", std::bind(&CartpoleControl::MPCTrigger, this, std::placeholders::_1, std::placeholders::_2));
 
     // Initial Variables
     timestep_.data = 0;

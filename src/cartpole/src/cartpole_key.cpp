@@ -8,7 +8,7 @@
 ///     cart_path (string): Path to save the cart joint position outputs
 ///     pole_path (string): Path to save the pole joint position outputs
 /// PUBLISHES:
-///     cartpole/timestep (std_msgs::msg::UInt64): Current Timestep of Simulation
+///     /cartpole/timestep (std_msgs::msg::UInt64): Current Timestep of Simulation
 ///     /cartpole/cmd (std_msgs::msg::Float64): Command Publisher for cartpole sim
 /// SUBSCRIBES:
 ///     /cmd_vel (geometry_msgs::msg::Twist): Subscribes to the Teleop Twist Keyboard

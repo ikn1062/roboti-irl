@@ -62,7 +62,12 @@ public:
   /// \brief Begins iLQR controller - returns none
   void iLQR();
 
-  /// \brief Begins Model Predictive Control - returns none
+  /// \brief Begins model predictive controller 
+  /// @param x0 Initial State vector at time t=0 for controls
+  /// @param u0 Initial Control vector at time t=0
+  /// @param num_steps Number of time steps given model_dt
+  /// @param max_iterations Number of max iterations for gradient descent loop
+  /// @return Controller and State Trajectories over time horizon
   std::pair<arma::mat, arma::mat> ModelPredictiveControl(
     const arma::vec & x0, const arma::vec & u0,
     const unsigned int & num_steps,
@@ -81,6 +86,11 @@ private:
   /// \return Objective value for trajectory
   double trajectoryJ(const arma::mat & Xt, const arma::mat & Ut) const;
 
+  /// \brief Calculates absolute value of descent direction
+  /// \param zeta_pair zeta and vega matrix for controller
+  /// \param at aT Matrix
+  /// \param bt bT Matrix
+  /// @return Descent direction as an double value
   double calculateDJ(
     std::pair<arma::mat, arma::mat> const & zeta_pair, const arma::mat & at,
     const arma::mat & bt);
@@ -88,6 +98,8 @@ private:
   /// \brief Calculates zeta and vega matrix for controller
   /// \param Xt State trajectory over time Horizon
   /// \param Ut Control over time horizon
+  /// \param aT aT Matrix
+  /// \param bT bT Matrix
   /// \return Returns zeta and vega matrix for controller
   std::pair<arma::mat, arma::mat> calculateZeta(
     const arma::mat & Xt, const arma::mat & Ut,

@@ -1,7 +1,7 @@
 #ifndef ERG_CON_INCLUDE_GUARD_HPP
 #define ERG_CON_INCLUDE_GUARD_HPP
 /// \file
-/// \brief
+/// \brief Ergodic COntroller
 
 
 #include <iosfwd>
@@ -24,6 +24,8 @@
 
 namespace ergodiclib
 {
+/// \brief Ergodic Controller for a given dynamic system
+/// \tparam ModelTemplate Template for Dynamic Model
 template<class ModelTemplate>
 class ergController
 {
@@ -31,6 +33,19 @@ public:
   ergController()
   {}
 
+  /// \brief Constructor for Ergodic Controller
+  /// \param ergodicMes Ergodic Measurement Class
+  /// \param basis Ergodic Basis Class
+  /// \param model_agent Model agent following Concept Template
+  /// \param q_val q value (Ergodic trajectory penalty)
+  /// \param Q Q Matrix (Trajectory Penalty)
+  /// \param R R Matrix (Control Penalty)
+  /// \param P P Matrix (Final Trajectory Penalty)
+  /// \param r r Matrix (Final Control Penalty)
+  /// \param max_iter_in Max iteration for control descent
+  /// \param a Alpha - Controller multiplier
+  /// \param b Beta - Controller multiplier for armijo line search
+  /// \param e Epsilon - Convergence Value for Objective Function
   ergController(
     ErgodicMeasure & ergodicMes, fourierBasis & basis, ModelTemplate model_agent,
     double q_val, arma::mat Q, arma::mat R, arma::mat P, arma::mat r,
@@ -54,36 +69,78 @@ public:
     n_iter = (int) ((model_agent.tf - model_agent.t0) / dt);
   }
 
+  /// \brief Begins iLQR controller - returns none
   void iLQR();
 
+  /// \brief Begins model predictive controller 
+  /// @param x0 Initial State vector at time t=0 for controls
+  /// @param u0 Initial Control vector at time t=0
+  /// @param num_steps Number of time steps given model_dt
+  /// @param max_iterations Number of max iterations for gradient descent loop
+  /// @return Controller and State Trajectories over time horizon
   std::pair<arma::mat, arma::mat> ModelPredictiveControl(
     const arma::vec & x0, const arma::vec & u0,
     const unsigned int & num_steps,
     const unsigned int & max_iterations);
 
 private:
+  
+  /// \brief Calculates absolute value of descent direction
+  /// \param zeta_pair zeta and vega matrix for controller
+  /// \param at aT Matrix
+  /// \param bt bT Matrix
+  /// @return Descent direction as an double value
   double calculateDJ(
     std::pair<arma::mat, arma::mat> const & zeta_pair, const arma::mat & at,
     const arma::mat & bt);
 
+  /// \brief Calculates the objective function given Trajectory and Control
+  /// \param Xt State trajectory over time Horizon
+  /// \param Ut Control over time horizon
+  /// \return Objective value
   double objectiveJ(const arma::mat & Xt, const arma::mat & Ut);
 
+  /// \brief Calculates zeta and vega matrix for controller
+  /// \param Xt State trajectory over time Horizon
+  /// \param Ut Control over time horizon
+  /// \param aT aT Matrix
+  /// \param bT bT Matrix
+  /// \return Returns zeta and vega matrix for controller
   std::pair<arma::mat, arma::mat> calculateZeta(
     const arma::mat & Xt, const arma::mat & Ut,
     const arma::mat & aT, const arma::mat & bT) const;
 
+  /// \brief Calculates P and r lists for solving ricatti equations
+  /// \param Xt State trajectory over time Horizon
+  /// \param Ut Control over time horizon
+  /// \param aT aT Matrix
+  /// \param bT bT Matrix
+  /// \return P and r lists over time horizon to calculate zeta
   std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(
     arma::mat Xt, arma::mat Ut,
     const arma::mat & aT,
     const arma::mat & bT) const;
 
+  /// \brief Calculates aT matrix
+  /// \param Xt State trajectory over time Horizon
+  /// \return Retuns aT matrix
   arma::mat calculate_aT(const arma::mat & x_mat);
 
+  /// \brief Calculates bT matrix
+  /// \param Ut Control over time horizon
+  /// \return Retuns bT matrix
   arma::mat calculate_bT(const arma::mat & Ut);
 
+  /// \param ergodicMes Ergodic Measurement Class
   ErgodicMeasure & ergodicMeasure;
+
+  /// \param basis Ergodic Basis Class
   fourierBasis & Basis;
+
+  /// \param model_agent Model agent following Concept Template
   ModelTemplate model;
+
+  /// \param q_val q value (Ergodic trajectory penalty)
   double q;
 
   /// \brief Initial State vector at time t=0

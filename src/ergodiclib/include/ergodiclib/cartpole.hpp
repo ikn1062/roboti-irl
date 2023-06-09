@@ -163,6 +163,7 @@ public:
   /// \brief Creates a trajectory given initial position vector x0 and control over time horizon
   /// \param x0_input Position vector of Cartpole Model at t=0
   /// \param ut_mat Control Matrix over time horizon
+  /// \param num_iter Number of time steps
   /// \return State Position Trajectory over time horizon
   arma::mat createTrajectory(
     const arma::vec & x0_input, const arma::mat & ut_mat,
