@@ -1,7 +1,7 @@
 cartpole_parameters:
   ros__parameters:
-    cart_mass: "50"
-    pole_mass: "10"
+    cart_mass: "10.0"
+    pole_mass: "5.0"
     pole_len: "2.0"
     pole_org: "-1.0"
     prop_gain: 100.0

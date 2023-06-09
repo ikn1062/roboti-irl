@@ -18,6 +18,8 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <ctime>
+#include <thread>
 
 #include <armadillo>
 
@@ -45,7 +47,7 @@ public:
     // Decalre Variables
     declare_parameter("rate", 100.0);
     declare_parameter("control_type", "file");
-    declare_parameter("control_file", "erg_control_out.csv");
+    declare_parameter("control_file", "control_out_1.csv");
 
     // Get Variables
     rate_ = get_parameter("rate").as_double();
@@ -60,7 +62,7 @@ public:
     command_pub_ = create_publisher<std_msgs::msg::Float64>("/cartpole/cmd", 10);
     joint_state_sub_ = create_subscription<sensor_msgs::msg::JointState>("/cartpole/joint_state", 10, std::bind(&CartpoleControl::jointstate_cb_, this, std::placeholders::_1));
 
-    file_cntrl_trigger_ = create_service<std_srvs::srv::Trigger>("~/file_control_trigger_", std::bind(&CartpoleControl::fileController, this, std::placeholders::_1, std::placeholders::_2));
+    file_cntrl_trigger_ = create_service<std_srvs::srv::Trigger>("~/file_control_trigger", std::bind(&CartpoleControl::fileController, this, std::placeholders::_1, std::placeholders::_2));
     MPC_trigger_ = create_service<std_srvs::srv::Trigger>("~/mpc_trigger_", std::bind(&CartpoleControl::MPCTrigger, this, std::placeholders::_1, std::placeholders::_2));
 
     // Initial Variables
@@ -191,10 +193,19 @@ private:
 
     controls.close();
 
+    std::cout << "control_input size: " << control_input.size() << std::endl;
+    auto start = std::chrono::high_resolution_clock::now();
     for (unsigned int i = 0; i < control_input.size(); i++){
         force_cmd.data = control_input[i];
         command_pub_->publish(force_cmd);
+        std::this_thread::sleep_for(std::chrono::microseconds(1150));
+        force_cmd.data = 0.0;
+        command_pub_->publish(force_cmd);
+        std::this_thread::sleep_for(std::chrono::microseconds(3650));
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    std::cout << "Time: " << duration.count() << std::endl;
 
     response->success = true;
     response->message = "Control Passed";
