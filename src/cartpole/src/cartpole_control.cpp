@@ -15,9 +15,6 @@
 ///     /cartpole/mpc_trigger (std_srvs::srv::Trigger) : Turns the MPC controller on
 
 
-
-
-
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -69,10 +66,18 @@ public:
     // Publishers and Subscribers
     timestep_pub_ = create_publisher<std_msgs::msg::UInt64>("cartpole/timestep", 50);
     command_pub_ = create_publisher<std_msgs::msg::Float64>("/cartpole/cmd", 10);
-    joint_state_sub_ = create_subscription<sensor_msgs::msg::JointState>("/cartpole/joint_state", 10, std::bind(&CartpoleControl::jointstate_cb_, this, std::placeholders::_1));
+    joint_state_sub_ = create_subscription<sensor_msgs::msg::JointState>(
+      "/cartpole/joint_state",
+      10,
+      std::bind(&CartpoleControl::jointstate_cb_, this, std::placeholders::_1));
 
-    file_cntrl_trigger_ = create_service<std_srvs::srv::Trigger>("~/file_control_trigger", std::bind(&CartpoleControl::fileController, this, std::placeholders::_1, std::placeholders::_2));
-    MPC_trigger_ = create_service<std_srvs::srv::Trigger>("~/mpc_trigger", std::bind(&CartpoleControl::MPCTrigger, this, std::placeholders::_1, std::placeholders::_2));
+    file_cntrl_trigger_ = create_service<std_srvs::srv::Trigger>(
+      "~/file_control_trigger", std::bind(
+        &CartpoleControl::fileController, this, std::placeholders::_1, std::placeholders::_2));
+    MPC_trigger_ =
+      create_service<std_srvs::srv::Trigger>(
+      "~/mpc_trigger",
+      std::bind(&CartpoleControl::MPCTrigger, this, std::placeholders::_1, std::placeholders::_2));
 
     // Initial Variables
     timestep_.data = 0;
@@ -103,7 +108,8 @@ public:
 
     // Create main callback
     timer_ = create_wall_timer(duration_, std::bind(&CartpoleControl::cartpole_main, this));
-    mpc_timer_ = create_wall_timer(mpc_duration_, std::bind(&CartpoleControl::ModelPredictiveControl, this));
+    mpc_timer_ =
+      create_wall_timer(mpc_duration_, std::bind(&CartpoleControl::ModelPredictiveControl, this));
   }
 
 private:
@@ -172,45 +178,47 @@ private:
       x_cart = cartpole_js.position[0];
       v_cart = cartpole_js.velocity[0];
     } else {
-      x_pole = ergodiclib::normalizeAngle(cartpole_js.position[0]); 
+      x_pole = ergodiclib::normalizeAngle(cartpole_js.position[0]);
       v_pole = cartpole_js.velocity[0];
     }
   }
 
-  void fileController(const std::shared_ptr<std_srvs::srv::Trigger::Request>, std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+  void fileController(
+    const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response)
   {
     std::vector<float> control_input;
     std::ifstream controls(control_file);
 
     if (!controls.is_open()) {
-        RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Control file could not be open");
-        response->success = false;
-        response->message = "Control File could not be opened";
-        return;
+      RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Control file could not be open");
+      response->success = false;
+      response->message = "Control File could not be opened";
+      return;
     }
-    
+
     std::string line;
     float num;
-    while (std::getline(controls, line)){
-        std::istringstream iss(line);
-        std::string value;
-        while (std::getline(iss, value, ',')) {
-            num = std::stof(value);
-            control_input.push_back(num); 
-        }
+    while (std::getline(controls, line)) {
+      std::istringstream iss(line);
+      std::string value;
+      while (std::getline(iss, value, ',')) {
+        num = std::stof(value);
+        control_input.push_back(num);
+      }
     }
 
     controls.close();
 
     std::cout << "control_input size: " << control_input.size() << std::endl;
     auto start = std::chrono::high_resolution_clock::now();
-    for (unsigned int i = 0; i < control_input.size(); i++){
-        force_cmd.data = control_input[i];
-        command_pub_->publish(force_cmd);
-        std::this_thread::sleep_for(std::chrono::microseconds(1150));
-        force_cmd.data = 0.0;
-        command_pub_->publish(force_cmd);
-        std::this_thread::sleep_for(std::chrono::microseconds(3650));
+    for (unsigned int i = 0; i < control_input.size(); i++) {
+      force_cmd.data = control_input[i];
+      command_pub_->publish(force_cmd);
+      std::this_thread::sleep_for(std::chrono::microseconds(1150));
+      force_cmd.data = 0.0;
+      command_pub_->publish(force_cmd);
+      std::this_thread::sleep_for(std::chrono::microseconds(3650));
     }
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
@@ -231,14 +239,16 @@ private:
       U = trajectories.second;
 
       for (unsigned int i = 0; i < U.n_cols; i++) {
-      controls = U(0, 0);
-      force_cmd.data = controls;
-      command_pub_->publish(force_cmd);
-    }
+        controls = U(0, 0);
+        force_cmd.data = controls;
+        command_pub_->publish(force_cmd);
+      }
     }
   }
 
-  void MPCTrigger(const std::shared_ptr<std_srvs::srv::Trigger::Request>, std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+  void MPCTrigger(
+    const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response)
   {
     if (mpc_trigger) {
       mpc_trigger = false;
@@ -247,11 +257,11 @@ private:
       mpc_trigger = true;
       response->message = "Control Trigger - OFF";
     }
-    
+
     response->success = true;
     return;
   }
-  
+
 };
 
 

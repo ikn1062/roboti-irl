@@ -72,7 +72,7 @@ public:
   /// \brief Begins iLQR controller - returns none
   void iLQR();
 
-  /// \brief Begins model predictive controller 
+  /// \brief Begins model predictive controller
   /// @param x0 Initial State vector at time t=0 for controls
   /// @param u0 Initial Control vector at time t=0
   /// @param num_steps Number of time steps given model_dt
@@ -84,7 +84,6 @@ public:
     const unsigned int & max_iterations);
 
 private:
-  
   /// \brief Calculates absolute value of descent direction
   /// \param zeta_pair zeta and vega matrix for controller
   /// \param at aT Matrix
@@ -230,7 +229,7 @@ void ergController<ModelTemplate>::iLQR()
     std::cout << "J: " << std::abs(J_new) << std::endl;
     (X.col(X.n_cols - 1)).print("End X: ");
 
-    if (i%10 == 0) {
+    if (i % 10 == 0) {
       X.print("X: ");
     }
   }

@@ -62,7 +62,7 @@ public:
   /// \brief Begins iLQR controller - returns none
   void iLQR();
 
-  /// \brief Begins model predictive controller 
+  /// \brief Begins model predictive controller
   /// @param x0 Initial State vector at time t=0 for controls
   /// @param u0 Initial Control vector at time t=0
   /// @param num_steps Number of time steps given model_dt
@@ -265,7 +265,7 @@ std::pair<arma::mat, arma::mat> ilqrController<ModelTemplate>::ModelPredictiveCo
     n = 1;
     J_new = std::numeric_limits<double>::max();
     gamma = beta;
-    while (J_new > J + alpha * gamma * DJ && n < 10) { 
+    while (J_new > J + alpha * gamma * DJ && n < 10) {
       U_new = U + gamma * vega;
       X_new = model.createTrajectory(x0, U_new);
       J_new = objectiveJ(X_new, U_new);

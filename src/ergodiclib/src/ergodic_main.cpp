@@ -36,7 +36,9 @@ int main()
   fourierBasis Basis = fourierBasis(lengths, 4, 4);
 
   std::cout << "Ergodic Measurements... START" << std::endl;
-  ErgodicMeasure ergodicMeasure = ErgodicMeasure(demonstrations, demo_posneg, demo_weights, 0.001, Basis);
+  ErgodicMeasure ergodicMeasure = ErgodicMeasure(
+    demonstrations, demo_posneg, demo_weights, 0.001,
+    Basis);
   ergodicMeasure.calcErgodic();
 
   // std::vector<double> hk = Basis.get_hK();
