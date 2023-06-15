@@ -28,26 +28,22 @@ target_include_directories(${PROJECT_NAME}
 target_compile_features(${PROJECT_NAME}  PUBLIC cxx_std_20)
 target_compile_options(${PROJECT_NAME}  PUBLIC -Wall -Wextra -Wpedantic)
 
-add_executable(ergodic_test src/ergodic_test.cpp)
-ament_target_dependencies(ergodic_test Armadillo)
-target_link_libraries(ergodic_test ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
+# add_executable(ergodic_main src/ergodic_main.cpp)
+# ament_target_dependencies(ergodic_main Armadillo)
+# target_link_libraries(ergodic_main ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
 
-add_executable(ergodic_main src/ergodic_main.cpp)
-ament_target_dependencies(ergodic_main Armadillo)
-target_link_libraries(ergodic_main ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
+# add_executable(controller_test src/controller_test.cpp)
+# ament_target_dependencies(controller_test Armadillo)
+# target_link_libraries(controller_test ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
 
-add_executable(controller_test src/controller_test.cpp)
-ament_target_dependencies(controller_test Armadillo)
-target_link_libraries(controller_test ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
-
-install(TARGETS ergodic_test ergodic_main controller_test DESTINATION lib/${PROJECT_NAME})
-install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
-install(TARGETS ergodic_test ergodic_main ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
-install(EXPORT ${PROJECT_NAME}-targets
-        FILE ${PROJECT_NAME}-config.cmake
-        NAMESPACE ${PROJECT_NAME}::
-        DESTINATION lib/cmake/${PROJECT_NAME})
-ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
+# install(TARGETS ergodic_main controller_test DESTINATION lib/${PROJECT_NAME})
+# install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
+# install(TARGETS ergodic_main controller_test ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+# install(EXPORT ${PROJECT_NAME}-targets
+#         FILE ${PROJECT_NAME}-config.cmake
+#         NAMESPACE ${PROJECT_NAME}::
+#         DESTINATION lib/cmake/${PROJECT_NAME})
+# ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
 
 #if (NOT CMAKE_CROSSCOMPILING)
 #  find_package(Doxygen)
