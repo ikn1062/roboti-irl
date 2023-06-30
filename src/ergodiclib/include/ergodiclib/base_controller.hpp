@@ -25,9 +25,20 @@ namespace ergodiclib
     class BaseController 
     {
         public:
+        /// \brief Base Constructor for Base Controller Class
         BaseController()
         {}
-
+        
+        /// \brief Constructor for iLQR Controller
+        /// \param model_in Model input following Concept Template
+        /// \param Q Q Matrix (Trajectory Penalty)
+        /// \param R R Matrix (Control Penalty)
+        /// \param P P Matrix (Final Trajectory Penalty)
+        /// \param r r Matrix (Final Control Penalty)
+        /// \param max_iter_in Max iteration for control descent
+        /// \param a Alpha - Controller multiplier
+        /// \param b Beta - Controller multiplier for armijo line search
+        /// \param e Epsilon - Convergence Value for Objective Function
         BaseController(
         ModelTemplate model_in, arma::mat Q, arma::mat R, arma::mat P, arma::mat r,
         unsigned int max_iter_in, double a, double b, double e)
@@ -46,6 +57,8 @@ namespace ergodiclib
             num_iter = (int) ((model_in.tf - model_in.t0) / dt);
         }
 
+        /// \brief Begins iLQR controller
+        /// \return Optimal Control and Trajectory as a pair <Trajectory, Controls>
         std::pair<arma::mat, arma::mat> iLQR()
         {
             // Create variables for iLQR loop
@@ -105,6 +118,12 @@ namespace ergodiclib
             return trajectory;
         }
 
+        /// \brief Begins model predictive controller
+        /// @param x0 Initial State vector at time t=0 for controls
+        /// @param u0 Initial Control vector at time t=0
+        /// @param num_steps Number of time steps given model_dt
+        /// @param max_iterations Number of max iterations for gradient descent loop
+        /// @return Controller and State Trajectories over time horizon
         std::pair<arma::mat, arma::mat> ModelPredictiveControl(
         const arma::vec & x0, const arma::vec & u0, const unsigned int & num_steps,
         const unsigned int & max_iterations)
@@ -158,6 +177,13 @@ namespace ergodiclib
         }
 
         protected:
+
+        /// \brief Calculates zeta and vega matrix for controller
+        /// \param Xt State trajectory over time Horizon
+        /// \param Ut Control over time horizon
+        /// \param aT aT Matrix
+        /// \param bT bT Matrix
+        /// \return Returns zeta and vega matrix for controller
         std::pair<arma::mat, arma::mat> calculateZeta(arma::mat & Xt, const arma::mat & Ut, const arma::mat & aT, const arma::mat & bT) const 
         {
             std::pair<std::vector<arma::mat>, std::vector<arma::mat>> listPr = calculatePr(Xt, Ut, aT, bT);
@@ -198,6 +224,12 @@ namespace ergodiclib
             return descDir;
         }
 
+        /// \brief Calculates P and r lists for solving ricatti equations
+        /// \param Xt State trajectory over time Horizon
+        /// \param Ut Control over time horizon
+        /// \param aT aT Matrix
+        /// \param bT bT Matrix
+        /// \return P and r lists over time horizon to calculate zeta
         std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(arma::mat Xt, arma::mat Ut, const arma::mat & aT, const arma::mat & bT) const
         {
             arma::mat P = P_mat;
@@ -232,16 +264,10 @@ namespace ergodiclib
             return list_pair;
         }
 
-        virtual arma::mat calculate_aT(const arma::mat & Xt) const
-        {
-            return Xt;
-        } 
-
-        virtual arma::mat calculate_bT(const arma::mat & Ut) const
-        {
-            return Ut;
-        }
-
+        /// \brief Calculates the objective function given Trajectory and Control [VIRTUAL]
+        /// \param Xt State trajectory over time Horizon
+        /// \param Ut Control over time horizon
+        /// \return Objective value
         virtual double objectiveJ(const arma::mat & Xt, const arma::mat & Ut) const
         {
             UNUSED(Xt);
@@ -249,12 +275,33 @@ namespace ergodiclib
             return 0.0;
         }
 
+        /// \brief Calculates absolute value of descent direction [VIRTUAL]
+        /// \param zeta_pair zeta and vega matrix for controller
+        /// \param at aT Matrix
+        /// \param bt bT Matrix
+        /// @return Descent direction as an double value
         virtual double calculateDJ(std::pair<arma::mat, arma::mat> const & zeta_pair, const arma::mat & aT, const arma::mat & bT)
         {
             UNUSED(aT);
             UNUSED(bT);
             UNUSED(zeta_pair);
             return 0.0;
+        }
+
+        /// \brief Calculates aT matrix [VIRTUAL]
+        /// \param Xt State trajectory over time Horizon
+        /// \return Retuns aT matrix
+        virtual arma::mat calculate_aT(const arma::mat & Xt) const
+        {
+            return Xt;
+        } 
+
+        /// \brief Calculates bT matrix [VIRTUAL]
+        /// \param Ut Control over time horizon
+        /// \return Retuns bT matrix
+        virtual arma::mat calculate_bT(const arma::mat & Ut) const
+        {
+            return Ut;
         }
 
         /// \brief Model following Concept Template

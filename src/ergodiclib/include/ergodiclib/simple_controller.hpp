@@ -22,11 +22,14 @@
 #endif
 
 namespace ergodiclib
-{
+{   
+    /// \brief Simple iLQR Controller for a given dynamic system
+    /// \tparam ModelTemplate Template for Dynamic Model
     template<class ModelTemplate>
     class SimpleController :  public BaseController<ModelTemplate>
     {
         public:
+        /// \brief Base Constructor for Simple Controller Class
         SimpleController()
         : BaseController<ModelTemplate>::BaseController()
         {}
