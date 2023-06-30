@@ -7,7 +7,7 @@
 
 #define private public
 
-#include <ergodiclib/cartpole.hpp>
+#include <cartpole/cartpole_sys.hpp>
 #include <ergodiclib/num_utils.hpp>
 
 using namespace ergodiclib;

@@ -39,7 +39,7 @@
 #include <ergodiclib/file_utils.hpp>
 #include <ergodiclib/ergodic_measure.hpp>
 #include <ergodiclib/simple_controller.hpp>
-#include <ergodiclib/cartpole.hpp>
+#include <cartpole/cartpole_sys.hpp>
 
 using namespace std::chrono;
 

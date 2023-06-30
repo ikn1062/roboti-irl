@@ -81,18 +81,18 @@ public:
   /// \param b Beta - Controller multiplier for armijo line search
   /// \param e Epsilon - Convergence Value for Objective Function
   ergController(
-    std::vector<arma::mat> demonstrations, std::vector<int> demo_posneg, 
+    std::vector<arma::mat> demonstrations, std::vector<int> demo_posneg,
     std::vector<double> demo_weights,
-    std::vector<std::pair<double, double>> L_dim, int num_dim, int K, 
-    ModelTemplate model_agent, double q_val, arma::mat Q, 
-    arma::mat R, arma::mat P, arma::mat r, int max_iter_in, 
+    std::vector<std::pair<double, double>> L_dim, int num_dim, int K,
+    ModelTemplate model_agent, double q_val, arma::mat Q,
+    arma::mat R, arma::mat P, arma::mat r, int max_iter_in,
     double a, double b, double e)
-  :
-    BaseController<ModelTemplate>::BaseController(model_agent, Q, R, P, r, max_iter_in, a, b, e),
+  : BaseController<ModelTemplate>::BaseController(model_agent, Q, R, P, r, max_iter_in, a, b, e),
     q(q_val)
   {
-    Basis = fourierBasis(L_dim, num_dim, K); 
-    ergodicMeasure = ErgodicMeasure(demonstrations, demo_posneg, demo_weights, model_agent.dt, Basis);
+    Basis = fourierBasis(L_dim, num_dim, K);
+    ergodicMeasure =
+      ErgodicMeasure(demonstrations, demo_posneg, demo_weights, model_agent.dt, Basis);
     tf = model_agent.tf;
   }
 

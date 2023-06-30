@@ -1,4 +1,4 @@
-#include <ergodiclib/cartpole.hpp>
+#include <cartpole/cartpole_sys.hpp>
 #include <ergodiclib/simple_controller.hpp>
 
 #if defined(__APPLE__)

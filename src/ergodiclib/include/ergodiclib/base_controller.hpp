@@ -21,326 +21,334 @@
 
 namespace ergodiclib
 {
-    template<class ModelTemplate>
-    class BaseController 
-    {
-        public:
-        /// \brief Base Constructor for Base Controller Class
-        BaseController()
-        {}
-        
-        /// \brief Constructor for iLQR Controller
-        /// \param model_in Model input following Concept Template
-        /// \param Q Q Matrix (Trajectory Penalty)
-        /// \param R R Matrix (Control Penalty)
-        /// \param P P Matrix (Final Trajectory Penalty)
-        /// \param r r Matrix (Final Control Penalty)
-        /// \param max_iter_in Max iteration for control descent
-        /// \param a Alpha - Controller multiplier
-        /// \param b Beta - Controller multiplier for armijo line search
-        /// \param e Epsilon - Convergence Value for Objective Function
-        BaseController(
-        ModelTemplate model_in, arma::mat Q, arma::mat R, arma::mat P, arma::mat r,
-        unsigned int max_iter_in, double a, double b, double e)
-        : model(model_in),
-        Q_mat(Q),
-        R_mat(R),
-        P_mat(P),
-        r_mat(r),
-        max_iter(max_iter_in),
-        alpha(a),
-        beta(b),
-        eps(e)
-        {
-            x0 = model_in.x0;
-            dt = model_in.dt;
-            num_iter = (int) ((model_in.tf - model_in.t0) / dt);
-        }
+template<class ModelTemplate>
+class BaseController
+{
+public:
+  /// \brief Base Constructor for Base Controller Class
+  BaseController()
+  {}
 
-        /// \brief Begins iLQR controller
-        /// \return Optimal Control and Trajectory as a pair <Trajectory, Controls>
-        std::pair<arma::mat, arma::mat> iLQR()
-        {
-            // Create variables for iLQR loop
-            std::pair<arma::mat, arma::mat> trajectory, descentDirection;
-            arma::mat X, U, zeta, vega, aT, bT;
-            double DJ, J, J_new, gamma;
-            unsigned int i, n;
+  /// \brief Constructor for iLQR Controller
+  /// \param model_in Model input following Concept Template
+  /// \param Q Q Matrix (Trajectory Penalty)
+  /// \param R R Matrix (Control Penalty)
+  /// \param P P Matrix (Final Trajectory Penalty)
+  /// \param r r Matrix (Final Control Penalty)
+  /// \param max_iter_in Max iteration for control descent
+  /// \param a Alpha - Controller multiplier
+  /// \param b Beta - Controller multiplier for armijo line search
+  /// \param e Epsilon - Convergence Value for Objective Function
+  BaseController(
+    ModelTemplate model_in, arma::mat Q, arma::mat R, arma::mat P, arma::mat r,
+    unsigned int max_iter_in, double a, double b, double e)
+  : model(model_in),
+    Q_mat(Q),
+    R_mat(R),
+    P_mat(P),
+    r_mat(r),
+    max_iter(max_iter_in),
+    alpha(a),
+    beta(b),
+    eps(e)
+  {
+    x0 = model_in.x0;
+    dt = model_in.dt;
+    num_iter = (int) ((model_in.tf - model_in.t0) / dt);
+  }
 
-            // Get an initial trajectory
-            trajectory = model.createTrajectory();
-            X = trajectory.first;
-            U = trajectory.second;
+  /// \brief Begins iLQR controller
+  /// \return Optimal Control and Trajectory as a pair <Trajectory, Controls>
+  std::pair<arma::mat, arma::mat> iLQR()
+  {
+    // Create variables for iLQR loop
+    std::pair<arma::mat, arma::mat> trajectory, descentDirection;
+    arma::mat X, U, zeta, vega, aT, bT;
+    double DJ, J, J_new, gamma;
+    unsigned int i, n;
 
-            J = objectiveJ(X, U);
-            DJ = 1000.0;
-            i = 0;
-            
-            // The Controller can use DJ or J in the while loop in comparison to eps
-            while (std::abs(DJ) > eps && i < max_iter) {
-                aT = calculate_aT(X);
-                bT = calculate_bT(U);
-                descentDirection = calculateZeta(X, U, aT, bT);
-                zeta = descentDirection.first;
-                vega = descentDirection.second;
+    // Get an initial trajectory
+    trajectory = model.createTrajectory();
+    X = trajectory.first;
+    U = trajectory.second;
 
-                DJ = calculateDJ(descentDirection, aT, bT);
-                J = objectiveJ(X, U);
-                J_new = std::numeric_limits<double>::max();
-                gamma = beta;
-                n = 1;
+    J = objectiveJ(X, U);
+    DJ = 1000.0;
+    i = 0;
 
-                while (J_new > J + alpha * gamma * DJ && n < 2) {
-                    U = U + gamma * vega;
-                    X = model.createTrajectory(x0, U);
-                    J_new = objectiveJ(X, U);
-                    n += 1;
-                    gamma = pow(beta, n);
-                }
+    // The Controller can use DJ or J in the while loop in comparison to eps
+    while (std::abs(DJ) > eps && i < max_iter) {
+      aT = calculate_aT(X);
+      bT = calculate_bT(U);
+      descentDirection = calculateZeta(X, U, aT, bT);
+      zeta = descentDirection.first;
+      vega = descentDirection.second;
 
-                trajectory = {X, U};
-                i += 1;
+      DJ = calculateDJ(descentDirection, aT, bT);
+      J = objectiveJ(X, U);
+      J_new = std::numeric_limits<double>::max();
+      gamma = beta;
+      n = 1;
 
-                // std::cout << "i: " << i << std::endl;
-                // std::cout << "DJ: " << std::abs(DJ) << std::endl;
-                // std::cout << "J: " << std::abs(J_new) << std::endl;
-                // (X.col(X.n_cols - 1)).print("End X: ");
+      while (J_new > J + alpha * gamma * DJ && n < 2) {
+        U = U + gamma * vega;
+        X = model.createTrajectory(x0, U);
+        J_new = objectiveJ(X, U);
+        n += 1;
+        gamma = pow(beta, n);
+      }
 
-            }
-            // // Used to save files
-            // std::string x_file = "erg_trajectory";
-            // arma::mat XT = X.t();
-            // XT.save(x_file, arma::csv_ascii);
-            // arma::mat UT = U.t();
-            // std::string u_file = "erg_control";
-            // UT.save(u_file, arma::csv_ascii);
+      trajectory = {X, U};
+      i += 1;
 
-            return trajectory;
-        }
+      // std::cout << "i: " << i << std::endl;
+      // std::cout << "DJ: " << std::abs(DJ) << std::endl;
+      // std::cout << "J: " << std::abs(J_new) << std::endl;
+      // (X.col(X.n_cols - 1)).print("End X: ");
 
-        /// \brief Begins model predictive controller
-        /// @param x0 Initial State vector at time t=0 for controls
-        /// @param u0 Initial Control vector at time t=0
-        /// @param num_steps Number of time steps given model_dt
-        /// @param max_iterations Number of max iterations for gradient descent loop
-        /// @return Controller and State Trajectories over time horizon
-        std::pair<arma::mat, arma::mat> ModelPredictiveControl(
-        const arma::vec & x0, const arma::vec & u0, const unsigned int & num_steps,
-        const unsigned int & max_iterations)
-        {
-        std::pair<arma::mat, arma::mat> trajectory, descentDirection;
-        arma::mat X, U, X_new, U_new, zeta, vega, aT, bT;
-        double DJ, J, J_new, gamma;
-        unsigned int i, n;
+    }
+    // // Used to save files
+    // std::string x_file = "erg_trajectory";
+    // arma::mat XT = X.t();
+    // XT.save(x_file, arma::csv_ascii);
+    // arma::mat UT = U.t();
+    // std::string u_file = "erg_control";
+    // UT.save(u_file, arma::csv_ascii);
 
-        // Create Trajectory
-        // std::cout << "Create Trajectory" << std::endl;
-        U = arma::mat(u0.n_elem, num_steps, arma::fill::zeros);
-        U.each_col() = u0;
-        X = model.createTrajectory(x0, U, num_steps);
+    return trajectory;
+  }
 
-        // Get Cost of the trajectory
-        // std::cout << "Cost of Trajectory" << std::endl;
-        J = objectiveJ(X, U);
+  /// \brief Begins model predictive controller
+  /// @param x0 Initial State vector at time t=0 for controls
+  /// @param u0 Initial Control vector at time t=0
+  /// @param num_steps Number of time steps given model_dt
+  /// @param max_iterations Number of max iterations for gradient descent loop
+  /// @return Controller and State Trajectories over time horizon
+  std::pair<arma::mat, arma::mat> ModelPredictiveControl(
+    const arma::vec & x0, const arma::vec & u0, const unsigned int & num_steps,
+    const unsigned int & max_iterations)
+  {
+    std::pair<arma::mat, arma::mat> trajectory, descentDirection;
+    arma::mat X, U, X_new, U_new, zeta, vega, aT, bT;
+    double DJ, J, J_new, gamma;
+    unsigned int i, n;
 
-        DJ = 1000.0;
-        i = 0;
-        while (std::abs(DJ) > eps && i < max_iterations) {
-            aT = calculate_aT(X);
-            bT = calculate_bT(U);
-            descentDirection = calculateZeta(X, U, aT, bT);
-            zeta = descentDirection.first;
-            vega = descentDirection.second;
+    // Create Trajectory
+    // std::cout << "Create Trajectory" << std::endl;
+    U = arma::mat(u0.n_elem, num_steps, arma::fill::zeros);
+    U.each_col() = u0;
+    X = model.createTrajectory(x0, U, num_steps);
 
-            DJ = calculateDJ(descentDirection, aT, bT);
-            J = objectiveJ(X, U);
-            J_new = std::numeric_limits<double>::max();
-            n = 1;
-            gamma = beta;
+    // Get Cost of the trajectory
+    // std::cout << "Cost of Trajectory" << std::endl;
+    J = objectiveJ(X, U);
 
-            //std::cout << "Loop: " << i << ", J: " << J << ", DJ: " << DJ << std::endl;
-            
-            // Take a look at the algorithm for Armijo line search to check if this is correct
-            while (J_new > J + alpha * gamma * DJ && n < 10) { 
-                U = U + gamma * vega;
-                X = model.createTrajectory(x0, U);
-                J_new = objectiveJ(X, U);
-                n += 1;
-                gamma = pow(beta, n);
-            }
+    DJ = 1000.0;
+    i = 0;
+    while (std::abs(DJ) > eps && i < max_iterations) {
+      aT = calculate_aT(X);
+      bT = calculate_bT(U);
+      descentDirection = calculateZeta(X, U, aT, bT);
+      zeta = descentDirection.first;
+      vega = descentDirection.second;
 
-            trajectory = {X, U};
-            i += 1;
-        }
+      DJ = calculateDJ(descentDirection, aT, bT);
+      J = objectiveJ(X, U);
+      J_new = std::numeric_limits<double>::max();
+      n = 1;
+      gamma = beta;
 
-        return trajectory;
-        }
+      //std::cout << "Loop: " << i << ", J: " << J << ", DJ: " << DJ << std::endl;
 
-        protected:
+      // Take a look at the algorithm for Armijo line search to check if this is correct
+      while (J_new > J + alpha * gamma * DJ && n < 10) {
+        U = U + gamma * vega;
+        X = model.createTrajectory(x0, U);
+        J_new = objectiveJ(X, U);
+        n += 1;
+        gamma = pow(beta, n);
+      }
 
-        /// \brief Calculates zeta and vega matrix for controller
-        /// \param Xt State trajectory over time Horizon
-        /// \param Ut Control over time horizon
-        /// \param aT aT Matrix
-        /// \param bT bT Matrix
-        /// \return Returns zeta and vega matrix for controller
-        std::pair<arma::mat, arma::mat> calculateZeta(arma::mat & Xt, const arma::mat & Ut, const arma::mat & aT, const arma::mat & bT) const 
-        {
-            std::pair<std::vector<arma::mat>, std::vector<arma::mat>> listPr = calculatePr(Xt, Ut, aT, bT);
-            std::vector<arma::mat> Plist = listPr.first;
-            std::vector<arma::mat> rlist = listPr.second;
+      trajectory = {X, U};
+      i += 1;
+    }
 
-            arma::mat zeta(Xt.n_rows, Xt.n_cols, arma::fill::zeros);
-            arma::mat vega(Ut.n_rows, Ut.n_cols, arma::fill::zeros);
+    return trajectory;
+  }
 
-            arma::mat A = model.getA(Xt.col(0), Ut.col(0));
-            arma::mat B = model.getB(Xt.col(0), Ut.col(0));
-            
-            // ERGODIC CONTROLLER: z(Xt.n_rows, arma::fill::zeros);
-            // CONTROLLER:         -Plist[0] * rlist[0];
-            // Fix: Use a virtual intialize z() function I guess
-            arma::vec z(Xt.n_rows, arma::fill::zeros); // The only difference between ergodic controller and a regular controller is this function
+protected:
+  /// \brief Calculates zeta and vega matrix for controller
+  /// \param Xt State trajectory over time Horizon
+  /// \param Ut Control over time horizon
+  /// \param aT aT Matrix
+  /// \param bT bT Matrix
+  /// \return Returns zeta and vega matrix for controller
+  std::pair<arma::mat, arma::mat> calculateZeta(
+    arma::mat & Xt, const arma::mat & Ut,
+    const arma::mat & aT, const arma::mat & bT) const
+  {
+    std::pair<std::vector<arma::mat>, std::vector<arma::mat>> listPr = calculatePr(Xt, Ut, aT, bT);
+    std::vector<arma::mat> Plist = listPr.first;
+    std::vector<arma::mat> rlist = listPr.second;
 
-            arma::vec v = -R_mat.i() * B.t() * Plist[0] * z - R_mat.i() * B.t() * rlist[0] - R_mat.i() *
-                bT.row(0).t();
-            zeta.col(0) = z;
-            vega.col(0) = v;
+    arma::mat zeta(Xt.n_rows, Xt.n_cols, arma::fill::zeros);
+    arma::mat vega(Ut.n_rows, Ut.n_cols, arma::fill::zeros);
 
-            arma::vec zdot;
-            for (unsigned int i = 1; i < Xt.n_cols; i++) {
-                A = model.getA(Xt.col(i), Ut.col(i));
-                B = model.getB(Xt.col(i), Ut.col(i));
+    arma::mat A = model.getA(Xt.col(0), Ut.col(0));
+    arma::mat B = model.getB(Xt.col(0), Ut.col(0));
 
-                zdot = A * z + B * v;
-                z = z + dt * zdot;
-                v = -R_mat.i() * B.t() * Plist[i] * z - R_mat.i() * B.t() * rlist[i] - R_mat.i() * bT.row(i).t();   // + R_mat.i() * B.t() * Plist[i] * z
+    // ERGODIC CONTROLLER: z(Xt.n_rows, arma::fill::zeros);
+    // CONTROLLER:         -Plist[0] * rlist[0];
+    // Fix: Use a virtual intialize z() function I guess
+    arma::vec z(Xt.n_rows, arma::fill::zeros);         // The only difference between ergodic controller and a regular controller is this function
 
-                zeta.col(i) = z;
-                vega.col(i) = v;
-            }
+    arma::vec v = -R_mat.i() * B.t() * Plist[0] * z - R_mat.i() * B.t() * rlist[0] - R_mat.i() *
+      bT.row(0).t();
+    zeta.col(0) = z;
+    vega.col(0) = v;
 
-            std::pair<arma::mat, arma::mat> descDir = {zeta, vega};
-            // std::cout << "calc Zeta Complete" << std::endl;
-            return descDir;
-        }
+    arma::vec zdot;
+    for (unsigned int i = 1; i < Xt.n_cols; i++) {
+      A = model.getA(Xt.col(i), Ut.col(i));
+      B = model.getB(Xt.col(i), Ut.col(i));
 
-        /// \brief Calculates P and r lists for solving ricatti equations
-        /// \param Xt State trajectory over time Horizon
-        /// \param Ut Control over time horizon
-        /// \param aT aT Matrix
-        /// \param bT bT Matrix
-        /// \return P and r lists over time horizon to calculate zeta
-        std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(arma::mat Xt, arma::mat Ut, const arma::mat & aT, const arma::mat & bT) const
-        {
-            arma::mat P = P_mat;
-            arma::mat r = r_mat;
-            std::vector<arma::mat> Plist(Xt.n_cols, P);
-            std::vector<arma::mat> rlist(Xt.n_cols, r);
-            Plist[Xt.n_cols - 1] = P;
-            rlist[Xt.n_cols - 1] = r;
+      zdot = A * z + B * v;
+      z = z + dt * zdot;
+      v = -R_mat.i() * B.t() * Plist[i] * z - R_mat.i() * B.t() * rlist[i] - R_mat.i() *
+        bT.row(i).t();                                                                                              // + R_mat.i() * B.t() * Plist[i] * z
 
-            arma::mat Rinv = R_mat.i();
+      zeta.col(i) = z;
+      vega.col(i) = v;
+    }
 
-            int idx;
-            arma::mat A, B, Pdot, rdot;
-            for (unsigned int i = 0; i < Xt.n_cols - 2; i++) {
-                idx = Xt.n_cols - 2 - i;
+    std::pair<arma::mat, arma::mat> descDir = {zeta, vega};
+    // std::cout << "calc Zeta Complete" << std::endl;
+    return descDir;
+  }
 
-                A = model.getA(Xt.col(idx), Ut.col(idx));
-                B = model.getB(Xt.col(idx), Ut.col(idx));
+  /// \brief Calculates P and r lists for solving ricatti equations
+  /// \param Xt State trajectory over time Horizon
+  /// \param Ut Control over time horizon
+  /// \param aT aT Matrix
+  /// \param bT bT Matrix
+  /// \return P and r lists over time horizon to calculate zeta
+  std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(
+    arma::mat Xt, arma::mat Ut,
+    const arma::mat & aT,
+    const arma::mat & bT) const
+  {
+    arma::mat P = P_mat;
+    arma::mat r = r_mat;
+    std::vector<arma::mat> Plist(Xt.n_cols, P);
+    std::vector<arma::mat> rlist(Xt.n_cols, r);
+    Plist[Xt.n_cols - 1] = P;
+    rlist[Xt.n_cols - 1] = r;
 
-                Pdot = -P * A - A.t() * P + P * B * R_mat.i() * B.t() * P - Q_mat; // + P * AT
-                rdot = -(A - B * R_mat.i() * B.t() * P).t() * r - aT.row(idx).t() + P * B * R_mat.i() * bT.row(
-                idx).t();
+    arma::mat Rinv = R_mat.i();
 
-                P = P - dt * Pdot;
-                r = r - dt * rdot;
+    int idx;
+    arma::mat A, B, Pdot, rdot;
+    for (unsigned int i = 0; i < Xt.n_cols - 2; i++) {
+      idx = Xt.n_cols - 2 - i;
 
-                Plist[idx] = P;
-                rlist[idx] = r;
-            }
+      A = model.getA(Xt.col(idx), Ut.col(idx));
+      B = model.getB(Xt.col(idx), Ut.col(idx));
 
-            std::pair<std::vector<arma::mat>, std::vector<arma::mat>> list_pair = {Plist, rlist};
-            return list_pair;
-        }
+      Pdot = -P * A - A.t() * P + P * B * R_mat.i() * B.t() * P - Q_mat;           // + P * AT
+      rdot = -(A - B * R_mat.i() * B.t() * P).t() * r - aT.row(idx).t() + P * B * R_mat.i() *
+        bT.row(
+        idx).t();
 
-        /// \brief Calculates the objective function given Trajectory and Control [VIRTUAL]
-        /// \param Xt State trajectory over time Horizon
-        /// \param Ut Control over time horizon
-        /// \return Objective value
-        virtual double objectiveJ(const arma::mat & Xt, const arma::mat & Ut) const
-        {
-            UNUSED(Xt);
-            UNUSED(Ut);
-            return 0.0;
-        }
+      P = P - dt * Pdot;
+      r = r - dt * rdot;
 
-        /// \brief Calculates absolute value of descent direction [VIRTUAL]
-        /// \param zeta_pair zeta and vega matrix for controller
-        /// \param at aT Matrix
-        /// \param bt bT Matrix
-        /// @return Descent direction as an double value
-        virtual double calculateDJ(std::pair<arma::mat, arma::mat> const & zeta_pair, const arma::mat & aT, const arma::mat & bT)
-        {
-            UNUSED(aT);
-            UNUSED(bT);
-            UNUSED(zeta_pair);
-            return 0.0;
-        }
+      Plist[idx] = P;
+      rlist[idx] = r;
+    }
 
-        /// \brief Calculates aT matrix [VIRTUAL]
-        /// \param Xt State trajectory over time Horizon
-        /// \return Retuns aT matrix
-        virtual arma::mat calculate_aT(const arma::mat & Xt) const
-        {
-            return Xt;
-        } 
+    std::pair<std::vector<arma::mat>, std::vector<arma::mat>> list_pair = {Plist, rlist};
+    return list_pair;
+  }
 
-        /// \brief Calculates bT matrix [VIRTUAL]
-        /// \param Ut Control over time horizon
-        /// \return Retuns bT matrix
-        virtual arma::mat calculate_bT(const arma::mat & Ut) const
-        {
-            return Ut;
-        }
+  /// \brief Calculates the objective function given Trajectory and Control [VIRTUAL]
+  /// \param Xt State trajectory over time Horizon
+  /// \param Ut Control over time horizon
+  /// \return Objective value
+  virtual double objectiveJ(const arma::mat & Xt, const arma::mat & Ut) const
+  {
+    UNUSED(Xt);
+    UNUSED(Ut);
+    return 0.0;
+  }
 
-        /// \brief Model following Concept Template
-        ModelTemplate model;
+  /// \brief Calculates absolute value of descent direction [VIRTUAL]
+  /// \param zeta_pair zeta and vega matrix for controller
+  /// \param at aT Matrix
+  /// \param bt bT Matrix
+  /// @return Descent direction as an double value
+  virtual double calculateDJ(
+    std::pair<arma::mat, arma::mat> const & zeta_pair,
+    const arma::mat & aT, const arma::mat & bT)
+  {
+    UNUSED(aT);
+    UNUSED(bT);
+    UNUSED(zeta_pair);
+    return 0.0;
+  }
 
-        /// \brief Initial State vector at time t=0
-        arma::vec x0;
+  /// \brief Calculates aT matrix [VIRTUAL]
+  /// \param Xt State trajectory over time Horizon
+  /// \return Retuns aT matrix
+  virtual arma::mat calculate_aT(const arma::mat & Xt) const
+  {
+    return Xt;
+  }
 
-        /// \brief Q Matrix (Trajectory Penalty)
-        arma::mat Q_mat;
+  /// \brief Calculates bT matrix [VIRTUAL]
+  /// \param Ut Control over time horizon
+  /// \return Retuns bT matrix
+  virtual arma::mat calculate_bT(const arma::mat & Ut) const
+  {
+    return Ut;
+  }
 
-        /// \brief R Matrix (Control Penalty)
-        arma::mat R_mat;
+  /// \brief Model following Concept Template
+  ModelTemplate model;
 
-        /// \brief P Matrix (Final Trajectory Penalty)
-        arma::mat P_mat;
+  /// \brief Initial State vector at time t=0
+  arma::vec x0;
 
-        /// \brief r Matrix (Final Control Penalty)
-        arma::mat r_mat;
+  /// \brief Q Matrix (Trajectory Penalty)
+  arma::mat Q_mat;
 
-        /// \brief Difference in time steps from model system
-        double dt;
+  /// \brief R Matrix (Control Penalty)
+  arma::mat R_mat;
 
-        /// \brief Number of iterations for time horizon
-        unsigned int num_iter;
+  /// \brief P Matrix (Final Trajectory Penalty)
+  arma::mat P_mat;
 
-        /// \brief Max iteration for control descent
-        unsigned int max_iter;
+  /// \brief r Matrix (Final Control Penalty)
+  arma::mat r_mat;
 
-        /// \brief Alpha - Controller multiplier
-        double alpha;
+  /// \brief Difference in time steps from model system
+  double dt;
 
-        /// \brief Beta - Controller multiplier for armijo line search
-        double beta;
+  /// \brief Number of iterations for time horizon
+  unsigned int num_iter;
 
-        /// \brief Epsilon - Convergence Value for Objective Function
-        double eps;
+  /// \brief Max iteration for control descent
+  unsigned int max_iter;
 
-    };
+  /// \brief Alpha - Controller multiplier
+  double alpha;
+
+  /// \brief Beta - Controller multiplier for armijo line search
+  double beta;
+
+  /// \brief Epsilon - Convergence Value for Objective Function
+  double eps;
+
+};
 }
 
 #endif
