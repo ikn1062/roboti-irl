@@ -1,5 +1,5 @@
 #include <ergodiclib/cartpole.hpp>
-#include <ergodiclib/controller.hpp>
+#include <ergodiclib/simple_controller.hpp>
 
 #if defined(__APPLE__)
 #include </opt/homebrew/include/armadillo>
@@ -39,7 +39,7 @@ int main()
   double eps = 2.0;
 
   CartPole cartpole = CartPole(x0, u0, dt, t0, tf, 10.0, 5.0, 2.0);
-  ilqrController controller = ilqrController(cartpole, Q, R, P, r, 1500, alpha, beta, eps);
+  SimpleController controller = SimpleController(cartpole, Q, R, P, r, 1500, alpha, beta, eps);
   controller.iLQR();
 
   return 0;

@@ -1,7 +1,11 @@
-#ifndef ERG_CON_INCLUDE_GUARD_HPP
-#define ERG_CON_INCLUDE_GUARD_HPP
+#ifndef ERGODIC_CON_INCLUDE_GUARD_HPP
+#define ERGODIC_CON_INCLUDE_GUARD_HPP
 /// \file
-/// \brief Ergodic COntroller
+/// \brief Ergodic Controller
+
+/*
+NOTE: THIS IS A DEPRECATED FILE - THE USE OF THE FILE WILL BE PHASED OUT
+*/
 
 
 #include <iosfwd>

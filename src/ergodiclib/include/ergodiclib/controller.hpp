@@ -3,6 +3,10 @@
 /// \file
 /// \brief Contains a Controller class for an iLQR controller
 
+/*
+NOTE: THIS IS A DEPRECATED FILE - THE USE OF THE FILE WILL BE PHASED OUT
+*/
+
 #include <iosfwd>
 #include <cmath>
 #include <iostream>

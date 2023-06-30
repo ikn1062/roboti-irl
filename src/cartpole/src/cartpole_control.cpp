@@ -38,7 +38,7 @@
 
 #include <ergodiclib/file_utils.hpp>
 #include <ergodiclib/ergodic_measure.hpp>
-#include <ergodiclib/controller.hpp>
+#include <ergodiclib/simple_controller.hpp>
 #include <ergodiclib/cartpole.hpp>
 
 using namespace std::chrono;
@@ -104,7 +104,7 @@ public:
     P(3, 3) = 2;
 
     cartpole = ergodiclib::CartPole(x0, u0, dt, t0, tf, 10.0, 5.0, 2.0);
-    controller = ergodiclib::ilqrController(cartpole, Q, R, P, r, 7500, alpha, beta, eps);
+    controller = ergodiclib::SimpleController(cartpole, Q, R, P, r, 7500, alpha, beta, eps);
 
     // Create main callback
     timer_ = create_wall_timer(duration_, std::bind(&CartpoleControl::cartpole_main, this));
@@ -148,7 +148,7 @@ private:
   unsigned int max_iter = 5000;
 
   ergodiclib::CartPole cartpole;
-  ergodiclib::ilqrController<ergodiclib::CartPole> controller;
+  ergodiclib::SimpleController<ergodiclib::CartPole> controller;
 
   std::pair<arma::mat, arma::mat> trajectories;
   arma::mat X;
