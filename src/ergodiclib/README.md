@@ -28,4 +28,5 @@ The parameters of the `visualize_ergodic.py` are listed as follows:
 * demonstration_folder (string) : File path to the folder containing all demonstrations trajectories
 
 ## References
-- https://arxiv.org/abs/2103.17098 - Ergodic imitation: Learning from what to do and what not to do
+Kalinowska, A., Prabhakar, A., Fitzsimons, K., &amp; Murphey, T. (2021). Ergodic imitation: Learning from what to do and what not to do. 2021 IEEE International Conference on Robotics and Automation (ICRA). https://doi.org/10.1109/icra48506.2021.9561746
+
