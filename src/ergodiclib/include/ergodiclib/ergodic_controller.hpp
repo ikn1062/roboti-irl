@@ -170,12 +170,12 @@ private:
   /// \brief Calculates aT matrix
   /// \param Xt State trajectory over time Horizon
   /// \return Retuns aT matrix
-  arma::mat calculate_aT(const arma::mat & x_mat);
+  arma::mat calculate_aT(const arma::mat & Xt) const;
 
   /// \brief Calculates bT matrix
   /// \param Ut Control over time horizon
   /// \return Retuns bT matrix
-  arma::mat calculate_bT(const arma::mat & Ut);
+  arma::mat calculate_bT(const arma::mat & Ut) const;
 
   /// \param ergodicMes Ergodic Measurement Class
   ErgodicMeasure & ergodicMeasure;
@@ -470,7 +470,7 @@ std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ergController<ModelTem
 }
 
 template<class ModelTemplate>
-arma::mat ergController<ModelTemplate>::calculate_aT(const arma::mat & Xt)
+arma::mat ergController<ModelTemplate>::calculate_aT(const arma::mat & Xt) const
 {
   arma::mat a_mat(Xt.n_cols, Xt.n_rows, arma::fill::zeros);
 
@@ -495,7 +495,7 @@ arma::mat ergController<ModelTemplate>::calculate_aT(const arma::mat & Xt)
 }
 
 template<class ModelTemplate>
-arma::mat ergController<ModelTemplate>::calculate_bT(const arma::mat & Ut)
+arma::mat ergController<ModelTemplate>::calculate_bT(const arma::mat & Ut) const
 {
   arma::mat bT(Ut.n_cols, Ut.n_rows, arma::fill::zeros);
   for (unsigned int i = 0; i < Ut.n_cols; i++) {

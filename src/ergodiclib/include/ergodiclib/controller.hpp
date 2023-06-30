@@ -12,7 +12,6 @@
 
 #include <ergodiclib/num_utils.hpp>
 #include <ergodiclib/model.hpp>
-#include <ergodiclib/cartpole.hpp>
 
 #if defined(__APPLE__)
 #include </opt/homebrew/include/armadillo>

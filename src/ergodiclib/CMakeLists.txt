@@ -28,23 +28,25 @@ target_include_directories(${PROJECT_NAME}
 target_compile_features(${PROJECT_NAME}  PUBLIC cxx_std_20)
 target_compile_options(${PROJECT_NAME}  PUBLIC -Wall -Wextra -Wpedantic)
 
+# # Lines below are used to add cpp scripts as ROS2 executable files
 # add_executable(ergodic_main src/ergodic_main.cpp)
 # ament_target_dependencies(ergodic_main Armadillo)
 # target_link_libraries(ergodic_main ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
 
-# add_executable(controller_test src/controller_test.cpp)
-# ament_target_dependencies(controller_test Armadillo)
-# target_link_libraries(controller_test ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
+add_executable(controller_test src/controller_test.cpp)
+ament_target_dependencies(controller_test Armadillo)
+target_link_libraries(controller_test ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
 
-# install(TARGETS ergodic_main controller_test DESTINATION lib/${PROJECT_NAME})
-# install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
-# install(TARGETS ergodic_main controller_test ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
-# install(EXPORT ${PROJECT_NAME}-targets
-#         FILE ${PROJECT_NAME}-config.cmake
-#         NAMESPACE ${PROJECT_NAME}::
-#         DESTINATION lib/cmake/${PROJECT_NAME})
-# ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
+install(TARGETS ergodic_main controller_test DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
+install(TARGETS ergodic_main controller_test ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+install(EXPORT ${PROJECT_NAME}-targets
+        FILE ${PROJECT_NAME}-config.cmake
+        NAMESPACE ${PROJECT_NAME}::
+        DESTINATION lib/cmake/${PROJECT_NAME})
+ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
 
+# # Cross-Compiling options
 #if (NOT CMAKE_CROSSCOMPILING)
 #  find_package(Doxygen)
 #  set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md) # Use the readme in your doxygen docs
