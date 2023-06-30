@@ -17,9 +17,7 @@
 #include <armadillo>
 #endif
 
-#define VOID(arg) void(arg);
-
-// Need to add friend class for the ergodic controller and the regular controller
+#define UNUSED(x) (void)(x)
 
 namespace ergodiclib
 {
@@ -29,6 +27,24 @@ namespace ergodiclib
         public:
         BaseController()
         {}
+
+        BaseController(
+        ModelTemplate model_in, arma::mat Q, arma::mat R, arma::mat P, arma::mat r,
+        unsigned int max_iter_in, double a, double b, double e)
+        : model(model_in),
+        Q_mat(Q),
+        R_mat(R),
+        P_mat(P),
+        r_mat(r),
+        max_iter(max_iter_in),
+        alpha(a),
+        beta(b),
+        eps(e)
+        {
+            x0 = model_in.x0;
+            dt = model_in.dt;
+            num_iter = (int) ((model_in.tf - model_in.t0) / dt);
+        }
 
         std::pair<arma::mat, arma::mat> iLQR()
         {
@@ -46,7 +62,7 @@ namespace ergodiclib
             J = objectiveJ(X, U);
             DJ = 1000.0;
             i = 0;
-
+            
             // The Controller can use DJ or J in the while loop in comparison to eps
             while (std::abs(DJ) > eps && i < max_iter) {
                 aT = calculate_aT(X);
@@ -216,17 +232,67 @@ namespace ergodiclib
             return list_pair;
         }
 
-        std::pair<std::vector<arma::mat>, std::vector<arma::mat>> calculatePr(arma::mat Xt, arma::mat Ut, const arma::mat & aT, const arma::mat & bT) const;
-
         virtual arma::mat calculate_aT(const arma::mat & Xt) const
         {
-            VOID(Xt);
+            return Xt;
         } 
 
         virtual arma::mat calculate_bT(const arma::mat & Ut) const
         {
-            VOID(Ut);
+            return Ut;
         }
+
+        virtual double objectiveJ(const arma::mat & Xt, const arma::mat & Ut) const
+        {
+            UNUSED(Xt);
+            UNUSED(Ut);
+            return 0.0;
+        }
+
+        virtual double calculateDJ(std::pair<arma::mat, arma::mat> const & zeta_pair, const arma::mat & aT, const arma::mat & bT)
+        {
+            UNUSED(aT);
+            UNUSED(bT);
+            UNUSED(zeta_pair);
+            return 0.0;
+        }
+
+        /// \brief Model following Concept Template
+        ModelTemplate model;
+
+        /// \brief Initial State vector at time t=0
+        arma::vec x0;
+
+        /// \brief Q Matrix (Trajectory Penalty)
+        arma::mat Q_mat;
+
+        /// \brief R Matrix (Control Penalty)
+        arma::mat R_mat;
+
+        /// \brief P Matrix (Final Trajectory Penalty)
+        arma::mat P_mat;
+
+        /// \brief r Matrix (Final Control Penalty)
+        arma::mat r_mat;
+
+        /// \brief Difference in time steps from model system
+        double dt;
+
+        /// \brief Number of iterations for time horizon
+        unsigned int num_iter;
+
+        /// \brief Max iteration for control descent
+        unsigned int max_iter;
+
+        /// \brief Alpha - Controller multiplier
+        double alpha;
+
+        /// \brief Beta - Controller multiplier for armijo line search
+        double beta;
+
+        /// \brief Epsilon - Convergence Value for Objective Function
+        double eps;
+
     };
 }
 

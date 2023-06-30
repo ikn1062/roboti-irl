@@ -37,9 +37,11 @@ add_executable(controller_test src/controller_test.cpp)
 ament_target_dependencies(controller_test Armadillo)
 target_link_libraries(controller_test ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
 
-install(TARGETS ergodic_main controller_test DESTINATION lib/${PROJECT_NAME})
+# install(TARGETS ergodic_main controller_test DESTINATION lib/${PROJECT_NAME})
+install(TARGETS controller_test DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
-install(TARGETS ergodic_main controller_test ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+# install(TARGETS ergodic_main controller_test ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+install(TARGETS controller_test ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
 install(EXPORT ${PROJECT_NAME}-targets
         FILE ${PROJECT_NAME}-config.cmake
         NAMESPACE ${PROJECT_NAME}::

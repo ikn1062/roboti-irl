@@ -32,12 +32,12 @@ target_link_libraries(cartpole_ctrl ergodiclib::ergodiclib "${cpp_typesupport_ta
 
 add_executable(ergodic_script src/ergodic_script.cpp)
 ament_target_dependencies(ergodic_script Armadillo)
-target_link_libraries(ergodic_script ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
+target_link_libraries(ergodic_script ${ARMADILLO_LIBRARIES})
 target_link_libraries(ergodic_script ergodiclib::ergodiclib "${cpp_typesupport_target}")
 
 add_executable(controller_script src/controller_script.cpp)
 ament_target_dependencies(controller_script Armadillo)
-target_link_libraries(controller_script ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
+target_link_libraries(controller_script ${ARMADILLO_LIBRARIES})
 target_link_libraries(controller_script ergodiclib::ergodiclib "${cpp_typesupport_target}")
 
 
