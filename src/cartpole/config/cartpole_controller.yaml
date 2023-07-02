@@ -1,7 +1,7 @@
-cartpole_key:
+cartpole_key_control:
   ros__parameters:
-    rate: 50.0
-    scale: 0.01
-    max_force: 10.0
+    rate: 10.0
+    scale: 10.0
+    max_force: 256.0
     cart_path: "./src/cartpole/demonstrations/cart_1.txt"
     pole_path: "./src/cartpole/demonstrations/pole_1.txt"

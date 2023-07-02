@@ -16,6 +16,5 @@
     
     <node name="cartpole_key_control" pkg="cartpole" exec="cartpole_key" output = "screen"> 
         <param from="$(find-pkg-share cartpole)/config/cartpole_controller.yaml" />
-        <param name="scale" value="10.0" />
     </node>
 </launch>

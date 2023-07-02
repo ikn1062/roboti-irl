@@ -62,9 +62,12 @@ target_link_libraries(controller_script ergodiclib::ergodiclib "${cpp_typesuppor
 
 install(TARGETS
   cartpole_key
+  cartpole_ctrl
+  ergodic_script
+  controller_script
   DESTINATION lib/${PROJECT_NAME})
 
-install(TARGETS cartpole_ctrl ergodic_script controller_script ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+install(TARGETS cartpole_key cartpole_ctrl ergodic_script controller_script ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
 install(EXPORT ${PROJECT_NAME}-targets
         FILE ${PROJECT_NAME}-config.cmake
         NAMESPACE ${PROJECT_NAME}::
