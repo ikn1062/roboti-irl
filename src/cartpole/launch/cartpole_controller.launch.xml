@@ -13,5 +13,6 @@
     </node>
     
     <node name="cartpole_ctrl" pkg="cartpole" exec="cartpole_ctrl" output = "screen"> 
+        <param from="$(find-pkg-share cartpole)/config/cartpole_controller.yaml" />
     </node>
 </launch>
