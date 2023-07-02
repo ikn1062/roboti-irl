@@ -1,5 +1,7 @@
 cartpole_ctrl:
   ros__parameters:
     rate: 100.0
-    control_type: "file"
     control_file: "control_out_1.csv"
+    mpc_rate: 10.0
+    mpc_dt: 0.005
+    mpc_timesteps: 200

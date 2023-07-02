@@ -3,8 +3,10 @@
 ///
 /// PARAMETERS:
 ///     rate (float): Rate of Main Loop
-///     control_type (string) : Name of Controller Type ('file' or 'MPC')
 ///     control_file (string) : File path to controls given 'file' option
+///     mpc_rate (float) : Rate of MPC timing trigger
+///     mpc_dt (float) : Time difference used 
+///     mpc_timesteps (int) : Number of time steps to calculate for MPC control
 /// PUBLISHES:
 ///     /cartpole/timestep (std_msgs::msg::UInt64): Current Timestep of Simulation
 ///     /cartpole/cmd (std_msgs::msg::Float64): Command Publisher for cartpole sim
@@ -52,16 +54,21 @@ public:
     // CARTPOLE SIMULATION CONSTRUCTOR
     // Decalre Variables
     declare_parameter("rate", 100.0);
-    declare_parameter("control_type", "file");
     declare_parameter("control_file", "control_out_1.csv");
+    declare_parameter("mpc_rate", 10.0);
+    declare_parameter("mpc_dt", 0.005);
+    declare_parameter("mpc_timesteps", 200);
 
     // Get Variables
     rate_ = get_parameter("rate").as_double();
-    auto duration_ = std::chrono::duration<double>(1.0 / rate_);
-    auto mpc_duration_ = std::chrono::duration<double>(1.0 / 10);
+    mpc_rate_ = get_parameter("mpc_rate").as_double();
+    auto duration_ = std::chrono::duration<double>(1.0 / 0.5);
+    auto mpc_duration_ = std::chrono::duration<double>(1.0 / mpc_rate_);
 
-    control_type = get_parameter("control_type").as_string();
     control_file = get_parameter("control_file").as_string();
+
+    dt = get_parameter("mpc_dt").as_double();
+    mpc_timesteps = get_parameter("mpc_timesteps").as_int();
 
     // Publishers and Subscribers
     timestep_pub_ = create_publisher<std_msgs::msg::UInt64>("cartpole/timestep", 50);
@@ -96,15 +103,15 @@ public:
     Q(2, 2) = 25.0;
     Q(3, 3) = 1.0;
 
-    R(0, 0) = 0.01;
+    R(0, 0) = 1;
 
-    P(0, 0) = 0.0001;
-    P(1, 1) = 0.0001;
+    P(0, 0) = 0.01;
+    P(1, 1) = 0.01;
     P(2, 2) = 100;
     P(3, 3) = 2;
 
     cartpole = ergodiclib::CartPole(x0, u0, dt, t0, tf, 10.0, 5.0, 2.0);
-    controller = ergodiclib::SimpleController(cartpole, Q, R, P, r, 7500, alpha, beta, eps);
+    controller = ergodiclib::SimpleController(cartpole, Q, R, P, r, 425, alpha, beta, eps);
 
     // Create main callback
     timer_ = create_wall_timer(duration_, std::bind(&CartpoleControl::cartpole_main, this));
@@ -120,7 +127,6 @@ private:
   int err;
 
   // Input for controls
-  std::string control_type;
   std::string control_file;
 
   // Controls message
@@ -128,6 +134,8 @@ private:
 
   // MPC Control Variables
   bool mpc_trigger;
+  double mpc_rate_;
+  int mpc_timesteps;
   double x_cart, v_cart, x_pole, v_pole;
   arma::vec x0;
   arma::vec u0;
@@ -141,7 +149,7 @@ private:
   double tf = 5.0;
   double alpha = 0.40;
   double beta = 0.85;
-  double eps = 0.01;
+  double eps = 1e-6;
   double M = 10.0;
   double m = 5.0;
   double l = 2.0;
@@ -178,9 +186,25 @@ private:
       x_cart = cartpole_js.position[0];
       v_cart = cartpole_js.velocity[0];
     } else {
-      x_pole = ergodiclib::normalizeAngle(cartpole_js.position[0]);
+      x_pole = normalize_angle(cartpole_js.position[0]);
       v_pole = cartpole_js.velocity[0];
     }
+  }
+
+  double normalize_angle(const double & rad)
+  {
+    double const PI = 3.14159265359;
+    double new_rad;
+
+    new_rad = fmod(rad, 2 * PI);
+    new_rad = fmod(new_rad + 2 * PI, 2 * PI);
+    if (new_rad > PI) {
+      new_rad -= 2 * PI;
+    }
+
+    new_rad = new_rad <= 0 ? (PI - abs(new_rad)) : -1 * (PI - abs(new_rad));
+
+    return new_rad;
   }
 
   void fileController(
@@ -231,15 +255,18 @@ private:
 
   void ModelPredictiveControl()
   {
-    while (mpc_trigger) {
+    if (mpc_trigger) {
+      double mpc_time = 1.0 / mpc_rate_;
+      unsigned int steps = (int)(mpc_time / dt);
       double controls;
       arma::vec curr_pos({x_cart, v_cart, x_pole, v_pole});
-      trajectories = controller.ModelPredictiveControl(curr_pos, u0, 10, 100);
+
+      trajectories = controller.ModelPredictiveControl(curr_pos, u0, mpc_timesteps, 500);
       X = trajectories.first;
       U = trajectories.second;
 
-      for (unsigned int i = 0; i < U.n_cols; i++) {
-        controls = U(0, 0);
+      for (unsigned int i = 0; i < steps; i++) {
+        controls = U(0, i);
         force_cmd.data = controls;
         command_pub_->publish(force_cmd);
       }
@@ -252,10 +279,10 @@ private:
   {
     if (mpc_trigger) {
       mpc_trigger = false;
-      response->message = "Control Trigger - ON";
+      response->message = "Control Trigger - OFF";
     } else {
       mpc_trigger = true;
-      response->message = "Control Trigger - OFF";
+      response->message = "Control Trigger - ON";
     }
 
     response->success = true;

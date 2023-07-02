@@ -1,5 +1,7 @@
 #include <cartpole/cartpole_sys.hpp>
 #include <ergodiclib/simple_controller.hpp>
+#include <chrono>
+using namespace std::chrono;
 
 #if defined(__APPLE__)
 #include </opt/homebrew/include/armadillo>
@@ -9,6 +11,7 @@
 
 using namespace ergodiclib;
 
+/*
 int main()
 {
   arma::vec x0({0.0, 0.0, PI, 0.0});
@@ -44,10 +47,13 @@ int main()
 
   return 0;
 }
+*/
 
-/*
+
 int main()
 {
+  arma::mat X, U;
+
   arma::vec x0({0.0, 0.0, PI, 0.0});
   arma::vec u0({0.0});
 
@@ -68,7 +74,7 @@ int main()
 
   arma::mat r(4, 1, arma::fill::zeros);
 
-  double dt = 0.001;
+  double dt = 0.005;
   double t0 = 0.0;
   double tf = 10.0;
   double alpha = 0.40;
@@ -76,10 +82,18 @@ int main()
   double eps = 1e-6;
 
   CartPole cartpole = CartPole(x0, u0, dt, t0, tf, 10.0, 5.0, 2.0);
-  ilqrController controller = ilqrController(cartpole, Q, R, P, r, 425, alpha, beta, eps);
+  SimpleController controller = SimpleController(cartpole, Q, R, P, r, 425, alpha, beta, eps);
 
-  std::pair<arma::mat, arma::mat> trajectories = controller.ModelPredictiveControl(x0, u0, 1000, 500);
+  auto start = high_resolution_clock::now();
+  std::pair<arma::mat, arma::mat> trajectories = controller.ModelPredictiveControl(x0, u0, 200, 500);
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<microseconds>(stop - start);
+
+  X = trajectories.first;
+  U = trajectories.second;
+  std::cout << "control time : " << duration.count() << std::endl;
 
   return 0;
 }
-*/
+
+

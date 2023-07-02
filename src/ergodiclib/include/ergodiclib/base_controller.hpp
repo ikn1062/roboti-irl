@@ -158,16 +158,19 @@ public:
       n = 1;
       gamma = beta;
 
-      //std::cout << "Loop: " << i << ", J: " << J << ", DJ: " << DJ << std::endl;
-
       // Take a look at the algorithm for Armijo line search to check if this is correct
-      while (J_new > J + alpha * gamma * DJ && n < 10) {
+      while (J_new > J + alpha * gamma * DJ && n < 5) {
         U = U + gamma * vega;
         X = model.createTrajectory(x0, U);
         J_new = objectiveJ(X, U);
         n += 1;
         gamma = pow(beta, n);
       }
+
+      // std::cout << "i: " << i << std::endl;
+      // std::cout << "DJ: " << std::abs(DJ) << std::endl;
+      // std::cout << "J: " << std::abs(J_new) << std::endl;
+      // (X.col(X.n_cols - 1)).print("End X: ");
 
       trajectory = {X, U};
       i += 1;

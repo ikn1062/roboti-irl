@@ -94,8 +94,8 @@ double SimpleController<ModelTemplate>::objectiveJ(const arma::mat & Xt, const a
   double trajectory_cost = trajectoryJ(Xt, Ut);
   double cost = 0.5 * (final_cost + trajectory_cost);
 
-  std::cout << "final cost: " << final_cost << std::endl;
-  std::cout << "trajectory cost: " << trajectory_cost << std::endl;
+  //std::cout << "final cost: " << final_cost << std::endl;
+  //std::cout << "trajectory cost: " << trajectory_cost << std::endl;
 
   return cost;
 }
