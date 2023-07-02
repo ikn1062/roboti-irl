@@ -81,6 +81,12 @@ private:
   /// \param Ut Control over time horizon
   /// \return Retuns bT matrix
   virtual arma::mat calculate_bT(const arma::mat & Ut) const;
+
+  /// \brief Gets the first iteration of the zeta matrix
+  /// \param Plist P matrix over time trajectory
+  /// \param rlist r matrix over time trajectory
+  /// \return z matrix 
+  virtual arma::vec get_z(const std::vector<arma::mat> & Plist, const std::vector<arma::mat> & rlist) const;
 };
 
 template<class ModelTemplate>
@@ -160,6 +166,14 @@ arma::mat SimpleController<ModelTemplate>::calculate_bT(const arma::mat & Ut) co
   }
   return bT;
 }
+
+template<class ModelTemplate>
+arma::vec SimpleController<ModelTemplate>::get_z(const std::vector<arma::mat> & Plist, const std::vector<arma::mat> & rlist) const
+{
+  arma::vec z = -Plist[0] * rlist[0];
+  return z;
+}
+
 }
 
 #endif

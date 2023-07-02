@@ -203,7 +203,9 @@ protected:
     // ERGODIC CONTROLLER: z(Xt.n_rows, arma::fill::zeros);
     // CONTROLLER:         -Plist[0] * rlist[0];
     // Fix: Use a virtual intialize z() function I guess
-    arma::vec z(Xt.n_rows, arma::fill::zeros);         // The only difference between ergodic controller and a regular controller is this function
+    // The only difference between ergodic controller and a regular controller is this function
+    arma::vec z = get_z(Plist, rlist);
+    //arma::vec z(Xt.n_rows, arma::fill::zeros);         
 
     arma::vec v = -R_mat.i() * B.t() * Plist[0] * z - R_mat.i() * B.t() * rlist[0] - R_mat.i() *
       bT.row(0).t();
@@ -313,6 +315,18 @@ protected:
   virtual arma::mat calculate_bT(const arma::mat & Ut) const
   {
     return Ut;
+  }
+
+  /// \brief Gets the first iteration of the zeta matrix
+  /// \param Plist P matrix over time trajectory
+  /// \param rlist r matrix over time trajectory
+  /// \return z matrix 
+  virtual arma::vec get_z(const std::vector<arma::mat> & Plist, const std::vector<arma::mat> & rlist) const
+  {
+    UNUSED(Plist);
+    UNUSED(rlist);
+    arma::vec z(0, arma::fill::zeros);
+    return z;
   }
 
   /// \brief Model following Concept Template

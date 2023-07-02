@@ -23,6 +23,8 @@
 #include <armadillo>
 #endif
 
+#define UNUSED(x) (void)(x)
+
 namespace ergodiclib
 {
 /// \brief Ergodic Controller for a given dynamic system
@@ -122,6 +124,12 @@ private:
   /// \return Retuns bT matrix
   virtual arma::mat calculate_bT(const arma::mat & Ut) const;
 
+  /// \brief Gets the first iteration of the zeta matrix
+  /// \param Plist P matrix over time trajectory
+  /// \param rlist r matrix over time trajectory
+  /// \return z matrix 
+  virtual arma::vec get_z(const std::vector<arma::mat> & Plist, const std::vector<arma::mat> & rlist) const;
+
   /// \param ergodicMes Ergodic Measurement Class
   ErgodicMeasure & ergodicMeasure;
 
@@ -220,6 +228,15 @@ arma::mat ergController<ModelTemplate>::calculate_bT(const arma::mat & Ut) const
   }
   return bT;
 }
+
+template<class ModelTemplate>
+arma::vec ergController<ModelTemplate>::get_z(const std::vector<arma::mat> & Plist, const std::vector<arma::mat> & rlist) const
+{
+  UNUSED(rlist);
+  arma::vec z(Plist[0].n_rows, arma::fill::zeros);
+  return z;
+}
+
 
 }
 
