@@ -68,7 +68,7 @@ public:
     unsigned int i, n;
 
     // Get an initial trajectory
-    trajectory = model.createTrajectory();
+    trajectory = createTrajectory();
     X = trajectory.first;
     U = trajectory.second;
 
@@ -92,7 +92,7 @@ public:
 
       while (J_new > J + alpha * gamma * DJ && n < 2) {
         U = U + gamma * vega;
-        X = model.createTrajectory(x0, U);
+        X = createTrajectory(x0, U);
         J_new = objectiveJ(X, U);
         n += 1;
         gamma = pow(beta, n);
@@ -137,7 +137,7 @@ public:
     // std::cout << "Create Trajectory" << std::endl;
     U = arma::mat(u0.n_elem, num_steps, arma::fill::zeros);
     U.each_col() = u0;
-    X = model.createTrajectory(x0, U, num_steps);
+    X = createTrajectory(x0, U, num_steps);
 
     // Get Cost of the trajectory
     // std::cout << "Cost of Trajectory" << std::endl;
@@ -161,7 +161,7 @@ public:
       // Take a look at the algorithm for Armijo line search to check if this is correct
       while (J_new > J + alpha * gamma * DJ && n < 5) {
         U = U + gamma * vega;
-        X = model.createTrajectory(x0, U);
+        X = createTrajectory(x0, U);
         J_new = objectiveJ(X, U);
         n += 1;
         gamma = pow(beta, n);
@@ -327,6 +327,90 @@ protected:
     UNUSED(rlist);
     arma::vec z(0, arma::fill::zeros);
     return z;
+  }
+
+  /// \brief Creates an intial trajectory of model with x0 and u0
+  /// \return State Position and Control Trajectories over time horizon
+  std::pair<arma::mat, arma::mat> createTrajectory() const
+  {
+    arma::mat x_traj(model.x0.n_elem, model.n_iter, arma::fill::zeros);
+    arma::mat u_traj(model.u0.n_elem, model.n_iter, arma::fill::zeros);
+
+    x_traj.col(0) = model.x0;
+    u_traj.col(0) = model.u0;
+
+    arma::mat x_new;
+    for (int i = 1; i < model.n_iter; i++) {
+      x_new = integrate(x_traj.col(i - 1), model.u0);
+      x_new = model.resolveState(x_new);
+      //x_new(2) = ergodiclib::normalizeAngle(x_new(2));
+      x_traj.col(i) = x_new;
+      u_traj.col(i) = model.u0;
+    }
+
+    std::pair<arma::mat, arma::mat> pair_trajec = {x_traj, u_traj};
+    return pair_trajec;
+  }
+
+  /// \brief Creates a trajectory given initial position vector x0 and control over time horizon
+  /// \param x0_input Position vector of Cartpole Model at t=0
+  /// \param ut_mat Control Matrix over time horizon
+  /// \return State Position Trajectory over time horizon
+  arma::mat createTrajectory(const arma::vec & x0_input, const arma::mat & ut_mat) const
+  {
+    const double num_iter = ut_mat.n_cols;
+    arma::mat x_traj(model.x0.n_elem, num_iter, arma::fill::zeros);
+    x_traj.col(0) = x0_input;
+
+    arma::mat x_new;
+    for (int i = 1; i < num_iter; i++) {
+      x_new = integrate(x_traj.col(i - 1), ut_mat.col(i - 1));
+      x_new = model.resolveState(x_new);
+      //x_new(2) = ergodiclib::normalizeAngle(x_new(2));
+      x_traj.col(i) = x_new;
+    }
+
+    return x_traj;
+  }
+
+  /// \brief Creates a trajectory given initial position vector x0 and control over time horizon
+  /// \param x0_input Position vector of Cartpole Model at t=0
+  /// \param ut_mat Control Matrix over time horizon
+  /// \param num_iter Number of time steps
+  /// \return State Position Trajectory over time horizon
+  arma::mat createTrajectory(
+    const arma::vec & x0_input, const arma::mat & ut_mat,
+    const unsigned int & num_iter) const
+  {
+    arma::mat x_traj(model.x0.n_elem, num_iter, arma::fill::zeros);
+    x_traj.col(0) = x0_input;
+
+    arma::mat x_new;
+    for (unsigned int i = 1; i < num_iter; i++) {
+      x_new = integrate(x_traj.col(i - 1), ut_mat.col(i - 1));
+      x_new = model.resolveState(x_new);
+      // x_new(2) = ergodiclib::normalizeAngle(x_new(2));
+      x_traj.col(i) = x_new;
+    }
+
+    return x_traj;
+  }
+
+  /// \brief Integrates the state vector by one time step (dt) using rk4
+  /// \param x_vec State Vector state at a given time
+  /// \param u_vec Control Vector state at a given time
+  /// \return New state vector after one time step
+  arma::vec integrate(arma::vec x_vec, const arma::vec & u_vec) const
+  {
+    arma::vec k1 = model.dynamics(x_vec, u_vec);
+    arma::vec k2 = model.dynamics(x_vec + 0.5 * dt * k1, u_vec);
+    arma::vec k3 = model.dynamics(x_vec + 0.5 * dt * k2, u_vec);
+    arma::vec k4 = model.dynamics(x_vec + dt * k3, u_vec);
+
+    arma::vec k_sum = (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
+    arma::vec res = x_vec + k_sum;
+
+    return res;
   }
 
   /// \brief Model following Concept Template
