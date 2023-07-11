@@ -103,18 +103,17 @@ public:
     Q(2, 2) = 25.0;
     Q(3, 3) = 1.0;
 
-    R(0, 0) = 1;
+    R(0, 0) = 0.15;
 
     P(0, 0) = 0.01;
     P(1, 1) = 0.01;
     P(2, 2) = 100;
     P(3, 3) = 2;
-
     cartpole = ergodiclib::CartPole(x0, u0, dt, t0, tf, 10.0, 5.0, 2.0);
     controller = ergodiclib::SimpleController(cartpole, Q, R, P, r, 425, alpha, beta, eps);
 
     // Create main callback
-    timer_ = create_wall_timer(duration_, std::bind(&CartpoleControl::cartpole_main, this));
+    // timer_ = create_wall_timer(duration_, std::bind(&CartpoleControl::cartpole_main, this));
     mpc_timer_ =
       create_wall_timer(mpc_duration_, std::bind(&CartpoleControl::ModelPredictiveControl, this));
   }
@@ -144,9 +143,9 @@ private:
   arma::mat P;
   arma::mat r;
 
-  double dt = 0.01;
+  double dt = 0.005;
   double t0 = 0.0;
-  double tf = 5.0;
+  double tf = 5.0; // 5.0
   double alpha = 0.40;
   double beta = 0.85;
   double eps = 1e-6;
@@ -256,6 +255,7 @@ private:
   void ModelPredictiveControl()
   {
     if (mpc_trigger) {
+      //std::cout << "MPC Trigger Start: " << std::endl;
       double mpc_time = 1.0 / mpc_rate_;
       unsigned int steps = (int)(mpc_time / dt);
       double controls;
@@ -267,6 +267,7 @@ private:
 
       for (unsigned int i = 0; i < steps; i++) {
         controls = U(0, i);
+        //std::cout << controls << std::endl;
         force_cmd.data = controls;
         command_pub_->publish(force_cmd);
       }
