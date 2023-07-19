@@ -56,13 +56,13 @@ public:
     declare_parameter("rate", 100.0);
     declare_parameter("control_file", "control_out_1.csv");
     declare_parameter("mpc_rate", 10.0);
-    declare_parameter("mpc_dt", 0.005);
+    declare_parameter("mpc_dt", 0.01);
     declare_parameter("mpc_timesteps", 200);
 
     // Get Variables
     rate_ = get_parameter("rate").as_double();
     mpc_rate_ = get_parameter("mpc_rate").as_double();
-    auto duration_ = std::chrono::duration<double>(1.0 / 0.5);
+    auto duration_ = std::chrono::duration<double>(1.0 / rate_);
     auto mpc_duration_ = std::chrono::duration<double>(1.0 / mpc_rate_);
 
     control_file = get_parameter("control_file").as_string();
@@ -98,16 +98,16 @@ public:
     r = arma::mat(4, 1, arma::fill::zeros);
 
     mpc_trigger = false;
-    Q(0, 0) = 0.0;
-    Q(1, 1) = 0.0;
-    Q(2, 2) = 25.0;
-    Q(3, 3) = 1.0;
+    Q(0, 0) = 0.1;
+    Q(1, 1) = 0.1;
+    Q(2, 2) = 110.0;
+    Q(3, 3) = 2.0;
 
-    R(0, 0) = 0.15;
+    R(0, 0) = 0.01;
 
     P(0, 0) = 0.01;
     P(1, 1) = 0.01;
-    P(2, 2) = 100;
+    P(2, 2) = 200;
     P(3, 3) = 2;
     cartpole = ergodiclib::CartPole(x0, u0, dt, t0, tf, 10.0, 5.0, 2.0);
     controller = ergodiclib::SimpleController(cartpole, Q, R, P, r, 425, alpha, beta, eps);
@@ -145,10 +145,10 @@ private:
 
   double dt = 0.005;
   double t0 = 0.0;
-  double tf = 5.0; // 5.0
+  double tf = 5.0; 
   double alpha = 0.40;
   double beta = 0.85;
-  double eps = 1e-6;
+  double eps = 1e-3;
   double M = 10.0;
   double m = 5.0;
   double l = 2.0;
@@ -255,22 +255,31 @@ private:
   void ModelPredictiveControl()
   {
     if (mpc_trigger) {
-      //std::cout << "MPC Trigger Start: " << std::endl;
+      auto start = std::chrono::high_resolution_clock::now();
       double mpc_time = 1.0 / mpc_rate_;
       unsigned int steps = (int)(mpc_time / dt);
       double controls;
       arma::vec curr_pos({x_cart, v_cart, x_pole, v_pole});
 
-      trajectories = controller.ModelPredictiveControl(curr_pos, u0, mpc_timesteps, 500);
+      trajectories = controller.ModelPredictiveControl(curr_pos, u0, mpc_timesteps, 100);
       X = trajectories.first;
       U = trajectories.second;
+      auto start2 = std::chrono::high_resolution_clock::now();
 
       for (unsigned int i = 0; i < steps; i++) {
         controls = U(0, i);
-        //std::cout << controls << std::endl;
         force_cmd.data = controls;
         command_pub_->publish(force_cmd);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        force_cmd.data = 0.0;
+        command_pub_->publish(force_cmd);
+        std::this_thread::sleep_for(std::chrono::milliseconds(15));
       }
+      auto end = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> loopduration = end - start;
+      std::chrono::duration<double> calcduration = start2 - start;
+      std::cout << "Loop Time: " << loopduration.count() << ", Calculation Time: " << calcduration.count() << std::endl;
+      // std::cout << "END CONTROL" << std::endl;
     }
   }
 
