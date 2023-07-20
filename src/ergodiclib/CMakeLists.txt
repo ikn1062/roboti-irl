@@ -28,27 +28,27 @@ target_include_directories(${PROJECT_NAME}
 target_compile_features(${PROJECT_NAME}  PUBLIC cxx_std_20)
 target_compile_options(${PROJECT_NAME}  PUBLIC -Wall -Wextra -Wpedantic)
 
-add_executable(ergodic_test src/ergodic_test.cpp)
-ament_target_dependencies(ergodic_test Armadillo)
-target_link_libraries(ergodic_test ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
-
-add_executable(ergodic_main src/ergodic_main.cpp)
-ament_target_dependencies(ergodic_main Armadillo)
-target_link_libraries(ergodic_main ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
+# # Lines below are used to add cpp scripts as ROS2 executable files
+# add_executable(ergodic_main src/ergodic_main.cpp)
+# ament_target_dependencies(ergodic_main Armadillo)
+# target_link_libraries(ergodic_main ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
 
 add_executable(controller_test src/controller_test.cpp)
 ament_target_dependencies(controller_test Armadillo)
 target_link_libraries(controller_test ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
 
-install(TARGETS ergodic_test ergodic_main controller_test DESTINATION lib/${PROJECT_NAME})
+# install(TARGETS ergodic_main controller_test DESTINATION lib/${PROJECT_NAME})
+install(TARGETS controller_test DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
-install(TARGETS ergodic_test ergodic_main ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+# install(TARGETS ergodic_main controller_test ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+install(TARGETS controller_test ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
 install(EXPORT ${PROJECT_NAME}-targets
         FILE ${PROJECT_NAME}-config.cmake
         NAMESPACE ${PROJECT_NAME}::
         DESTINATION lib/cmake/${PROJECT_NAME})
 ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
 
+# # Cross-Compiling options
 #if (NOT CMAKE_CROSSCOMPILING)
 #  find_package(Doxygen)
 #  set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md) # Use the readme in your doxygen docs
@@ -66,18 +66,5 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
-
-include(CTest)
-add_executable(test_cartpole tests/test_cartpole.cpp)
-target_link_libraries(test_cartpole ${PROJECT_NAME} Catch2::Catch2WithMain ${ARMADILLO_LIBRARIES})
-add_test(NAME Test_of_Cartpole_Model COMMAND test_cartpole)
-
-add_executable(test_ilqr_controller tests/test_ilqr_controller.cpp)
-target_link_libraries(test_ilqr_controller ${PROJECT_NAME} Catch2::Catch2WithMain ${ARMADILLO_LIBRARIES})
-add_test(NAME Test_of_iLQR_Control COMMAND test_ilqr_controller)
-
-add_executable(test_ergodic tests/test_ergodic.cpp)
-target_link_libraries(test_ergodic ${PROJECT_NAME} Catch2::Catch2WithMain ${ARMADILLO_LIBRARIES})
-add_test(NAME Test_of_Ergoidic_Measure COMMAND test_ergodic)
 
 ament_package()

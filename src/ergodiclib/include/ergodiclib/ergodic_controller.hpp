@@ -1,7 +1,11 @@
-#ifndef ERG_CON_INCLUDE_GUARD_HPP
-#define ERG_CON_INCLUDE_GUARD_HPP
+#ifndef ERGODIC_CON_INCLUDE_GUARD_HPP
+#define ERGODIC_CON_INCLUDE_GUARD_HPP
 /// \file
-/// \brief Ergodic COntroller
+/// \brief Ergodic Controller
+
+/*
+NOTE: THIS IS A DEPRECATED FILE - THE USE OF THE FILE WILL BE PHASED OUT
+*/
 
 
 #include <iosfwd>
@@ -69,6 +73,53 @@ public:
     n_iter = (int) ((model_agent.tf - model_agent.t0) / dt);
   }
 
+  /// \brief Constructor for Ergodic Controller
+  /// \param demonstrations Vector of Demonstrations - Trajectories
+  /// \param demo_posneg Demonstration weights - length of demonstrations
+  /// \param demo_weights Demonstration weights - length of demonstrations
+  /// \param K_coeff Size of Series Coefficient
+  /// \param L_dim Size of boundaries for dimensions
+  /// \param dt_demo time difference between each state in the trajectory
+  /// \param L_dim Length of Dimensions
+  /// \param num_dim Number of Dimensions
+  /// \param K Fourier Series Coefficient
+  /// \param model_agent Model agent following Concept Template
+  /// \param q_val q value (Ergodic trajectory penalty)
+  /// \param Q Q Matrix (Trajectory Penalty)
+  /// \param R R Matrix (Control Penalty)
+  /// \param P P Matrix (Final Trajectory Penalty)
+  /// \param r r Matrix (Final Control Penalty)
+  /// \param max_iter_in Max iteration for control descent
+  /// \param a Alpha - Controller multiplier
+  /// \param b Beta - Controller multiplier for armijo line search
+  /// \param e Epsilon - Convergence Value for Objective Function
+  ergController(
+    std::vector<arma::mat> demonstrations, std::vector<int> demo_posneg,
+    std::vector<double> demo_weights,
+    std::vector<std::pair<double, double>> L_dim, int num_dim, int K,
+    ModelTemplate model_agent, double q_val, arma::mat Q,
+    arma::mat R, arma::mat P, arma::mat r, int max_iter_in,
+    double a, double b, double e)
+  : model(model_agent),
+    q(q_val),
+    Q_mat(Q),
+    R_mat(R),
+    P_mat(P),
+    r_mat(r),
+    max_iter(max_iter_in),
+    alpha(a),
+    beta(b),
+    eps(e)
+  {
+    Basis = fourierBasis(L_dim, num_dim, K);
+    ergodicMeasure =
+      ErgodicMeasure(demonstrations, demo_posneg, demo_weights, model_agent.dt, Basis);
+    x0 = model_agent.x0;
+    dt = model_agent.dt;
+    tf = model_agent.tf;
+    n_iter = (int) ((model_agent.tf - model_agent.t0) / dt);
+  }
+
   /// \brief Begins iLQR controller - returns none
   void iLQR();
 
@@ -123,12 +174,12 @@ private:
   /// \brief Calculates aT matrix
   /// \param Xt State trajectory over time Horizon
   /// \return Retuns aT matrix
-  arma::mat calculate_aT(const arma::mat & x_mat);
+  arma::mat calculate_aT(const arma::mat & Xt) const;
 
   /// \brief Calculates bT matrix
   /// \param Ut Control over time horizon
   /// \return Retuns bT matrix
-  arma::mat calculate_bT(const arma::mat & Ut);
+  arma::mat calculate_bT(const arma::mat & Ut) const;
 
   /// \param ergodicMes Ergodic Measurement Class
   ErgodicMeasure & ergodicMeasure;
@@ -423,7 +474,7 @@ std::pair<std::vector<arma::mat>, std::vector<arma::mat>> ergController<ModelTem
 }
 
 template<class ModelTemplate>
-arma::mat ergController<ModelTemplate>::calculate_aT(const arma::mat & Xt)
+arma::mat ergController<ModelTemplate>::calculate_aT(const arma::mat & Xt) const
 {
   arma::mat a_mat(Xt.n_cols, Xt.n_rows, arma::fill::zeros);
 
@@ -448,7 +499,7 @@ arma::mat ergController<ModelTemplate>::calculate_aT(const arma::mat & Xt)
 }
 
 template<class ModelTemplate>
-arma::mat ergController<ModelTemplate>::calculate_bT(const arma::mat & Ut)
+arma::mat ergController<ModelTemplate>::calculate_bT(const arma::mat & Ut) const
 {
   arma::mat bT(Ut.n_cols, Ut.n_rows, arma::fill::zeros);
   for (unsigned int i = 0; i < Ut.n_cols; i++) {

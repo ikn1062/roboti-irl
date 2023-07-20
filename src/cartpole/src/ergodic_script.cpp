@@ -3,8 +3,8 @@
 #include <vector>
 #include <ergodiclib/file_utils.hpp>
 #include <ergodiclib/ergodic_measure.hpp>
-#include <ergodiclib/ergodic_controller.hpp>
-#include <ergodiclib/cartpole.hpp>
+#include <ergodiclib/erg_controller.hpp>
+#include <cartpole/cartpole_sys.hpp>
 
 #if defined(__APPLE__)
 #include </opt/homebrew/include/armadillo>

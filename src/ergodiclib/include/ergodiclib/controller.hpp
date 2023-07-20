@@ -3,6 +3,10 @@
 /// \file
 /// \brief Contains a Controller class for an iLQR controller
 
+/*
+NOTE: THIS IS A DEPRECATED FILE - THE USE OF THE FILE WILL BE PHASED OUT
+*/
+
 #include <iosfwd>
 #include <cmath>
 #include <iostream>
@@ -12,7 +16,6 @@
 
 #include <ergodiclib/num_utils.hpp>
 #include <ergodiclib/model.hpp>
-#include <ergodiclib/cartpole.hpp>
 
 #if defined(__APPLE__)
 #include </opt/homebrew/include/armadillo>

@@ -7,7 +7,7 @@
 
 #define private public
 
-#include <ergodiclib/cartpole.hpp>
+#include <cartpole/cartpole_sys.hpp>
 #include <ergodiclib/num_utils.hpp>
 
 using namespace ergodiclib;
@@ -181,25 +181,26 @@ TEST_CASE("Cartpole Dynamics", "[CartPole]")
   }
 }
 
+// Integrate step has moved to controller
 TEST_CASE("Cartpole Integrate Step", "[CartPole]")
 {
-  double M0 = 10.0;
-  double m0 = 5.0;
-  double l0 = 1.0;
-  double dt = 0.0005;
-  CartPole cartpole = CartPole(M0, m0, l0);
+  // double M0 = 10.0;
+  // double m0 = 5.0;
+  // double l0 = 1.0;
+  // double dt = 0.0005;
+  // CartPole cartpole = CartPole(M0, m0, l0);
 
-  // Linearized around x = {10.0, 2.0, PI/4, 3.0}, F = {10.0}
-  arma::vec x0({10.0, 2.0, ergodiclib::PI / 4.0, 3.0});
-  arma::vec u0({10.0});
-  arma::vec x1 = cartpole.integrate(x0, u0);
+  // // Linearized around x = {10.0, 2.0, PI/4, 3.0}, F = {10.0}
+  // arma::vec x0({10.0, 2.0, ergodiclib::PI / 4.0, 3.0});
+  // arma::vec u0({10.0});
+  // arma::vec x1 = cartpole.integrate(x0, u0);
 
-  arma::vec xdot_test({2.0, 0.21641558, 3.0, 7.0897464});
-  arma::vec x1_test = x0 + dt * xdot_test;
+  // arma::vec xdot_test({2.0, 0.21641558, 3.0, 7.0897464});
+  // arma::vec x1_test = x0 + dt * xdot_test;
 
-  for (int i = 0; i < 4; i++) {
-    REQUIRE(ergodiclib::almost_equal(x1(i), x1_test(i), 1e-4));
-  }
+  // for (int i = 0; i < 4; i++) {
+  //   REQUIRE(ergodiclib::almost_equal(x1(i), x1_test(i), 1e-4));
+  // }
 }
 
 /*

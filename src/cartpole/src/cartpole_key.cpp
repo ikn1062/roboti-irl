@@ -41,7 +41,7 @@ public:
     // CARTPOLE SIMULATION CONSTRUCTOR
     // Decalre Variables
     declare_parameter("rate", 10.0);
-    declare_parameter("scale", 64.0);
+    declare_parameter("scale", 10.0);
     declare_parameter("max_force", 256.0);
     declare_parameter("cart_path", "./src/cartpole/demonstrations/cart_x.txt");
     declare_parameter("pole_path", "./src/cartpole/demonstrations/pole_x.txt");

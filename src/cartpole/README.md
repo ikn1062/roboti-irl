@@ -58,6 +58,7 @@ The parameters of the `cartpole_file_util.py` are listed as follows:
 
 
 ## References:
-Cartpole URDF Source: https://github.com/erlerobot/cartpole_gazebo
-Cartpole Dynamics Source: https://courses.ece.ucsb.edu/ECE594/594D_W10Byl/hw/cartpole_eom.pdf
+Alejandro Hernández Cordero, cartpole_gazebo, (2018), GitHub Repository, https://github.com/erlerobot/cartpole_gazebo
+
+CART-pole system: Equations of Motion Nonlinear Dynamics - UC santa barbara. (2010). https://courses.ece.ucsb.edu/ECE594/594D_W10Byl/hw/cartpole_eom.pdf 
 

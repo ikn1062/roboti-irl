@@ -1,7 +1,7 @@
-cartpole_key:
+cartpole_ctrl:
   ros__parameters:
-    rate: 50.0
-    scale: 0.01
-    max_force: 10.0
-    cart_path: "./src/cartpole/demonstrations/cart_1.txt"
-    pole_path: "./src/cartpole/demonstrations/pole_1.txt"
+    rate: 100.0
+    control_file: "control_out_1.csv"
+    mpc_rate: 1.0
+    mpc_dt: 0.02
+    mpc_timesteps: 75
