@@ -255,7 +255,7 @@ private:
   void ModelPredictiveControl()
   {
     if (mpc_trigger) {
-      auto start = std::chrono::high_resolution_clock::now();
+      // auto start = std::chrono::high_resolution_clock::now();
       double mpc_time = 1.0 / mpc_rate_;
       unsigned int steps = (int)(mpc_time / dt);
       double controls;
@@ -264,7 +264,7 @@ private:
       trajectories = controller.ModelPredictiveControl(curr_pos, u0, mpc_timesteps, 100);
       X = trajectories.first;
       U = trajectories.second;
-      auto start2 = std::chrono::high_resolution_clock::now();
+      // auto start2 = std::chrono::high_resolution_clock::now();
 
       for (unsigned int i = 0; i < steps; i++) {
         controls = U(0, i);
@@ -276,9 +276,9 @@ private:
         std::this_thread::sleep_for(std::chrono::milliseconds(15));
       }
       auto end = std::chrono::high_resolution_clock::now();
-      std::chrono::duration<double> loopduration = end - start;
-      std::chrono::duration<double> calcduration = start2 - start;
-      std::cout << "Loop Time: " << loopduration.count() << ", Calculation Time: " << calcduration.count() << std::endl;
+      // std::chrono::duration<double> loopduration = end - start;
+      // std::chrono::duration<double> calcduration = start2 - start;
+      // std::cout << "Loop Time: " << loopduration.count() << ", Calculation Time: " << calcduration.count() << std::endl;
       // std::cout << "END CONTROL" << std::endl;
     }
   }

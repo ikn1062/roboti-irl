@@ -167,14 +167,14 @@ public:
         gamma = pow(beta, n);
       }
 
-      // std::cout << "i: " << i << std::endl;
-      // std::cout << "DJ: " << std::abs(DJ) << std::endl;
-      // std::cout << "J: " << std::abs(J_new) << std::endl;
-      // (X.col(X.n_cols - 1)).print("End X: ");
-
       trajectory = {X, U};
       i += 1;
     }
+
+    // std::cout << "i: " << i << std::endl;
+    // std::cout << "DJ: " << std::abs(DJ) << std::endl;
+    // std::cout << "J: " << std::abs(J_new) << std::endl;
+    // (X.col(X.n_cols - 1)).print("End X: ");
 
     return trajectory;
   }
