@@ -4,7 +4,7 @@ Created:      15/02/2023
 Last Updated: 09/06/2023 
 
 ## Project Description
-This project contains a library for generalized n-dimensional model-free ergodic control of any dynamic system. 
+This project contains a library for generalized model-free ergodic / standard control for any dynamic system.
 
 Cartpole Ergodic Controller Example:
 [Ergodic Controller Link](https://youtu.be/QWhWvpcZHBM)
