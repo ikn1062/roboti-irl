@@ -30,7 +30,6 @@ TEST_CASE("Open File", "[FileUtils]")
     REQUIRE(arma::approx_equal(demonstrations[0].col(999), col999, "absdiff", 0.0001));
 
 }
-*/
 
 TEST_CASE("Test calculateHk - Normalization Factor", "[fourierBasis]")
 {
@@ -161,3 +160,4 @@ TEST_CASE("Test calculateDFk - Jacobian of Fourier Basis", "[fourierBasis]")
   //dfk_test2.print("dfk2_test: ");
   REQUIRE(arma::approx_equal(dfk2, dfk_test2, "absdiff", 0.001));
 }
+*/

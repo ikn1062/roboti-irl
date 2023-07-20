@@ -56,7 +56,7 @@ public:
   /// \return CK value, Spacial Statistics
   double calculateCk(
     const arma::mat & x_trajectory,
-    const std::vector<int> & K_vec, int k_idx);
+    const std::vector<int> & K_vec, const int k_idx);
 
   void calcErgodic();
 
@@ -65,35 +65,35 @@ private:
   ///        phi_k is defined by the following:
   ///        phi_k = sum w_j * c_k_j where j ranges from 1 to num_trajectories
   ///        - w_j is initialized as 1/num_trajectories, the weighting of each trajectory in the spatial coefficient
-  /// \return  PhiK Vector
-  arma::vec calculatePhik();
+  /// \return None
+  void calculatePhik();
 
   /// \brief Calculate lambda_k places larger weights on lower coefficients of information
   ///        lambda_k is defined by the following:
   ///        lambda_k = (1 + ||k||2) − s where s = n+1/2
-  /// \return  LambdaK Vector
-  arma::vec calculateLambdaK();
+  /// \return None
+  void calculateLambdaK();
 
   /// \brief Vector of Demonstrations - Each Demonstration is a trajectory of n-dimensions
-  std::vector<arma::mat> D_mat;
+  const std::vector<arma::mat> D_mat;
 
   /// Class that contains the fourier basis for the space
   fourierBasis & Basis;
 
   /// \brief Vector of weights for each Demonstration
-  std::vector<int> E_vec;
+  const std::vector<int> E_vec;
 
   /// \brief Time Difference
-  double dt;
+  const double dt;
 
   /// \brief Length of dimension of a given trajectory
-  int n_dim;
+  const int n_dim;
 
   /// \brief Number of Trajectories
-  int m_demo;
+  const int m_demo;
 
   /// \brief Vector of Weights for each demonstration
-  std::vector<double> weight_vec;
+  const std::vector<double> weight_vec;
 
   /// \brief Vector of Weights for each demonstration
   std::vector<std::vector<int>> K_series;

@@ -28,6 +28,14 @@ public:
   /// \param K Fourier Series Coefficient
   fourierBasis(std::vector<std::pair<double, double>> L_dim, int num_dim, int K);
 
+  /// \brief Returns Normalizing factor for Fk for each series coefficient
+  /// \return hK vector
+  std::vector<double> get_hK() const;
+
+  /// \brief Gets the fourier dimension series
+  /// \return Fourier Dimension Series K vector of vector of int
+  std::vector<std::vector<int>> get_K_series() const;
+
   /// \brief Calculates normalized fourier coeffecient using basis function metric
   ///        Fk is defined by the following:
   ///        Fk = 1/hk * product(cos(k[i] *x[i])) where i ranges for all dimensions of x
@@ -38,42 +46,32 @@ public:
   /// \param k_idx The index of the series coefficient K_vec
   /// \return Fk Value, normalized fourier coeffecient
   double calculateFk(
-    const arma::vec & x_i_trajectory, const std::vector<int> & K_vec,
-    const int & k_idx);
+    const arma::vec & xTrajectory, const std::vector<int> & Kvec,
+    const int Kidx) const;
 
   /// \brief WRITE COMMENT
   arma::rowvec calculateDFk(
-    const arma::colvec & xt, const std::vector<int> & K_vec,
-    const int & k_idx) const;
-
-  /// \brief Returns Normalizing factor for Fk for each series coefficient
-  /// \return hK vector
-  std::vector<double> get_hK() const;
-
-  /// \brief Gets the fourier dimension series
-  /// \return Fourier Dimension Series K vector of vector of int
-  std::vector<std::vector<int>> get_K_series() const;
+    const arma::colvec & xTrajectory, const std::vector<int> & Kvec,
+    const int Kidx) const;
 
 private:
   /// \brief Normalizing factor for Fk
   ///        hk is defined as:
   ///        hk = Integral cos^2(k[i] * x[i]) dx from L[i][0] to L[i][1]
-  /// \param K_vec The series coefficient given as a list of length dimensions
-  /// \param k_idx The index of the series coefficient K_vec
   /// \return hk, normalizing factor for Fk
-  double calculateHk(const std::vector<int> & K_vec, const int & k_idx);
+  void calculateHk();
 
   /// \brief Creates the fourier series coefficients
   /// \param K Size of series coefficients
   /// \param n_dim Size of dimension for demonstrations
   /// \return List of Fourier Series Coefficients
-  std::vector<std::vector<int>> create_K_series(const int & K, const int & n_dim);
+  std::vector<std::vector<int>> create_K_series(const int K);
 
   /// \brief Length of dimension of a given trajectory
-  unsigned int n_dim;
+  const unsigned int n_dim;
 
   /// \brief Size of boundaries for dimensions - [Lower boundary, Higher Boundary]
-  std::vector<std::pair<double, double>> L;
+  const std::vector<std::pair<double, double>> L;
 
   /// \brief Vector of hK Values
   std::vector<double> hK_vec;

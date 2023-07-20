@@ -1,5 +1,11 @@
 #include <ergodiclib/ergodic_measure.hpp>
 
+#ifndef THREADS
+#define THREADS 0;
+#else 
+#include <thread>
+#endif
+
 namespace ergodiclib
 {
 ErgodicMeasure::ErgodicMeasure(
@@ -38,11 +44,18 @@ arma::vec ErgodicMeasure::get_LambdaK() const
 
 void ErgodicMeasure::calcErgodic()
 {
-  PhiK_vec = calculatePhik();
-  lambdaK_vec = calculateLambdaK();
+#if !THREADS
+  calculatePhik();
+  calculateLambdaK();
+#else 
+  std::thread phikThread(&ErgodicMeasure::calculatePhik, this);
+  std::thread lambdaThread(&ErgodicMeasure::calculateLambdaK, this);
+  if (phikThread.joinable()) phikThread.join();
+  if (lambdaThread.joinable()) lambdaThread.join();
+#endif
 }
 
-arma::vec ErgodicMeasure::calculatePhik()
+void ErgodicMeasure::calculatePhik()
 {
   double PhiK_val = 0.0;
 
@@ -53,12 +66,13 @@ arma::vec ErgodicMeasure::calculatePhik()
     }
     PhiK_vec(i) = PhiK_val;
   }
-  return PhiK_vec;
+
+  return;
 }
 
 double ErgodicMeasure::calculateCk(
   const arma::mat & x_trajectory,
-  const std::vector<int> & K_vec, int k_idx)
+  const std::vector<int> & K_vec, const int k_idx)
 {
   int x_len = x_trajectory.n_cols;
   double trajec_time = x_len * dt;
@@ -71,7 +85,7 @@ double ErgodicMeasure::calculateCk(
   return Ck;
 }
 
-arma::vec ErgodicMeasure::calculateLambdaK()
+void ErgodicMeasure::calculateLambdaK()
 {
   double lambda_k;
   double s = (n_dim + 1) / 2.0;
@@ -79,7 +93,8 @@ arma::vec ErgodicMeasure::calculateLambdaK()
     lambda_k = 1 / pow(1 + l2_norm(K_series[i]), s);
     lambdaK_vec(i) = lambda_k;
   }
-  return lambdaK_vec;
+
+  return;
 }
 
 

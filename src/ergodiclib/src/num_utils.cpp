@@ -12,16 +12,4 @@ double integralTrapz(const arma::vec & y_trajec, const double & dx)
   sum *= dx;
   return sum;
 }
-
-double normalizeAngle(const double & rad)
-{
-  double new_rad;
-  new_rad = fmod(rad, 2 * PI);
-  new_rad = fmod(new_rad + 2 * PI, 2 * PI);
-  if (new_rad > PI) {
-    new_rad -= 2 * PI;
-  }
-  return new_rad;
-}
-
 }
