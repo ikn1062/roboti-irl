@@ -141,11 +141,11 @@ public:
 
     arma::vec xdot(4, 1, arma::fill::zeros);
     xdot(0) = dx;
-    xdot(1) = (-m * l * sint * pow(dt, 2) + f + m * g * cost * sint) / (M + m * (1 - cos2t));
+    // xdot(1) = (-m * l * sint * pow(dt, 2) + f + m * g * cost * sint) / (M + m * (1 - cos2t));
+    xdot(1) = (f + m*l*(pow(dt,2) * sint - dt * cost)) / (m + M);
     xdot(2) = dt;
-    xdot(3) =
-      (-m * l * cost * sint *
-      pow(dt, 2) + f * cost + (M + m) * g * sint) / (l * (M + m * (1 - cos2t)));
+    // xdot(3) = (-m * l * cost * sint * pow(dt, 2) + f * cost + (M + m) * g * sint) / (l * (M + m * (1 - cos2t)));
+    xdot(3) = (g*sint-((f + l * pow(dt, 2) * sint * m)/(M+m))*cost)/(l*(4/3-(cos2t * m/(m+M))));
 
     return xdot;
   }
@@ -181,27 +181,36 @@ private:
     double dt = xt(3);
     double f = ut(0);
 
+    double dt2 = pow(dt, 2);
     double sint = sin(t);
     double cost = cos(t);
     double sin2t = pow(sint, 2);
     double cos2t = pow(cost, 2);
 
-    double d2x_t_a = (m * g * (cos2t - sin2t) - l * m * pow(dt, 2) * cost) / (M + m * (1 - cos2t));
-    double d2x_t_b =
-      (2 * m * sint * cost *
-      (f + g * m * sint * cost - l * m * pow(dt, 2) * sint)) / pow((M + m * (1 - cos2t)), 2);
-    double d2x_t = d2x_t_a - d2x_t_b;
-    double d2x_dt = (-2 * l * m * dt * sin(t)) / (M + m * (1 - cos2t));         // adding a minus sign
+    // double d2x_t_a = (m * g * (cos2t - sin2t) - l * m * pow(dt, 2) * cost) / (M + m * (1 - cos2t));
+    // double d2x_t_b =
+    //   (2 * m * sint * cost *
+    //   (f + g * m * sint * cost - l * m * pow(dt, 2) * sint)) / pow((M + m * (1 - cos2t)), 2);
+    // double d2x_t = d2x_t_a - d2x_t_b;
+    double d2x_t_a_denom = l*((m*cos2t)/(M + m) - 4/3);
+    double d2x_t_a = ((cost*(g*cost + (sin(t)*(l*m*sint*dt2 + f))/(M + m) - (dt2*l*m*cos2t)/(M + m))) - (sin(t)*(g*sin(t) - (cos(t)*(l*m*sin(t)*dt2 + f))/(M + m)))) / d2x_t_a_denom; 
+    double d2x_t_b = (2*m*cos2t*sint*(g*sint- (cost*(l*m*sint*dt2 + f))/(M+m))) / (l*(M+m)*pow((m*cos2t)/(M+m) - 4/3, 2));
 
-    double d2t_t_a =
-      (-f * sint + g * (m + M) * cost + l * m *
-      pow(dt, 2) * (sin2t - cos2t)) / (l * (M + m * (1 - cos2t)));
-    double d2t_t_b =
-      (2 * m * sint * cost *
-      (f * cost + (m + M) * g * sint - l * m *
-      pow(dt, 2) * sint * cost)) / (l * pow(M + m * (1 - cos2t), 2));
+    double d2x_t = (l * m * (dt2 * cost + d2x_t_a + d2x_t_b)) / (M + m);
+    double d2x_dt = -(l * m * 8 * dt * sint) / (3 * m * cos2t - 4 * (m + M));
+
+    // double d2t_t_a =
+    //   (-f * sint + g * (m + M) * cost + l * m *
+    //   pow(dt, 2) * (sin2t - cos2t)) / (l * (M + m * (1 - cos2t)));
+    // double d2t_t_b =
+    //   (2 * m * sint * cost *
+    //   (f * cost + (m + M) * g * sint - l * m *
+    //   pow(dt, 2) * sint * cost)) / (l * pow(M + m * (1 - cos2t), 2));
+    // double d2t_t = d2t_t_a - d2t_t_b;
+    double d2t_t_a = (3 * (g * cost * (M + m) + f * sint + l * dt2 * m * (sin2t - cos2t)))/(l * (3 * m * cos2t - 4 * (M + m)));
+    double d2t_t_b = -((9 * m * sin(2*t) * (g * sin(t) * (M + m) - f * cost - l * dt2 * m * cost * sint))/(l * pow((3 * m * cos2t - 4 * (M + m)), 2)));
     double d2t_t = d2t_t_a - d2t_t_b;
-    double d2t_dt = (-2 * m * dt * sint * cost) / (M + m * (1 - cos2t));         // adding a minus sign
+    double d2t_dt = (dt * m * sin(2*t) * 3) / (3 * m * cos2t - 4 * (M + m)); 
 
     A(0, 1) = 1.0;
     A(1, 2) = d2x_t;
@@ -226,8 +235,11 @@ private:
     double cost = cos(t);
     double cos2t = pow(cost, 2);
 
-    B(1, 0) = 1.0 / (M + m * (1 - cos2t));
-    B(3, 0) = cost / (l * (M + m * (1 - cos2t)));
+    // B(1, 0) = 1.0 / (M + m * (1 - cos2t));
+    // B(3, 0) = cost / (l * (M + m * (1 - cos2t)));
+
+    B(1, 0) = - 4.0 / (3 * m * cos2t - 4.0 * (M + m));
+    B(3, 0) = (3.0 * cost) / (l * (3 * m * cos2t - 4 * (M + m)));
 
     return B;
   }
