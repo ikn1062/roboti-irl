@@ -79,8 +79,8 @@ arma::mat readDemonstrationCSV(const std::string & csv_filepath, const int n_dim
 
 void saveTrajectoryCSV(const std::string& filename, const std::pair<arma::mat, arma::mat>& trajectory)
 {
-  std::string x_file = filename + "_trajectory";
-  std::string u_file = filename + "_control";
+  std::string x_file = filename + "_trajectory.csv";
+  std::string u_file = filename + "_control.csv";
 
   arma::mat XT = trajectory.first.t();
   arma::mat UT = trajectory.second.t();

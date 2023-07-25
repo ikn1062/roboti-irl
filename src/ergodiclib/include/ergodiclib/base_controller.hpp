@@ -63,7 +63,7 @@ public:
   {
     // Create variables for iLQR loop
     std::pair<arma::mat, arma::mat> trajectory, descentDirection;
-    arma::mat X, U, zeta, vega, aT, bT;
+    arma::mat X, U, Xnew, Unew, zeta, vega, aT, bT;
     double DJ, J, J_new, gamma;
     unsigned int i, n;
 
@@ -81,40 +81,31 @@ public:
       aT = calculate_aT(X);
       bT = calculate_bT(U);
       descentDirection = calculateZeta(X, U, aT, bT);
-      zeta = descentDirection.first;
+      // zeta = descentDirection.first;
       vega = descentDirection.second;
 
       DJ = calculateDJ(descentDirection, aT, bT);
       J = objectiveJ(X, U);
       J_new = std::numeric_limits<double>::max();
+
       gamma = beta;
-      n = 1;
-
-      while (J_new > J + alpha * gamma * DJ && n < 2) {
-        U = U + gamma * vega;
-        X = createTrajectory(model, x0, U, dt);
-        J_new = objectiveJ(X, U);
-        n += 1;
-        gamma = pow(beta, n);
+      n = 0;
+      while (J_new > J + alpha * gamma * std::abs(DJ) && n < 20) {
+        Unew = U + gamma * vega;
+        Xnew = createTrajectory(model, x0, Unew, dt);
+        J_new = objectiveJ(Xnew, Unew);
+        gamma = pow(beta, n++);
       }
-
+      X = Xnew;
+      U = Unew;
       trajectory = {X, U};
-      i += 1;
 
-      // std::cout << "i: " << i << std::endl;
-      // std::cout << "DJ: " << std::abs(DJ) << std::endl;
-      // std::cout << "J: " << std::abs(J_new) << std::endl;
+      // std::cout << "i: " << i << ", n: " << n << std::endl;
+      // std::cout << "J: " << std::abs(J_new) << ", DJ: " << DJ << std::endl;
       // (X.col(X.n_cols - 1)).print("End X: ");
-
+      
+      i += 1;
     }
-    // // I wrote this previously to save files to an output.
-    // // Now this has been implemented into a function
-    // std::string x_file = "erg_trajectory";
-    // arma::mat XT = X.t();
-    // XT.save(x_file, arma::csv_ascii);
-    // arma::mat UT = U.t();
-    // std::string u_file = "erg_control";
-    // UT.save(u_file, arma::csv_ascii);
 
     return trajectory;
   }
@@ -150,24 +141,31 @@ public:
       aT = calculate_aT(X);
       bT = calculate_bT(U);
       descentDirection = calculateZeta(X, U, aT, bT);
-      zeta = descentDirection.first;
+      // zeta = descentDirection.first;
       vega = descentDirection.second;
 
       DJ = calculateDJ(descentDirection, aT, bT);
       J = objectiveJ(X, U);
       J_new = std::numeric_limits<double>::max();
-      n = 1;
+
+      n = 0;
       gamma = beta;
 
       // Take a look at the algorithm for Armijo line search to check if this is correct
-      while (J_new > J + alpha * gamma * DJ && n < 2) {
-        U = U + gamma * vega;
-        X = createTrajectory(model, x0, U, dt);
-        J_new = objectiveJ(X, U);
+      while (J_new > J + alpha * gamma * std::abs(DJ) && n < 20) {
+        U_new = U + gamma * vega;
+        X_new = createTrajectory(model, x0, U_new, dt);
+        J_new = objectiveJ(X_new, U_new);
         n += 1;
         gamma = pow(beta, n);
       }
+      // std::cout << "i: " << i << std::endl;
+      // std::cout << "DJ: " << std::abs(DJ) << std::endl;
+      // std::cout << "J: " << std::abs(J_new) << std::endl;
+      // (X_new.col(X.n_cols - 1)).print("End X: ");
 
+      X = X_new;
+      U = U_new;
       trajectory = {X, U};
       i += 1;
     }
@@ -205,10 +203,8 @@ protected:
     // CONTROLLER:         -Plist[0] * rlist[0];
     // Fix: Use a virtual intialize z() function I guess
     arma::vec z = get_z(Plist, rlist);
-    //arma::vec z(Xt.n_rows, arma::fill::zeros);         
 
-    arma::vec v = -R_mat.i() * B.t() * Plist[0] * z - R_mat.i() * B.t() * rlist[0] - R_mat.i() *
-      bT.row(0).t();
+    arma::vec v = -R_mat.i() * B.t() * Plist[0] * z - R_mat.i() * B.t() * rlist[0] - R_mat.i() * bT.row(0).t();
     zeta.col(0) = z;
     vega.col(0) = v;
 
@@ -219,9 +215,7 @@ protected:
 
       zdot = A * z + B * v;
       z = z + dt * zdot;
-      // + R_mat.i() * B.t() * Plist[i] * z
-      v = -R_mat.i() * B.t() * Plist[i] * z - R_mat.i() * B.t() * rlist[i] - R_mat.i() *
-        bT.row(i).t();                                                                                             
+      v = -R_mat.i() * B.t() * Plist[i] * z - R_mat.i() * B.t() * rlist[i] - R_mat.i() * bT.row(i).t();                                                                                             
 
       zeta.col(i) = z;
       vega.col(i) = v;
@@ -261,9 +255,7 @@ protected:
       B = model.getB(Xt.col(idx), Ut.col(idx));
 
       Pdot = -P * A - A.t() * P + P * B * R_mat.i() * B.t() * P - Q_mat;           // + P * AT
-      rdot = -(A - B * R_mat.i() * B.t() * P).t() * r - aT.row(idx).t() + P * B * R_mat.i() *
-        bT.row(
-        idx).t();
+      rdot = -(A - B * R_mat.i() * B.t() * P).t() * r - aT.row(idx).t() + P * B * R_mat.i() * bT.row(idx).t();
 
       P = P - dt * Pdot;
       r = r - dt * rdot;

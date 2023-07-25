@@ -98,17 +98,17 @@ public:
     r = arma::mat(4, 1, arma::fill::zeros);
 
     mpc_trigger = false;
-    Q(0, 0) = 0.1;
-    Q(1, 1) = 0.1;
-    Q(2, 2) = 110.0;
-    Q(3, 3) = 2.0;
+    Q(0, 0) = 0.0;
+    Q(1, 1) = 0.0;
+    Q(2, 2) = 200.0;
+    Q(3, 3) = 1.0;
 
-    R(0, 0) = 0.01;
+    R(0, 0) = 0.05;
 
-    P(0, 0) = 0.01;
-    P(1, 1) = 0.01;
-    P(2, 2) = 200;
-    P(3, 3) = 2;
+    P(0, 0) = 0.0001;
+    P(1, 1) = 0.0001;
+    P(2, 2) = 1000;
+    P(3, 3) = 50;
     cartpole = ergodiclib::CartPole(x0, u0, dt, t0, tf, 10.0, 5.0, 2.0);
     controller = ergodiclib::SimpleController(cartpole, Q, R, P, r, 425, alpha, beta, eps);
 
@@ -147,8 +147,8 @@ private:
   double t0 = 0.0;
   double tf = 5.0; 
   double alpha = 0.40;
-  double beta = 0.85;
-  double eps = 1e-3;
+  double beta = 0.75;
+  double eps = 1e-5;
   double M = 10.0;
   double m = 5.0;
   double l = 2.0;
@@ -238,10 +238,10 @@ private:
     for (unsigned int i = 0; i < control_input.size(); i++) {
       force_cmd.data = control_input[i];
       command_pub_->publish(force_cmd);
-      std::this_thread::sleep_for(std::chrono::microseconds(1150));
+      std::this_thread::sleep_for(std::chrono::milliseconds(8));
       force_cmd.data = 0.0;
       command_pub_->publish(force_cmd);
-      std::this_thread::sleep_for(std::chrono::microseconds(3650));
+      std::this_thread::sleep_for(std::chrono::milliseconds(12));
     }
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
@@ -260,8 +260,9 @@ private:
       unsigned int steps = (int)(mpc_time / dt);
       double controls;
       arma::vec curr_pos({x_cart, v_cart, x_pole, v_pole});
+      curr_pos.print("Initial: ");
 
-      trajectories = controller.ModelPredictiveControl(curr_pos, u0, mpc_timesteps, 100);
+      trajectories = controller.ModelPredictiveControl(curr_pos, u0, mpc_timesteps, 500);
       X = trajectories.first;
       U = trajectories.second;
       // auto start2 = std::chrono::high_resolution_clock::now();
@@ -270,10 +271,11 @@ private:
         controls = U(0, i);
         force_cmd.data = controls;
         command_pub_->publish(force_cmd);
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        force_cmd.data = 0.0;
-        command_pub_->publish(force_cmd);
-        std::this_thread::sleep_for(std::chrono::milliseconds(15));
+        (X.col(i)).print("Ctrl_X: ");
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        // force_cmd.data = 0.0;
+        // command_pub_->publish(force_cmd);
+        // std::this_thread::sleep_for(std::chrono::milliseconds(15));
       }
       auto end = std::chrono::high_resolution_clock::now();
       // std::chrono::duration<double> loopduration = end - start;

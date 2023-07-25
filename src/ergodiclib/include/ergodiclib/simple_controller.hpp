@@ -118,8 +118,7 @@ double SimpleController<ModelTemplate>::trajectoryJ(
   for (unsigned int i = 0; i < Xt.n_cols; i++) {
     Xt_i = Xt.col(i);
     Ut_i = Ut.col(i);
-    cost = Xt_i.t() * BaseController<ModelTemplate>::Q_mat * Xt_i + Ut_i.t() *
-      BaseController<ModelTemplate>::R_mat * Ut_i;
+    cost = Xt_i.t() * BaseController<ModelTemplate>::Q_mat * Xt_i + Ut_i.t() * BaseController<ModelTemplate>::R_mat * Ut_i;
     trajecJ(i) = cost(0, 0);
   }
 
