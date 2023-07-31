@@ -21,6 +21,8 @@
 
 namespace ergodiclib
 {
+/// \brief Base controller class for iLQR control
+/// \tparam ModelTemplate Template for Dynamic Model
 template<class ModelTemplate>
 class BaseController
 {
@@ -63,12 +65,12 @@ public:
   {
     // Create variables for iLQR loop
     std::pair<arma::mat, arma::mat> trajectory, descentDirection;
-    arma::mat X, U, zeta, vega, aT, bT;
+    arma::mat X, U, Xnew, Unew, zeta, vega, aT, bT;
     double DJ, J, J_new, gamma;
     unsigned int i, n;
 
     // Get an initial trajectory
-    trajectory = createTrajectory();
+    trajectory = createTrajectory(model, dt);
     X = trajectory.first;
     U = trajectory.second;
 
@@ -81,39 +83,33 @@ public:
       aT = calculate_aT(X);
       bT = calculate_bT(U);
       descentDirection = calculateZeta(X, U, aT, bT);
-      zeta = descentDirection.first;
+      // zeta = descentDirection.first;
       vega = descentDirection.second;
 
       DJ = calculateDJ(descentDirection, aT, bT);
       J = objectiveJ(X, U);
       J_new = std::numeric_limits<double>::max();
+
       gamma = beta;
-      n = 1;
+      n = 0;
+      while (J_new > J + alpha * gamma * DJ && n < 20) {
+        Unew = U + gamma * vega;
+        Xnew = createTrajectory(model, x0, Unew, dt);
+        J_new = objectiveJ(Xnew, Unew);
+        gamma = pow(beta, n++);
 
-      while (J_new > J + alpha * gamma * DJ && n < 2) {
-        U = U + gamma * vega;
-        X = createTrajectory(x0, U);
-        J_new = objectiveJ(X, U);
-        n += 1;
-        gamma = pow(beta, n);
+        // std::cout << "J: " << J << ", Jnew: " << J_new << std::endl;
       }
-
+      X = Xnew;
+      U = Unew;
       trajectory = {X, U};
+
+      std::cout << "i: " << i << ", n: " << n << std::endl;
+      std::cout << "J: " << std::abs(J_new) << ", DJ: " << DJ << std::endl;
+      (X.col(X.n_cols - 1)).print("End X: ");
+
       i += 1;
-
-      // std::cout << "i: " << i << std::endl;
-      // std::cout << "DJ: " << std::abs(DJ) << std::endl;
-      // std::cout << "J: " << std::abs(J_new) << std::endl;
-      // (X.col(X.n_cols - 1)).print("End X: ");
-
     }
-    // // Used to save files
-    // std::string x_file = "erg_trajectory";
-    // arma::mat XT = X.t();
-    // XT.save(x_file, arma::csv_ascii);
-    // arma::mat UT = U.t();
-    // std::string u_file = "erg_control";
-    // UT.save(u_file, arma::csv_ascii);
 
     return trajectory;
   }
@@ -137,7 +133,7 @@ public:
     // std::cout << "Create Trajectory" << std::endl;
     U = arma::mat(u0.n_elem, num_steps, arma::fill::zeros);
     U.each_col() = u0;
-    X = createTrajectory(x0, U, num_steps);
+    X = createTrajectory(model, x0, U, num_steps, dt);
 
     // Get Cost of the trajectory
     // std::cout << "Cost of Trajectory" << std::endl;
@@ -149,32 +145,39 @@ public:
       aT = calculate_aT(X);
       bT = calculate_bT(U);
       descentDirection = calculateZeta(X, U, aT, bT);
-      zeta = descentDirection.first;
+      // zeta = descentDirection.first;
       vega = descentDirection.second;
 
       DJ = calculateDJ(descentDirection, aT, bT);
       J = objectiveJ(X, U);
       J_new = std::numeric_limits<double>::max();
-      n = 1;
+
+      n = 0;
       gamma = beta;
 
       // Take a look at the algorithm for Armijo line search to check if this is correct
-      while (J_new > J + alpha * gamma * DJ && n < 5) {
-        U = U + gamma * vega;
-        X = createTrajectory(x0, U);
-        J_new = objectiveJ(X, U);
+      while (J_new > J + alpha * gamma * std::abs(DJ) && n < 20) {
+        U_new = U + gamma * vega;
+        X_new = createTrajectory(model, x0, U_new, dt);
+        J_new = objectiveJ(X_new, U_new);
         n += 1;
         gamma = pow(beta, n);
       }
+      // std::cout << "i: " << i << std::endl;
+      // std::cout << "DJ: " << std::abs(DJ) << std::endl;
+      // std::cout << "J: " << std::abs(J_new) << std::endl;
+      // (X_new.col(X.n_cols - 1)).print("End X: ");
 
+      X = X_new;
+      U = U_new;
       trajectory = {X, U};
       i += 1;
     }
 
-    // std::cout << "i: " << i << std::endl;
-    // std::cout << "DJ: " << std::abs(DJ) << std::endl;
-    // std::cout << "J: " << std::abs(J_new) << std::endl;
-    // (X.col(X.n_cols - 1)).print("End X: ");
+    std::cout << "i: " << i << std::endl;
+    std::cout << "DJ: " << std::abs(DJ) << std::endl;
+    std::cout << "J: " << std::abs(J_new) << std::endl;
+    (X.col(X.n_cols - 1)).print("End X: ");
 
     return trajectory;
   }
@@ -203,9 +206,7 @@ protected:
     // ERGODIC CONTROLLER: z(Xt.n_rows, arma::fill::zeros);
     // CONTROLLER:         -Plist[0] * rlist[0];
     // Fix: Use a virtual intialize z() function I guess
-    // The only difference between ergodic controller and a regular controller is this function
     arma::vec z = get_z(Plist, rlist);
-    //arma::vec z(Xt.n_rows, arma::fill::zeros);         
 
     arma::vec v = -R_mat.i() * B.t() * Plist[0] * z - R_mat.i() * B.t() * rlist[0] - R_mat.i() *
       bT.row(0).t();
@@ -220,7 +221,7 @@ protected:
       zdot = A * z + B * v;
       z = z + dt * zdot;
       v = -R_mat.i() * B.t() * Plist[i] * z - R_mat.i() * B.t() * rlist[i] - R_mat.i() *
-        bT.row(i).t();                                                                                              // + R_mat.i() * B.t() * Plist[i] * z
+        bT.row(i).t();
 
       zeta.col(i) = z;
       vega.col(i) = v;
@@ -261,8 +262,7 @@ protected:
 
       Pdot = -P * A - A.t() * P + P * B * R_mat.i() * B.t() * P - Q_mat;           // + P * AT
       rdot = -(A - B * R_mat.i() * B.t() * P).t() * r - aT.row(idx).t() + P * B * R_mat.i() *
-        bT.row(
-        idx).t();
+        bT.row(idx).t();
 
       P = P - dt * Pdot;
       r = r - dt * rdot;
@@ -279,7 +279,7 @@ protected:
   /// \param Xt State trajectory over time Horizon
   /// \param Ut Control over time horizon
   /// \return Objective value
-  virtual double objectiveJ(const arma::mat & Xt, const arma::mat & Ut) const
+  virtual double objectiveJ(const arma::mat & Xt, const arma::mat & Ut)
   {
     UNUSED(Xt);
     UNUSED(Ut);
@@ -288,8 +288,8 @@ protected:
 
   /// \brief Calculates absolute value of descent direction [VIRTUAL]
   /// \param zeta_pair zeta and vega matrix for controller
-  /// \param at aT Matrix
-  /// \param bt bT Matrix
+  /// \param aT aT Matrix
+  /// \param bT bT Matrix
   /// @return Descent direction as an double value
   virtual double calculateDJ(
     std::pair<arma::mat, arma::mat> const & zeta_pair,
@@ -320,97 +320,15 @@ protected:
   /// \brief Gets the first iteration of the zeta matrix
   /// \param Plist P matrix over time trajectory
   /// \param rlist r matrix over time trajectory
-  /// \return z matrix 
-  virtual arma::vec get_z(const std::vector<arma::mat> & Plist, const std::vector<arma::mat> & rlist) const
+  /// \return z matrix
+  virtual arma::vec get_z(
+    const std::vector<arma::mat> & Plist,
+    const std::vector<arma::mat> & rlist) const
   {
     UNUSED(Plist);
     UNUSED(rlist);
     arma::vec z(0, arma::fill::zeros);
     return z;
-  }
-
-  /// \brief Creates an intial trajectory of model with x0 and u0
-  /// \return State Position and Control Trajectories over time horizon
-  std::pair<arma::mat, arma::mat> createTrajectory() const
-  {
-    arma::mat x_traj(model.x0.n_elem, model.n_iter, arma::fill::zeros);
-    arma::mat u_traj(model.u0.n_elem, model.n_iter, arma::fill::zeros);
-
-    x_traj.col(0) = model.x0;
-    u_traj.col(0) = model.u0;
-
-    arma::mat x_new;
-    for (int i = 1; i < model.n_iter; i++) {
-      x_new = integrate(x_traj.col(i - 1), model.u0);
-      x_new = model.resolveState(x_new);
-      //x_new(2) = ergodiclib::normalizeAngle(x_new(2));
-      x_traj.col(i) = x_new;
-      u_traj.col(i) = model.u0;
-    }
-
-    std::pair<arma::mat, arma::mat> pair_trajec = {x_traj, u_traj};
-    return pair_trajec;
-  }
-
-  /// \brief Creates a trajectory given initial position vector x0 and control over time horizon
-  /// \param x0_input Position vector of Cartpole Model at t=0
-  /// \param ut_mat Control Matrix over time horizon
-  /// \return State Position Trajectory over time horizon
-  arma::mat createTrajectory(const arma::vec & x0_input, const arma::mat & ut_mat) const
-  {
-    const double num_iter = ut_mat.n_cols;
-    arma::mat x_traj(model.x0.n_elem, num_iter, arma::fill::zeros);
-    x_traj.col(0) = x0_input;
-
-    arma::mat x_new;
-    for (int i = 1; i < num_iter; i++) {
-      x_new = integrate(x_traj.col(i - 1), ut_mat.col(i - 1));
-      x_new = model.resolveState(x_new);
-      //x_new(2) = ergodiclib::normalizeAngle(x_new(2));
-      x_traj.col(i) = x_new;
-    }
-
-    return x_traj;
-  }
-
-  /// \brief Creates a trajectory given initial position vector x0 and control over time horizon
-  /// \param x0_input Position vector of Cartpole Model at t=0
-  /// \param ut_mat Control Matrix over time horizon
-  /// \param num_iter Number of time steps
-  /// \return State Position Trajectory over time horizon
-  arma::mat createTrajectory(
-    const arma::vec & x0_input, const arma::mat & ut_mat,
-    const unsigned int & num_iter) const
-  {
-    arma::mat x_traj(model.x0.n_elem, num_iter, arma::fill::zeros);
-    x_traj.col(0) = x0_input;
-
-    arma::mat x_new;
-    for (unsigned int i = 1; i < num_iter; i++) {
-      x_new = integrate(x_traj.col(i - 1), ut_mat.col(i - 1));
-      x_new = model.resolveState(x_new);
-      // x_new(2) = ergodiclib::normalizeAngle(x_new(2));
-      x_traj.col(i) = x_new;
-    }
-
-    return x_traj;
-  }
-
-  /// \brief Integrates the state vector by one time step (dt) using rk4
-  /// \param x_vec State Vector state at a given time
-  /// \param u_vec Control Vector state at a given time
-  /// \return New state vector after one time step
-  arma::vec integrate(arma::vec x_vec, const arma::vec & u_vec) const
-  {
-    arma::vec k1 = model.dynamics(x_vec, u_vec);
-    arma::vec k2 = model.dynamics(x_vec + 0.5 * dt * k1, u_vec);
-    arma::vec k3 = model.dynamics(x_vec + 0.5 * dt * k2, u_vec);
-    arma::vec k4 = model.dynamics(x_vec + dt * k3, u_vec);
-
-    arma::vec k_sum = (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);
-    arma::vec res = x_vec + k_sum;
-
-    return res;
   }
 
   /// \brief Model following Concept Template

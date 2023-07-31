@@ -1,144 +1,182 @@
 #include <ergodiclib/fourier_basis.hpp>
 
-
-/// \brief Reccursive helper for fourier series coefficients
-/// \param K_num Size of series coefficients
-/// \param permutation Current Permutation in sequence
-/// \param n_dim Size of dimension for demonstrations
-/// \param idx Current idx of sequence in permutation
-/// \return List of Fourier Series Coefficients
-static std::vector<std::vector<int>> create_K_helper(
-  const std::vector<int> K_num, std::vector<int> permutation,
-  const int n_dim, int idx)
-{
-  std::vector<std::vector<int>> res;
-  std::vector<std::vector<int>> k_series;
-  for (unsigned int i = 0; i < K_num.size(); i++) {
-    permutation[idx] = K_num[i];
-    if (idx == n_dim - 1) {
-      res.push_back(permutation);
-    } else {
-      k_series = create_K_helper(K_num, permutation, n_dim, idx + 1);
-      res.reserve(res.size() + std::distance(k_series.begin(), k_series.end()));
-      res.insert(res.end(), k_series.begin(), k_series.end());
-    }
-  }
-  return res;
-}
-
+#ifndef THREADS
+#define THREADS 0;
+#else
+#include <thread>
+#include <mutex>
+#include <chrono>
+std::mutex lockHk;
+#endif
 
 namespace ergodiclib
 {
-fourierBasis::fourierBasis(std::vector<std::pair<double, double>> L_dim, int num_dim, int K)
-: n_dim(num_dim),
-  L(L_dim)
+fourierBasis::fourierBasis(std::vector<std::pair<double, double>> dimensionLengths, int nDim, int K)
+: _nDim(nDim),
+  _lengthDims(dimensionLengths)
 {
-  K_series = create_K_series(K, num_dim);
-  hK_vec.resize(K_series.size());
-  for (unsigned int i = 0; i < K_series.size(); i++) {
-    hK_vec[i] = calculateHk(K_series[i], i);
-  }
+  size_t ksize = std::pow(K + 1, nDim);
+  _kSeries.resize(ksize);
+  create_K_series(K);
+  _hkVec.resize(ksize);
+  calculateHk();
 }
 
-
-std::vector<double> fourierBasis::get_hK() const
+std::vector<std::vector<int>> const & fourierBasis::get_K_series() const
 {
-  return hK_vec;
+  return _kSeries;
 }
 
-std::vector<std::vector<int>> fourierBasis::get_K_series() const
+double fourierBasis::calculateFk(const arma::vec & xTrajectory, const int Kidx) const
 {
-  return K_series;
-}
-
-double fourierBasis::calculateFk(
-  const arma::vec & x_i_trajectory,
-  const std::vector<int> & K_vec, const int & k_idx)
-{
-  double hk = hK_vec[k_idx];
+  double hk = _hkVec[Kidx];
   double fourier_basis = 1.0;
   double upper, lower;
 
-  for (unsigned int i = 0; i < x_i_trajectory.n_elem; i++) {
-    upper = K_vec[i] * PI * x_i_trajectory(i);
-    lower = L[i].first - L[i].second;
-    fourier_basis *= cos(upper / lower);
+  for (unsigned int i = 0; i < xTrajectory.n_elem; i++) {
+    upper = _kSeries[Kidx][i] * PI * xTrajectory(i);
+    lower = _lengthDims[i].first - _lengthDims[i].second;
+    fourier_basis *= std::cos(upper / lower);
   }
 
   double Fk = (1 / hk) * fourier_basis;
   return Fk;
 }
 
-double fourierBasis::calculateHk(const std::vector<int> & K_vec, const int & k_idx)
-{
-  double l0, l1, ki;
-
-  double hk = 1.0;
-  double dx = 0.0001; //
-  unsigned int integral_iter = 0;
-  for (unsigned int i = 0; i < n_dim; i++) {
-    l0 = L[i].first;
-    l1 = L[i].second;
-    ki = (K_vec[i] * PI) / (l1 - l0);
-
-    // Calculating from integral:
-    // if (K_vec[i] == 0) {
-    //   hk *= (l1 - l0);
-    //   continue;
-    // }
-    // hk *= (2 * ki * (l1 - l0) - sin(2 * ki * l0) + sin(2 * ki * l1)) / (4 * ki);
-
-    integral_iter = (unsigned int) ((l1 - l0) / dx);
-    arma::vec integral(integral_iter, arma::fill::zeros);
-    for (unsigned int i = 0; i < integral_iter; i++) {
-      integral(i) = pow(cos(ki * (i * dx)), 2);
-    }
-    hk *= integralTrapz(integral, dx);
-  }
-
-  hk = sqrt(hk);
-  hK_vec[k_idx] = hk;
-  return hk;
-}
-
 arma::rowvec fourierBasis::calculateDFk(
-  const arma::colvec & xt,
-  const std::vector<int> & K_vec, const int & k_idx) const
+  const arma::colvec & xTrajectory, const int Kidx) const
 {
-  arma::rowvec dfk(xt.n_rows, arma::fill::zeros);
-  // std::cout << "hk_values" << std::endl;
-  // for (unsigned int i = 0; i < hK_vec.size(); i++) {
-  //   std::cout << hK_vec[i] << std::endl;
-  // }
+  arma::rowvec dfk(_nDim, arma::fill::ones);
 
+  arma::rowvec normState(_nDim, arma::fill::zeros);
+  arma::rowvec kDerivative(_nDim, arma::fill::zeros);
 
-  double hk = hK_vec[k_idx];
-  double ki, kj, dfk_val;
-  for (unsigned int i = 0; i < n_dim; i++) {
-    dfk_val = 1.0;
-    ki = (K_vec[i] * PI) / (L[i].first - L[i].second);
-    dfk_val *= (1 / hk) * (-1.0 * ki) * sin(ki * xt(i));
+  double hk = _hkVec[Kidx];
+  double dkj = 1;
 
-    for (unsigned int j = 0; j < n_dim; j++) {
-      if (i != j) {
-        kj = (K_vec[j] * PI) / (L[j].first - L[j].second);
-        dfk_val *= cos(kj * xt(j));
-      }
-    }
-
-    dfk(i) = dfk_val;
+  // Uses a variation of the Product Except Self algorithm
+  for (unsigned int i = 0; i < _nDim; i++) {
+    normState(i) = (_kSeries[Kidx][i] * PI) / (_lengthDims[i].first - _lengthDims[i].second);
+    kDerivative(i) = std::cos(normState(i) * xTrajectory(i));
   }
-  //dfk.print("dfk: ");
+
+  for (unsigned int i = 1; i < _nDim; i++) {
+    dfk(i) = dfk(i - 1) * kDerivative[i - 1];
+  }
+
+  for (int i = _nDim - 2; i >= 0; i--) {
+    dkj *= kDerivative(i + 1);
+    dfk(i) *= dkj;
+  }
+
+  for (unsigned int i = 0; i < _nDim; i++) {
+    dfk(i) *= (1 / hk) * (-1.0 * normState(i)) * std::sin(normState(i) * xTrajectory(i));
+  }
+
   return dfk;
 }
 
-std::vector<std::vector<int>> fourierBasis::create_K_series(const int & K, const int & n_dim)
+#if THREADS
+// static void integralHk(const unsigned int integral_iter, const double ki, const double dx, double& hk)
+void integralHk(const unsigned int integral_iter, const double ki, const double dx, double & hk)
 {
-  std::vector<int> input_k;
-  for (int k = 0; k < K + 1; k++) {
-    input_k.push_back(k);
+  arma::vec integralVector(integral_iter, arma::fill::zeros);
+  double hkdim, coski;
+
+  for (unsigned int i = 0; i < integral_iter; i++) {
+    coski = std::cos(ki * (i * dx));
+    integralVector(i) = coski * coski;
   }
-  std::vector<int> permutation(n_dim);
-  return create_K_helper(input_k, permutation, n_dim, 0);
+
+  hkdim = integralTrapz(integralVector, dx);
+
+  lockHk.lock();
+  hk *= hkdim;
+  lockHk.unlock();
+
+  return;
+}
+#endif
+
+void fourierBasis::calculateHk()
+{
+  std::vector<int> K_vec;
+  std::vector<double> normState(_nDim, 0);
+  arma::vec integral;
+  double hk;
+  double dx = 0.0001;
+  unsigned int integral_iter;
+
+  for (unsigned int i = 0; i < _kSeries.size(); i++) {
+    K_vec = _kSeries[i];
+    hk = 1.0;
+
+    for (unsigned int j = 0; j < _nDim; j++) {
+      normState[j] = (K_vec[j] * PI) / (_lengthDims[j].second - _lengthDims[j].first);
+    }
+
+#if !THREADS
+    double coski, hktemp;
+    for (unsigned int j = 0; j < _nDim; j++) {
+      integral_iter = (unsigned int) ((_lengthDims[j].second - _lengthDims[j].first) / dx);
+      integral = arma::vec(integral_iter, arma::fill::zeros);
+      for (unsigned int k = 0; k < integral_iter; k++) {
+        coski = std::cos(normState[j] * (k * dx));
+        integral(k) = coski * coski;
+      }
+      hktemp = integralTrapz(integral, dx);
+      hk *= hktemp;
+    }
+#else
+    std::vector<std::thread> threadVec(_nDim);
+
+    for (unsigned int k = 0; k < _nDim; k++) {
+      integral_iter = (unsigned int) ((_lengthDims[k].second - _lengthDims[k].first) / dx);
+      //threadVec.push_back(std::thread(integralHk, integral_iter, normState[k], dx, std::ref(hk)));
+      threadVec.push_back(std::thread(integralHk, integral_iter, normState[k], dx, std::ref(hk)));
+    }
+
+    for (std::thread & t : threadVec) {
+      if (t.joinable()) {t.join();}
+    }
+#endif
+    hk = sqrt(hk);
+    _hkVec[i] = hk;
+  }
+
+  return;
+}
+
+
+// /// \brief Reccursive helper for fourier series coefficients
+// /// \return List of Fourier Series Coefficients
+static void createKhelper(
+  std::vector<int> & inputK, std::vector<int> & Kvec,
+  std::vector<std::vector<int>> & Kseries, const unsigned int & n,
+  unsigned int & idx)
+{
+  if (Kvec.size() == n) {
+    Kseries[idx] = Kvec;
+    idx++;
+    return;
+  }
+  for (auto & k : inputK) {
+    Kvec.push_back(k);
+    createKhelper(inputK, Kvec, Kseries, n, idx);
+    Kvec.pop_back();
+  }
+  return;
+}
+
+
+void fourierBasis::create_K_series(const int K)
+{
+  std::vector<int> inputK, Kvec;
+  unsigned int idx = 0;
+  for (int k = 0; k < K + 1; k++) {
+    inputK.push_back(k);
+  }
+  createKhelper(inputK, Kvec, _kSeries, _nDim, idx);
+  return;
 }
 }

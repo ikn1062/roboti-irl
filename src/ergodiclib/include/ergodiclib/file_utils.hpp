@@ -28,21 +28,21 @@ namespace ergodiclib
 /// \return Vector of demonstration trajectories
 std::vector<arma::mat> readDemonstrations(
   const std::string & demonstration_dir_path,
-  const int & n_dimension);
-
-/*
-/// \brief
-/// \param demonstration_file_list_path
-/// \param n_dimension
-/// \return
-std::vector< std::vector< std::vector<double> > > readDemonstrationsFileList(const std::string& demonstration_file_list_path, int n_dimension);
-*/
+  const int n_dimension);
 
 /// \brief Read Demonstrations from a given CSV file
 /// \param csv_filepath File Path for demonstration csv
 /// \param n_dimension Number of dimensions in dynamic system
 /// \return Matrix of demonstration trajectory
-arma::mat readDemonstrationCSV(const std::string & csv_filepath, const int & n_dimension);
+arma::mat readDemonstrationCSV(const std::string & csv_filepath, const int n_dimension);
+
+/// \brief Save trajectory and controls into a csv file
+/// \param filename Name of file to be saved
+/// \param trajectory Trajectory and controls to be saved to file
+/// \return None
+void saveTrajectoryCSV(
+  const std::string & filename, const std::pair<arma::mat,
+  arma::mat> & trajectory);
 }
 
 #endif

@@ -55,7 +55,7 @@ private:
   /// \param Xt State trajectory over time Horizon
   /// \param Ut Control over time horizon
   /// \return Objective value
-  virtual double objectiveJ(const arma::mat & Xt, const arma::mat & Ut) const;
+  virtual double objectiveJ(const arma::mat & Xt, const arma::mat & Ut);
 
   /// \brief Calculates the objective value of the trajectory
   /// \param Xt State trajectory over time Horizon
@@ -85,12 +85,14 @@ private:
   /// \brief Gets the first iteration of the zeta matrix
   /// \param Plist P matrix over time trajectory
   /// \param rlist r matrix over time trajectory
-  /// \return z matrix 
-  virtual arma::vec get_z(const std::vector<arma::mat> & Plist, const std::vector<arma::mat> & rlist) const;
+  /// \return z matrix
+  virtual arma::vec get_z(
+    const std::vector<arma::mat> & Plist,
+    const std::vector<arma::mat> & rlist) const;
 };
 
 template<class ModelTemplate>
-double SimpleController<ModelTemplate>::objectiveJ(const arma::mat & Xt, const arma::mat & Ut) const
+double SimpleController<ModelTemplate>::objectiveJ(const arma::mat & Xt, const arma::mat & Ut)
 {
   int X_cols = Xt.n_cols - 1;
   arma::vec x_tf = Xt.col(X_cols);
@@ -168,7 +170,9 @@ arma::mat SimpleController<ModelTemplate>::calculate_bT(const arma::mat & Ut) co
 }
 
 template<class ModelTemplate>
-arma::vec SimpleController<ModelTemplate>::get_z(const std::vector<arma::mat> & Plist, const std::vector<arma::mat> & rlist) const
+arma::vec SimpleController<ModelTemplate>::get_z(
+  const std::vector<arma::mat> & Plist,
+  const std::vector<arma::mat> & rlist) const
 {
   arma::vec z = -Plist[0] * rlist[0];
   return z;

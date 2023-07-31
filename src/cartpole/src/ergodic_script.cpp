@@ -3,8 +3,9 @@
 #include <vector>
 #include <ergodiclib/file_utils.hpp>
 #include <ergodiclib/ergodic_measure.hpp>
-#include <ergodiclib/erg_controller.hpp>
+#include <ergodiclib/ergodic_controller.hpp>
 #include <cartpole/cartpole_sys.hpp>
+#include <ergodiclib/fourier_basis.hpp>
 
 #if defined(__APPLE__)
 #include </opt/homebrew/include/armadillo>
@@ -13,7 +14,6 @@
 #endif
 
 using namespace ergodiclib;
-
 
 int main()
 {
@@ -34,18 +34,13 @@ int main()
   std::pair<double, double> pair4(-10, 10);
   std::vector<std::pair<double, double>> lengths{pair1, pair2, pair3, pair4};
   fourierBasis Basis = fourierBasis(lengths, 4, 4);
+  std::vector<std::vector<int>> kseries = Basis.get_K_series();
 
   std::cout << "Ergodic Measurements... START" << std::endl;
   ErgodicMeasure ergodicMeasure = ErgodicMeasure(
     demonstrations, demo_posneg, demo_weights, 0.001,
-    Basis);
+    lengths, 4, 4);
   ergodicMeasure.calcErgodic();
-
-  // std::vector<double> hk = Basis.get_hK();
-  // std::cout << "hk_values" << std::endl;
-  // for (unsigned int i = 0; i < hk.size(); i++) {
-  //   std::cout << hk[i] << std::endl;
-  // }
 
   std::cout << "Cartpole...  START" << std::endl;
   arma::vec x0({0.0, 0.0, PI, 0.0});
@@ -88,8 +83,8 @@ int main()
   double eps = 0.005;
 
   ergController controller = ergController<CartPole>(
-    ergodicMeasure, Basis, cartpole, q, Q, R, P, r,
-    500, alpha, beta, eps);
+    &ergodicMeasure, cartpole, q, Q, R, P, r, 500,
+    alpha, beta, eps);
   controller.iLQR();
   return 0;
 }

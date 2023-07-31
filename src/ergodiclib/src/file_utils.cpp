@@ -21,7 +21,8 @@ static bool compareStrings(const std::string & file_a, const std::string & file_
 namespace ergodiclib
 {
 std::vector<arma::mat> readDemonstrations(
-  const std::string & demonstration_dir_path, const int & n_dimension)
+  const std::string & demonstration_dir_path,
+  const int n_dimension)
 {
   std::vector<arma::mat> demonstrations;
 
@@ -33,13 +34,15 @@ std::vector<arma::mat> readDemonstrations(
     std::filesystem::recursive_directory_iterator(demonstration_dir_path))
   {
     filename = dirEntry.path().generic_string();
-    demonstration_list.push_back(filename);
+    if (filename.substr(filename.find_last_of(".") + 1) == "csv") {
+      demonstration_list.push_back(filename);
+    }
   }
 
   // Sort the folder by number and collect demonstrations
   std::sort(demonstration_list.begin(), demonstration_list.end(), compareStrings);
   for (const std::string & filename : demonstration_list) {
-    std::cout << filename << std::endl;
+    std::cout << "Reading: " << filename << std::endl;
     demonstration_vec = readDemonstrationCSV(filename, n_dimension);
     demonstrations.push_back(demonstration_vec);
   }
@@ -47,25 +50,7 @@ std::vector<arma::mat> readDemonstrations(
   return demonstrations;
 }
 
-/*
-std::vector<std::vector<std::vector<double>>> readDemonstrationsFileList(const std::string& demonstration_file_list_path, int n_dimension)
-{
-    std::vector<std::vector<std::vector<double>>> demonstrations;
-    std::ifstream demonstrationListFile(demonstration_file_list_path);
-
-    std::string filename;
-    std::vector<std::vector<double>> demonstration_vec;
-    while (std::getline(demonstrationListFile, filename)) {
-        demonstration_vec = readDemonstrationCSV(filename, n_dimension);
-        demonstrations.push_back(demonstration_vec);
-    }
-
-    demonstrationListFile.close();
-    return demonstrations;
-}
-*/
-
-arma::mat readDemonstrationCSV(const std::string & csv_filepath, const int & n_dimension)
+arma::mat readDemonstrationCSV(const std::string & csv_filepath, const int n_dimension)
 {
   arma::mat demonstration(0, 0, arma::fill::zeros);
   std::ifstream demonstration_file(csv_filepath);
@@ -92,5 +77,21 @@ arma::mat readDemonstrationCSV(const std::string & csv_filepath, const int & n_d
 
   demonstration_file.close();
   return demonstration;
+}
+
+void saveTrajectoryCSV(
+  const std::string & filename, const std::pair<arma::mat,
+  arma::mat> & trajectory)
+{
+  std::string x_file = filename + "_trajectory.csv";
+  std::string u_file = filename + "_control.csv";
+
+  arma::mat XT = trajectory.first.t();
+  arma::mat UT = trajectory.second.t();
+
+  XT.save(x_file, arma::csv_ascii);
+  UT.save(u_file, arma::csv_ascii);
+
+  return;
 }
 }

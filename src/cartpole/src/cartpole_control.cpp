@@ -5,7 +5,7 @@
 ///     rate (float): Rate of Main Loop
 ///     control_file (string) : File path to controls given 'file' option
 ///     mpc_rate (float) : Rate of MPC timing trigger
-///     mpc_dt (float) : Time difference used 
+///     mpc_dt (float) : Time difference used
 ///     mpc_timesteps (int) : Number of time steps to calculate for MPC control
 /// PUBLISHES:
 ///     /cartpole/timestep (std_msgs::msg::UInt64): Current Timestep of Simulation
@@ -45,6 +45,7 @@
 
 using namespace std::chrono;
 
+/// \brief Cartpole Controller Node
 class CartpoleControl : public rclcpp::Node
 {
 public:
@@ -73,6 +74,8 @@ public:
     // Publishers and Subscribers
     timestep_pub_ = create_publisher<std_msgs::msg::UInt64>("cartpole/timestep", 50);
     command_pub_ = create_publisher<std_msgs::msg::Float64>("/cartpole/cmd", 10);
+    cartpos_pub_ = create_publisher<std_msgs::msg::Float64>("/cartpole/cartpos", 10);
+    polepos_pub_ = create_publisher<std_msgs::msg::Float64>("/cartpole/polepos", 10);
     joint_state_sub_ = create_subscription<sensor_msgs::msg::JointState>(
       "/cartpole/joint_state",
       10,
@@ -81,6 +84,9 @@ public:
     file_cntrl_trigger_ = create_service<std_srvs::srv::Trigger>(
       "~/file_control_trigger", std::bind(
         &CartpoleControl::fileController, this, std::placeholders::_1, std::placeholders::_2));
+    file_traj_trigger_ = create_service<std_srvs::srv::Trigger>(
+      "~/file_traj_trigger", std::bind(
+        &CartpoleControl::filePosition, this, std::placeholders::_1, std::placeholders::_2));
     MPC_trigger_ =
       create_service<std_srvs::srv::Trigger>(
       "~/mpc_trigger",
@@ -98,17 +104,17 @@ public:
     r = arma::mat(4, 1, arma::fill::zeros);
 
     mpc_trigger = false;
-    Q(0, 0) = 0.1;
-    Q(1, 1) = 0.1;
-    Q(2, 2) = 110.0;
-    Q(3, 3) = 2.0;
+    Q(0, 0) = 0.0;
+    Q(1, 1) = 0.0;
+    Q(2, 2) = 200.0;
+    Q(3, 3) = 1.0;
 
-    R(0, 0) = 0.01;
+    R(0, 0) = 0.05;
 
-    P(0, 0) = 0.01;
-    P(1, 1) = 0.01;
-    P(2, 2) = 200;
-    P(3, 3) = 2;
+    P(0, 0) = 0.0001;
+    P(1, 1) = 0.0001;
+    P(2, 2) = 1000;
+    P(3, 3) = 50;
     cartpole = ergodiclib::CartPole(x0, u0, dt, t0, tf, 10.0, 5.0, 2.0);
     controller = ergodiclib::SimpleController(cartpole, Q, R, P, r, 425, alpha, beta, eps);
 
@@ -130,6 +136,8 @@ private:
 
   // Controls message
   std_msgs::msg::Float64 force_cmd;
+  std_msgs::msg::Float64 cart_cmd;
+  std_msgs::msg::Float64 pole_cmd;
 
   // MPC Control Variables
   bool mpc_trigger;
@@ -145,10 +153,10 @@ private:
 
   double dt = 0.005;
   double t0 = 0.0;
-  double tf = 5.0; 
+  double tf = 5.0;
   double alpha = 0.40;
-  double beta = 0.85;
-  double eps = 1e-3;
+  double beta = 0.75;
+  double eps = 1e-5;
   double M = 10.0;
   double m = 5.0;
   double l = 2.0;
@@ -162,9 +170,13 @@ private:
   arma::mat U;
 
   // Create publishers and subscribers
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr cartpos_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr polepos_pub_;
+
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr command_pub_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr file_cntrl_trigger_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr file_traj_trigger_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr MPC_trigger_;
 
   // Publishes the current timestep of the simulation
@@ -238,10 +250,10 @@ private:
     for (unsigned int i = 0; i < control_input.size(); i++) {
       force_cmd.data = control_input[i];
       command_pub_->publish(force_cmd);
-      std::this_thread::sleep_for(std::chrono::microseconds(1150));
+      std::this_thread::sleep_for(std::chrono::microseconds(4163));
       force_cmd.data = 0.0;
       command_pub_->publish(force_cmd);
-      std::this_thread::sleep_for(std::chrono::microseconds(3650));
+      std::this_thread::sleep_for(std::chrono::microseconds(637));
     }
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
@@ -249,6 +261,55 @@ private:
 
     response->success = true;
     response->message = "Control Passed";
+    return;
+  }
+
+  void filePosition(
+    const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+  {
+    std::vector<std::vector<float>> tracjectory;
+    std::ifstream trajectoryFile("example_trajectory.csv");
+
+    if (!trajectoryFile.is_open()) {
+      RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Control file could not be open");
+      response->success = false;
+      response->message = "Control File could not be opened";
+      return;
+    }
+
+    std::string line;
+    float num;
+    while (std::getline(trajectoryFile, line)) {
+      std::istringstream iss(line);
+      std::string value;
+      std::vector<float> trajecline;
+      while (std::getline(iss, value, ',')) {
+        num = std::stof(value);
+        trajecline.push_back(num);
+      }
+      tracjectory.push_back(trajecline);
+    }
+
+    trajectoryFile.close();
+
+    std::cout << "trajec_input size: " << tracjectory.size() << std::endl;
+    auto start = std::chrono::high_resolution_clock::now();
+    for (unsigned int i = 0; i < tracjectory.size(); i++) {
+      cart_cmd.data = tracjectory[i][0];
+      cartpos_pub_->publish(cart_cmd);
+      if (i > 200) {
+        pole_cmd.data = tracjectory[i - 200][2];
+        polepos_pub_->publish(pole_cmd);
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    std::cout << "Time: " << duration.count() << std::endl;
+
+    response->success = true;
+    response->message = "Trajectory Complete";
     return;
   }
 
@@ -260,8 +321,9 @@ private:
       unsigned int steps = (int)(mpc_time / dt);
       double controls;
       arma::vec curr_pos({x_cart, v_cart, x_pole, v_pole});
+      // curr_pos.print("Initial: ");
 
-      trajectories = controller.ModelPredictiveControl(curr_pos, u0, mpc_timesteps, 100);
+      trajectories = controller.ModelPredictiveControl(curr_pos, u0, mpc_timesteps, 500);
       X = trajectories.first;
       U = trajectories.second;
       // auto start2 = std::chrono::high_resolution_clock::now();
@@ -270,12 +332,13 @@ private:
         controls = U(0, i);
         force_cmd.data = controls;
         command_pub_->publish(force_cmd);
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        force_cmd.data = 0.0;
-        command_pub_->publish(force_cmd);
-        std::this_thread::sleep_for(std::chrono::milliseconds(15));
+        // (X.col(i)).print("Ctrl_X: ");
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        // force_cmd.data = 0.0;
+        // command_pub_->publish(force_cmd);
+        // std::this_thread::sleep_for(std::chrono::milliseconds(15));
       }
-      auto end = std::chrono::high_resolution_clock::now();
+      // auto end = std::chrono::high_resolution_clock::now();
       // std::chrono::duration<double> loopduration = end - start;
       // std::chrono::duration<double> calcduration = start2 - start;
       // std::cout << "Loop Time: " << loopduration.count() << ", Calculation Time: " << calcduration.count() << std::endl;
@@ -301,7 +364,10 @@ private:
 
 };
 
-
+/// @brief Main function to run controller Node
+/// @param argc Inputs
+/// @param argv Inputs
+/// @return None
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);

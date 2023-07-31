@@ -75,7 +75,7 @@ install(EXPORT ${PROJECT_NAME}-targets
 ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
 
 install(PROGRAMS
-  scripts/cartpole_file_util.py
+  scripts/cartpole_file_util.py scripts/cartpole_dynamics.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -96,6 +96,12 @@ if(BUILD_TESTING)
   # a copyright and license is added to all source files
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+endif()
+
+if(NOT CMAKE_CROSSCOMPILING)
+  find_package(Doxygen)
+  set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md) # Use the readme in your doxygen docs
+  doxygen_add_docs(doxygen include/ src/ README.md ALL)
 endif()
 
 include(CTest)

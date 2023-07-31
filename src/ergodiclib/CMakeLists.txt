@@ -6,17 +6,17 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -pthread)
 endif()
+
+add_compile_definitions(THREADS=0)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(Catch2 3 REQUIRED)
 find_package(Armadillo REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
 
+# Add .cpp files to the library
 add_library(${PROJECT_NAME} src/ergodic_measure.cpp src/file_utils.cpp src/fourier_basis.cpp src/num_utils.cpp)
 
 target_include_directories(${PROJECT_NAME}
@@ -29,31 +29,25 @@ target_compile_features(${PROJECT_NAME}  PUBLIC cxx_std_20)
 target_compile_options(${PROJECT_NAME}  PUBLIC -Wall -Wextra -Wpedantic)
 
 # # Lines below are used to add cpp scripts as ROS2 executable files
-# add_executable(ergodic_main src/ergodic_main.cpp)
-# ament_target_dependencies(ergodic_main Armadillo)
-# target_link_libraries(ergodic_main ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
-
-add_executable(controller_test src/controller_test.cpp)
-ament_target_dependencies(controller_test Armadillo)
-target_link_libraries(controller_test ${PROJECT_NAME} ${ARMADILLO_LIBRARIES})
-
-# install(TARGETS ergodic_main controller_test DESTINATION lib/${PROJECT_NAME})
-install(TARGETS controller_test DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY include/${PROJECT_NAME} DESTINATION include)
-# install(TARGETS ergodic_main controller_test ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
-install(TARGETS controller_test ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
 install(EXPORT ${PROJECT_NAME}-targets
         FILE ${PROJECT_NAME}-config.cmake
         NAMESPACE ${PROJECT_NAME}::
         DESTINATION lib/cmake/${PROJECT_NAME})
 ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
 
-# # Cross-Compiling options
-#if (NOT CMAKE_CROSSCOMPILING)
-#  find_package(Doxygen)
-#  set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md) # Use the readme in your doxygen docs
-#  doxygen_add_docs(doxygen include/ src/ README.md ALL)
-#endif()
+install(PROGRAMS
+  scripts/visualize_ergodic.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+# Cross-Compiling options
+if(NOT CMAKE_CROSSCOMPILING)
+  find_package(Doxygen)
+  set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md) # Use the readme in your doxygen docs
+  doxygen_add_docs(doxygen include/ src/ README.md ALL)
+endif()
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import numpy as np
 import matplotlib.pyplot as plt
 import json
@@ -324,7 +325,7 @@ class ErgodicMeasure:
 
 def main():
     print("Getting Demonstrations")
-    ergodic_properties_json = input("Please input the full path to ergodic properties: ")
+    ergodic_properties_json = input("Please input the full path to the ergodic properties json: ")
     # ergodic_properties_json = "../../cartpole/config/ergodic_properties.json"
 
     with open(ergodic_properties_json, 'r') as f:
@@ -372,19 +373,6 @@ def main():
     plot_phix_metric = Plot2DMetric(D, new_E, K, L, dt, 2, 3, interpolation='bilinear')
     plot_phix_metric.visualize_trajectory()
     plot_phix_metric.visualize_ergodic()
-
-    """
-    ergodic_test = ErgodicMeasure(D, E, K, L, dt)
-    hk, phik, lambdak = ergodic_test.calc_fourier_metrics()
-    for k_series in phik.keys():
-        print(f"K: {k_series}, PhiK: {phik[k_series]}")
-
-    for k_series in lambdak.keys():
-        print(f"K: {k_series}, LambdaK: {lambdak[k_series]}")
-
-    for k_series in hk.keys():
-        print(f"K: {k_series}, hK: {hk[k_series]}")
-    """
 
 
 if __name__ == "__main__":
