@@ -45,6 +45,7 @@
 
 using namespace std::chrono;
 
+/// \brief Cartpole Controller Node
 class CartpoleControl : public rclcpp::Node
 {
 public:
@@ -337,7 +338,7 @@ private:
         // command_pub_->publish(force_cmd);
         // std::this_thread::sleep_for(std::chrono::milliseconds(15));
       }
-      auto end = std::chrono::high_resolution_clock::now();
+      // auto end = std::chrono::high_resolution_clock::now();
       // std::chrono::duration<double> loopduration = end - start;
       // std::chrono::duration<double> calcduration = start2 - start;
       // std::cout << "Loop Time: " << loopduration.count() << ", Calculation Time: " << calcduration.count() << std::endl;
@@ -363,7 +364,10 @@ private:
 
 };
 
-
+/// @brief Main function to run controller Node
+/// @param argc Inputs
+/// @param argv Inputs
+/// @return None
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);

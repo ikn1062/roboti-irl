@@ -23,6 +23,7 @@
 #include <armadillo>
 #endif
 
+/// \brief Used to void statements in virtual ergodic controller calculations
 #define UNUSED(x) (void)(x)
 
 namespace ergodiclib
@@ -39,7 +40,6 @@ public:
 
   /// \brief Constructor for Ergodic Controller
   /// \param ergodicMes Ergodic Measurement Class
-  /// \param basis Ergodic Basis Class
   /// \param model_agent Model agent following Concept Template
   /// \param q_val q value (Ergodic trajectory penalty)
   /// \param Q Q Matrix (Trajectory Penalty)
@@ -51,11 +51,10 @@ public:
   /// \param b Beta - Controller multiplier for armijo line search
   /// \param e Epsilon - Convergence Value for Objective Function
   ergController(
-    ErgodicMeasure & ergodicMes, fourierBasis & basis, ModelTemplate model_agent,
+    ErgodicMeasure* ergodicMes, ModelTemplate model_agent,
     double q_val, arma::mat Q, arma::mat R, arma::mat P, arma::mat r,
     int max_iter_in, double a, double b, double e)
   : ergodicMeasure(ergodicMes),
-    Basis(basis),
     BaseController<ModelTemplate>::BaseController(model_agent, Q, R, P, r, max_iter_in, a, b, e),
     q(q_val)
   {
@@ -68,10 +67,7 @@ public:
   /// \param demo_weights Demonstration weights - length of demonstrations
   /// \param K_coeff Size of Series Coefficient
   /// \param L_dim Size of boundaries for dimensions
-  /// \param dt_demo time difference between each state in the trajectory
-  /// \param L_dim Length of Dimensions
   /// \param num_dim Number of Dimensions
-  /// \param K Fourier Series Coefficient
   /// \param model_agent Model agent following Concept Template
   /// \param q_val q value (Ergodic trajectory penalty)
   /// \param Q Q Matrix (Trajectory Penalty)
@@ -85,17 +81,20 @@ public:
   ergController(
     std::vector<arma::mat> demonstrations, std::vector<int> demo_posneg,
     std::vector<double> demo_weights,
-    std::vector<std::pair<double, double>> L_dim, int num_dim, int K,
+    std::vector<std::pair<double, double>> L_dim, int num_dim, int K_coeff,
     ModelTemplate model_agent, double q_val, arma::mat Q,
     arma::mat R, arma::mat P, arma::mat r, int max_iter_in,
     double a, double b, double e)
   : BaseController<ModelTemplate>::BaseController(model_agent, Q, R, P, r, max_iter_in, a, b, e),
     q(q_val)
   {
-    Basis = fourierBasis(L_dim, num_dim, K);
-    ergodicMeasure =
-      ErgodicMeasure(demonstrations, demo_posneg, demo_weights, model_agent.dt, Basis);
+    ergodicMeasure = new ErgodicMeasure(demonstrations, demo_posneg, demo_weights, model_agent.dt, L_dim, num_dim, K_coeff);
     tf = model_agent.tf;
+  }
+
+  ~ergController()
+  {
+    delete ergodicMeasure;
   }
 
 private:
@@ -131,10 +130,7 @@ private:
   virtual arma::vec get_z(const std::vector<arma::mat> & Plist, const std::vector<arma::mat> & rlist) const;
 
   /// \param ergodicMes Ergodic Measurement Class
-  ErgodicMeasure & ergodicMeasure;
-
-  /// \param basis Ergodic Basis Class
-  fourierBasis & Basis;
+  ErgodicMeasure* ergodicMeasure;
 
   /// \param q_val q value (Ergodic trajectory penalty)
   double q;
@@ -166,15 +162,14 @@ double ergController<ModelTemplate>::calculateDJ(
 template<class ModelTemplate>
 double ergController<ModelTemplate>::objectiveJ(const arma::mat & Xt, const arma::mat & Ut)
 {
-  const std::vector<std::vector<int>> K_series = Basis.get_K_series();
-  arma::mat lambda = ergodicMeasure.get_LambdaK();
-  arma::mat phi = ergodicMeasure.get_PhiK();
+  arma::mat lambda = ergodicMeasure->get_LambdaK();
+  arma::mat phi = ergodicMeasure->get_PhiK();
 
   double ergodicCost = 0.0;
 
   double ck;
-  for (unsigned int i = 0; i < K_series.size(); i++) {
-    ck = ergodicMeasure.calculateCk(Xt, K_series[i], i);
+  for (unsigned int i = 0; i < ergodicMeasure->sizeK; i++) {
+    ck = ergodicMeasure->calculateCk(Xt, i);
     ergodicCost += lambda[i] * pow(ck - phi[i], 2);
   }
   ergodicCost = q * ergodicCost;
@@ -199,17 +194,16 @@ arma::mat ergController<ModelTemplate>::calculate_aT(const arma::mat & Xt) const
 {
   arma::mat a_mat(Xt.n_cols, Xt.n_rows, arma::fill::zeros);
 
-  const std::vector<std::vector<int>> K_series = Basis.get_K_series();
-  arma::mat lambda = ergodicMeasure.get_LambdaK();
-  arma::mat phi = ergodicMeasure.get_PhiK();
+  arma::mat lambda = ergodicMeasure->get_LambdaK();
+  arma::mat phi = ergodicMeasure->get_PhiK();
 
   arma::rowvec ak_mat(Xt.n_rows, arma::fill::zeros);
   arma::rowvec dfk(Xt.n_rows, arma::fill::zeros);
-  for (unsigned int i = 0; i < K_series.size(); i++) {
-    double ck = ergodicMeasure.calculateCk(Xt, K_series[i], i);
+  for (unsigned int i = 0; i < ergodicMeasure->sizeK; i++) {
+    double ck = ergodicMeasure->calculateCk(Xt, i);
 
     for (unsigned int t = 0; t < Xt.n_cols; t++) {
-      dfk = Basis.calculateDFk(Xt.col(t), K_series[i], i);
+      dfk = ergodicMeasure->calculateFourierDFk(Xt.col(t), i);
       ak_mat = lambda[i] * (2 * (ck - phi[i]) * ((1 / tf) * dfk));
       a_mat.row(t) = a_mat.row(t) + ak_mat;
     }

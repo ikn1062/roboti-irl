@@ -32,6 +32,7 @@
 
 using namespace std::chrono;
 
+/// \brief Cartpole Keyboard Controller Node
 class CartpoleControl : public rclcpp::Node
 {
 public:
@@ -157,7 +158,10 @@ private:
   }
 };
 
-
+/// \brief Main function to run Controller Node
+/// \param argc Inputs
+/// \param argv Inputs
+/// \return None
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);

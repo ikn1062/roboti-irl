@@ -21,6 +21,8 @@
 
 namespace ergodiclib
 {
+/// \brief Base controller class for iLQR control
+/// \tparam ModelTemplate Template for Dynamic Model
 template<class ModelTemplate>
 class BaseController
 {
@@ -274,7 +276,7 @@ protected:
   /// \param Xt State trajectory over time Horizon
   /// \param Ut Control over time horizon
   /// \return Objective value
-  virtual double objectiveJ(const arma::mat & Xt, const arma::mat & Ut) const
+  virtual double objectiveJ(const arma::mat & Xt, const arma::mat & Ut)
   {
     UNUSED(Xt);
     UNUSED(Ut);
@@ -283,8 +285,8 @@ protected:
 
   /// \brief Calculates absolute value of descent direction [VIRTUAL]
   /// \param zeta_pair zeta and vega matrix for controller
-  /// \param at aT Matrix
-  /// \param bt bT Matrix
+  /// \param aT aT Matrix
+  /// \param bT bT Matrix
   /// @return Descent direction as an double value
   virtual double calculateDJ(
     std::pair<arma::mat, arma::mat> const & zeta_pair,

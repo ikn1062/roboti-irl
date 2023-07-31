@@ -55,7 +55,7 @@ private:
   /// \param Xt State trajectory over time Horizon
   /// \param Ut Control over time horizon
   /// \return Objective value
-  virtual double objectiveJ(const arma::mat & Xt, const arma::mat & Ut) const;
+  virtual double objectiveJ(const arma::mat & Xt, const arma::mat & Ut);
 
   /// \brief Calculates the objective value of the trajectory
   /// \param Xt State trajectory over time Horizon
@@ -90,7 +90,7 @@ private:
 };
 
 template<class ModelTemplate>
-double SimpleController<ModelTemplate>::objectiveJ(const arma::mat & Xt, const arma::mat & Ut) const
+double SimpleController<ModelTemplate>::objectiveJ(const arma::mat & Xt, const arma::mat & Ut)
 {
   int X_cols = Xt.n_cols - 1;
   arma::vec x_tf = Xt.col(X_cols);

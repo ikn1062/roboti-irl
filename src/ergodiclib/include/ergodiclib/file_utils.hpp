@@ -37,8 +37,8 @@ std::vector<arma::mat> readDemonstrations(
 arma::mat readDemonstrationCSV(const std::string & csv_filepath, const int n_dimension);
 
 /// \brief Save trajectory and controls into a csv file
-/// \param csv_filepath Standard file name for the csv files
-/// \param n_dimension Trajectory pair
+/// \param filename Name of file to be saved
+/// \param trajectory Trajectory and controls to be saved to file
 /// \return None
 void saveTrajectoryCSV(const std::string& filename, const std::pair<arma::mat, arma::mat>& trajectory);
 }

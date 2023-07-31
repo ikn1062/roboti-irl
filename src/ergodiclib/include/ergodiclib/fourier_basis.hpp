@@ -18,41 +18,39 @@
 
 namespace ergodiclib
 {
-/// \brief Class containing methods for calculating the fourier basis of a trajectory
+/// \brief Class containing methods for calculating the fourier basis of a trajectory signal
 class fourierBasis
 {
 public:
   /// \brief Constructor for Fourier Basis class
-  /// \param L_dim Length of Dimensions
-  /// \param num_dim Number of Dimensions
+  /// \param dimensionLengths Length of Dimensions
+  /// \param nDim Number of Dimensions
   /// \param K Fourier Series Coefficient
-  fourierBasis(std::vector<std::pair<double, double>> L_dim, int num_dim, int K);
+  fourierBasis(std::vector<std::pair<double, double>> dimensionLengths, int nDim, int K);
 
-  /// \brief Returns Normalizing factor for Fk for each series coefficient
-  /// \return hK vector
-  std::vector<double> get_hK() const;
+  /// \brief Destructor for Fourier Basis class
+  ~fourierBasis() = default;
 
   /// \brief Gets the fourier dimension series
   /// \return Fourier Dimension Series K vector of vector of int
-  std::vector<std::vector<int>> get_K_series() const;
+  std::vector<std::vector<int>> const &  get_K_series() const;
 
   /// \brief Calculates normalized fourier coeffecient using basis function metric
   ///        Fk is defined by the following:
   ///        Fk = 1/hk * product(cos(k[i] *x[i])) where i ranges for all dimensions of x
   ///        - Where k[i] = (K[i] * pi) / L[i]
   ///        - Where L[i] is the bounds of the variable dimension i
-  /// \param x_i_trajectory Position vector X at a given time t
-  /// \param K_vec The series coefficient given as a list of length dimensions
-  /// \param k_idx The index of the series coefficient K_vec
+  /// \param xTrajectory Position vector X at a given time t
+  /// \param Kidx The index of the series coefficient K_vec
   /// \return Fk Value, normalized fourier coeffecient
   double calculateFk(
-    const arma::vec & xTrajectory, const std::vector<int> & Kvec,
-    const int Kidx) const;
+    const arma::vec & xTrajectory, const int Kidx) const;
 
-  /// \brief WRITE COMMENT
-  arma::rowvec calculateDFk(
-    const arma::colvec & xTrajectory, const std::vector<int> & Kvec,
-    const int Kidx) const;
+  /// \brief Calculated Directional Derivative of DFk relative to state vector
+  /// \param xTrajectory Position vector X at a given time t
+  /// \param Kidx The index of the series coefficient K_vec
+  /// \return Row vector for direction derivative of normalized state vector
+  arma::rowvec calculateDFk(const arma::colvec & xTrajectory, const int Kidx) const;
 
 private:
   /// \brief Normalizing factor for Fk
@@ -64,20 +62,20 @@ private:
   /// \brief Creates the fourier series coefficients
   /// \param K Size of series coefficients
   /// \param n_dim Size of dimension for demonstrations
-  /// \return List of Fourier Series Coefficients
-  std::vector<std::vector<int>> create_K_series(const int K);
+  /// \return None
+  void create_K_series(const int K);
 
   /// \brief Length of dimension of a given trajectory
-  const unsigned int n_dim;
+  const unsigned int _nDim;
 
   /// \brief Size of boundaries for dimensions - [Lower boundary, Higher Boundary]
-  const std::vector<std::pair<double, double>> L;
+  const std::vector<std::pair<double, double>> _lengthDims;
 
   /// \brief Vector of hK Values
-  std::vector<double> hK_vec;
+  std::vector<double> _hkVec;
 
   /// \brief Vector of Weights for each demonstration
-  std::vector<std::vector<int>> K_series;
+  std::vector<std::vector<int>> _kSeries;
 };
 }
 

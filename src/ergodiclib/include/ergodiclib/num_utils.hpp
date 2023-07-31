@@ -19,6 +19,7 @@
 
 namespace ergodiclib
 {
+/// \brief Double form of PI
 constexpr double PI = 3.14159265358979323846;
 
 /// \brief Finds the integral of a trajectory using the trapezoidal rule, using constant dx
@@ -86,6 +87,8 @@ double l2_norm(const std::vector<T> & v)
 }
 
 /// \brief Creates an intial trajectory of model with x0 and u0
+/// \param model Model Class used to calculate dynamics
+/// \param dt Change in time
 /// \return State Position and Control Trajectories over time horizon
 template<class ModelTemplate>
 std::pair<arma::mat, arma::mat> createTrajectory(ModelTemplate model, const double& dt)
@@ -110,8 +113,10 @@ std::pair<arma::mat, arma::mat> createTrajectory(ModelTemplate model, const doub
 }
 
 /// \brief Creates a trajectory given initial position vector x0 and control over time horizon
+/// \param model Model Class used to calculate dynamics
 /// \param x0_input Position vector of Cartpole Model at t=0
 /// \param ut_mat Control Matrix over time horizon
+/// \param dt Change in time
 /// \return State Position Trajectory over time horizon
 template<class ModelTemplate>
 arma::mat createTrajectory(ModelTemplate model, const arma::vec & x0_input, const arma::mat & ut_mat, const double& dt)
@@ -132,9 +137,11 @@ arma::mat createTrajectory(ModelTemplate model, const arma::vec & x0_input, cons
 }
 
 /// \brief Creates a trajectory given initial position vector x0 and control over time horizon
+/// \param model Model Class used to calculate dynamics
 /// \param x0_input Position vector of Cartpole Model at t=0
 /// \param ut_mat Control Matrix over time horizon
 /// \param num_iter Number of time steps
+/// \param dt Change in time
 /// \return State Position Trajectory over time horizon
 template<class ModelTemplate>
 arma::mat createTrajectory(
@@ -156,8 +163,10 @@ arma::mat createTrajectory(
 }
 
 /// \brief Integrates the state vector by one time step (dt) using rk4
+/// \param model Model Class used to calculate dynamics
 /// \param x_vec State Vector state at a given time
 /// \param u_vec Control Vector state at a given time
+/// \param dt Change in time
 /// \return New state vector after one time step
 template<class ModelTemplate>
 arma::vec integrate(ModelTemplate model, arma::vec x_vec, const arma::vec & u_vec, const double& dt)

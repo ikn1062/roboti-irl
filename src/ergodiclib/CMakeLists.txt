@@ -9,7 +9,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -pthread)
 endif()
 
-add_compile_definitions(THREADS=1)
+add_compile_definitions(THREADS=0)
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -37,12 +37,17 @@ install(EXPORT ${PROJECT_NAME}-targets
         DESTINATION lib/cmake/${PROJECT_NAME})
 ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
 
+install(PROGRAMS
+  scripts/visualize_ergodic.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 # Cross-Compiling options
-# if (NOT CMAKE_CROSSCOMPILING)
-#  find_package(Doxygen)
-#  set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md) # Use the readme in your doxygen docs
-#  doxygen_add_docs(doxygen include/ src/ README.md ALL)
-# endif()
+if (NOT CMAKE_CROSSCOMPILING)
+ find_package(Doxygen)
+ set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md) # Use the readme in your doxygen docs
+ doxygen_add_docs(doxygen include/ src/ README.md ALL)
+endif()
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

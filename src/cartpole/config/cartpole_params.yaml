@@ -4,6 +4,6 @@ cartpole_parameters:
     pole_mass: "5.0"
     pole_len: "2.0"
     pole_org: "-1.0"
-    prop_gain: 25.0
-    int_gain: 0.01
-    diff_gain: 2.0
+    prop_gain: 1.0
+    int_gain: 0.0
+    diff_gain: 0.0

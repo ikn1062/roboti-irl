@@ -11,37 +11,31 @@ std::mutex lockHk;
 
 namespace ergodiclib
 {
-fourierBasis::fourierBasis(std::vector<std::pair<double, double>> L_dim, int num_dim, int K)
-: n_dim(num_dim),
-  L(L_dim)
+fourierBasis::fourierBasis(std::vector<std::pair<double, double>> dimensionLengths, int nDim, int K)
+: _nDim(nDim),
+  _lengthDims(dimensionLengths)
 {
-  K_series = create_K_series(K);
-  hK_vec.resize(K_series.size());
+  size_t ksize = std::pow(K+1, nDim);
+  _kSeries.resize(ksize);
+  create_K_series(K);
+  _hkVec.resize(ksize);
   calculateHk();
 }
 
-
-std::vector<double> fourierBasis::get_hK() const
+std::vector<std::vector<int>> const & fourierBasis::get_K_series() const
 {
-  return hK_vec;
+  return _kSeries;
 }
 
-std::vector<std::vector<int>> fourierBasis::get_K_series() const
+double fourierBasis::calculateFk(const arma::vec & xTrajectory, const int Kidx) const
 {
-  return K_series;
-}
-
-double fourierBasis::calculateFk(
-  const arma::vec & xTrajectory,
-  const std::vector<int> & Kvec, const int Kidx) const
-{
-  double hk = hK_vec[Kidx];
+  double hk = _hkVec[Kidx];
   double fourier_basis = 1.0;
   double upper, lower;
 
   for (unsigned int i = 0; i < xTrajectory.n_elem; i++) {
-    upper = Kvec[i] * PI * xTrajectory(i);
-    lower = L[i].first - L[i].second;
+    upper = _kSeries[Kidx][i] * PI * xTrajectory(i);
+    lower = _lengthDims[i].first - _lengthDims[i].second;
     fourier_basis *= std::cos(upper / lower);
   }
 
@@ -50,32 +44,32 @@ double fourierBasis::calculateFk(
 }
 
 arma::rowvec fourierBasis::calculateDFk(
-  const arma::colvec & xTrajectory,
-  const std::vector<int> & Kvec, const int Kidx) const
+  const arma::colvec & xTrajectory, const int Kidx) const
 {
-  arma::rowvec dfk(n_dim, arma::fill::ones);
+  arma::rowvec dfk(_nDim, arma::fill::ones);
 
-  arma::rowvec normState(n_dim, arma::fill::zeros);
-  arma::rowvec kDerivative(n_dim, arma::fill::zeros);
+  arma::rowvec normState(_nDim, arma::fill::zeros);
+  arma::rowvec kDerivative(_nDim, arma::fill::zeros);
 
-  double hk = hK_vec[Kidx];
+  double hk = _hkVec[Kidx];
   double dkj = 1;
 
   // Uses a variation of the Product Except Self algorithm
-  for (unsigned int i = 0; i < n_dim; i++) {
-    normState(i) = (Kvec[i] * PI) / (L[i].first - L[i].second);
+  for (unsigned int i = 0; i < _nDim; i++) {
+    normState(i) = (_kSeries[Kidx][i] * PI) / (_lengthDims[i].first - _lengthDims[i].second);
     kDerivative(i) = std::cos(normState(i) * xTrajectory(i));
   }
 
-  for (unsigned int i = 1; i < n_dim; i++){
+  for (unsigned int i = 1; i < _nDim; i++){
     dfk(i) = dfk(i-1) * kDerivative[i-1];
   }
-  for (int i = n_dim - 2; i >= 0; i--) {
+
+  for (int i = _nDim - 2; i >= 0; i--) {
     dkj *= kDerivative(i+1);
     dfk(i) *= dkj;
   }
 
-  for (unsigned int i = 0; i < n_dim; i++) {
+  for (unsigned int i = 0; i < _nDim; i++) {
     dfk(i) *= (1 / hk) * (-1.0 * normState(i)) * std::sin(normState(i) * xTrajectory(i));
   }
 
@@ -107,24 +101,24 @@ void integralHk(const unsigned int integral_iter, const double ki, const double 
 void fourierBasis::calculateHk()
 {
   std::vector<int> K_vec;
-  std::vector<double> normState(n_dim, 0);
+  std::vector<double> normState(_nDim, 0);
   arma::vec integral;
   double hk;
   double dx = 0.0001;
   unsigned int integral_iter;
-
-  for (unsigned int i = 0; i < K_series.size(); i++) {
-    K_vec = K_series[i];
+  
+  for (unsigned int i = 0; i < _kSeries.size(); i++) {
+    K_vec = _kSeries[i];
     hk = 1.0;
 
-    for (unsigned int j = 0; j < n_dim; j++) {
-      normState[j] = (K_vec[j] * PI) / (L[j].second - L[j].first);
+    for (unsigned int j = 0; j < _nDim; j++) {
+      normState[j] = (K_vec[j] * PI) / (_lengthDims[j].second - _lengthDims[j].first);
     }
 
 #if !THREADS
     double coski, hktemp;
-    for (unsigned int j = 0; j < n_dim; j++) {
-      integral_iter = (unsigned int) ((L[j].second - L[j].first) / dx);
+    for (unsigned int j = 0; j < _nDim; j++) {
+      integral_iter = (unsigned int) ((_lengthDims[j].second - _lengthDims[j].first) / dx);
       integral = arma::vec(integral_iter, arma::fill::zeros);
       for (unsigned int k = 0; k < integral_iter; k++) {
         coski = std::cos(normState[j] * (k * dx));
@@ -134,10 +128,10 @@ void fourierBasis::calculateHk()
       hk *= hktemp;
     }
 #else
-    std::vector<std::thread> threadVec(n_dim);
+    std::vector<std::thread> threadVec(_nDim);
 
-    for (unsigned int k = 0; k < n_dim; k++) {
-      integral_iter = (unsigned int) ((L[k].second - L[k].first) / dx);
+    for (unsigned int k = 0; k < _nDim; k++) {
+      integral_iter = (unsigned int) ((_lengthDims[k].second - _lengthDims[k].first) / dx);
       //threadVec.push_back(std::thread(integralHk, integral_iter, normState[k], dx, std::ref(hk)));
       threadVec.push_back(std::thread(integralHk, integral_iter, normState[k], dx, std::ref(hk)));
     }
@@ -147,7 +141,7 @@ void fourierBasis::calculateHk()
     }
 #endif
     hk = sqrt(hk);
-    hK_vec[i] = hk;
+    _hkVec[i] = hk;
   }
 
   return;
@@ -156,29 +150,30 @@ void fourierBasis::calculateHk()
 
 // /// \brief Reccursive helper for fourier series coefficients
 // /// \return List of Fourier Series Coefficients
-static void createKhelper(std::vector<int>& inputK, std::vector<int>& Kvec, std::vector<std::vector<int>>& Kseries)
+static void createKhelper(std::vector<int>& inputK, std::vector<int>& Kvec, std::vector<std::vector<int>>& Kseries, const unsigned int& n, unsigned int& idx)
 {
-  if (Kvec.size() == inputK.size()) {
-    Kseries.push_back(Kvec);
+  if (Kvec.size() == n) {
+    Kseries[idx] = Kvec;
+    idx++;
     return;
   }
   for (auto & k : inputK) {
     Kvec.push_back(k);
-    createKhelper(inputK, Kvec, Kseries);
+    createKhelper(inputK, Kvec, Kseries, n, idx);
     Kvec.pop_back();
   }
   return;
 }
 
 
-std::vector<std::vector<int>> fourierBasis::create_K_series(const int K)
+void fourierBasis::create_K_series(const int K)
 {
-  std::vector<std::vector<int>> Kseries;
   std::vector<int> inputK, Kvec;
+  unsigned int idx = 0;
   for (int k = 0; k < K + 1; k++) {
     inputK.push_back(k);
   }
-  createKhelper(inputK, Kvec, Kseries);
-  return Kseries;
+  createKhelper(inputK, Kvec, _kSeries, _nDim, idx);
+  return;
 }
 }

@@ -18,7 +18,7 @@
 #include <armadillo>
 #endif
 
-
+/// \brief Used to void variables in functions
 #define UNUSED(x) (void)(x)
 
 namespace ergodiclib
@@ -150,6 +150,9 @@ public:
     return xdot;
   }
 
+  /// \brief Used to resolve a given state after trajectory calculations
+  /// \param x_vec State Vector state at a given time
+  /// @return New updated state matrix
   arma::mat resolveState(const arma::mat & x_vec) const
   {
     arma::mat x_new = x_vec;
