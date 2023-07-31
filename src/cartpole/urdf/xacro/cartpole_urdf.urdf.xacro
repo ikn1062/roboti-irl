@@ -98,6 +98,26 @@
   </transmission>
 
   <gazebo>
+    <!-- <plugin 
+      filename="libignition-gazebo-joint-position-controller-system.so" 
+      name="ignition::gazebo::systems::JointPositionController">
+      <joint_name>slider_to_cart</joint_name>
+      <topic>/cartpole/cartpos</topic>
+      <p_gain>${prop_gain}</p_gain>
+      <i_gain>${int_gain}</i_gain>
+      <d_gain>${diff_gain}</d_gain>
+    </plugin>
+
+    <plugin 
+      filename="libignition-gazebo-joint-position-controller-system.so" 
+      name="ignition::gazebo::systems::JointPositionController">
+      <joint_name>cart_to_pole</joint_name>
+      <topic>/cartpole/polepos</topic>
+      <p_gain>55</p_gain>
+      <i_gain>0.1</i_gain>
+      <d_gain>2.0</d_gain>
+    </plugin> -->
+
     <plugin 
       filename="libignition-gazebo-joint-controller-system.so" 
       name="ignition::gazebo::systems::JointController">

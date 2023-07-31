@@ -19,32 +19,32 @@ int main()
   arma::vec u0({0.0});
 
   arma::mat Q(4, 4, arma::fill::eye);
-  Q(0, 0) = 0.0;
-  Q(1, 1) = 0.0;
+  Q(0, 0) = 1.0;
+  Q(1, 1) = 1.0;
   Q(2, 2) = 200.0;
-  Q(3, 3) = 1.0;
+  Q(3, 3) = 10.0;
 
   arma::mat R(1, 1, arma::fill::eye);
-  R(0, 0) = 0.05;
+  R(0, 0) = 0.01;
 
   arma::mat P(4, 4, arma::fill::eye);
-  P(0, 0) = 0.0001;
-  P(1, 1) = 0.0001;
-  P(2, 2) = 1000;
-  P(3, 3) = 50;
+  P(0, 0) = 0.0;
+  P(1, 1) = 0.0;
+  P(2, 2) = 1000.0;
+  P(3, 3) = 50.0;
 
   arma::mat r(4, 1, arma::fill::zeros);
 
-  double dt = 0.02;
+  double dt = 0.005;
   double t0 = 0.0;
   double tf = 3.0;
   double alpha = 0.40;
   double beta = 0.75;
-  double eps = 1e-5;
+  double eps = 0.0001;
 
   CartPole cartpole = CartPole(x0, u0, dt, t0, tf, 10.0, 5.0, 2.0);
   std::cout << "start controller" << std::endl;
-  SimpleController controller = SimpleController(cartpole, Q, R, P, r, 500, alpha, beta, eps);
+  SimpleController controller = SimpleController(cartpole, Q, R, P, r, 1000, alpha, beta, eps);
   std::pair<arma::mat, arma::mat> trajectories = controller.iLQR();
   saveTrajectoryCSV("example", trajectories);
   return 0;

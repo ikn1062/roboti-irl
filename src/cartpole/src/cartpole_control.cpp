@@ -73,6 +73,8 @@ public:
     // Publishers and Subscribers
     timestep_pub_ = create_publisher<std_msgs::msg::UInt64>("cartpole/timestep", 50);
     command_pub_ = create_publisher<std_msgs::msg::Float64>("/cartpole/cmd", 10);
+    cartpos_pub_ = create_publisher<std_msgs::msg::Float64>("/cartpole/cartpos", 10);
+    polepos_pub_ = create_publisher<std_msgs::msg::Float64>("/cartpole/polepos", 10);
     joint_state_sub_ = create_subscription<sensor_msgs::msg::JointState>(
       "/cartpole/joint_state",
       10,
@@ -81,6 +83,9 @@ public:
     file_cntrl_trigger_ = create_service<std_srvs::srv::Trigger>(
       "~/file_control_trigger", std::bind(
         &CartpoleControl::fileController, this, std::placeholders::_1, std::placeholders::_2));
+    file_traj_trigger_ = create_service<std_srvs::srv::Trigger>(
+      "~/file_traj_trigger", std::bind(
+        &CartpoleControl::filePosition, this, std::placeholders::_1, std::placeholders::_2));
     MPC_trigger_ =
       create_service<std_srvs::srv::Trigger>(
       "~/mpc_trigger",
@@ -130,6 +135,8 @@ private:
 
   // Controls message
   std_msgs::msg::Float64 force_cmd;
+  std_msgs::msg::Float64 cart_cmd;
+  std_msgs::msg::Float64 pole_cmd;
 
   // MPC Control Variables
   bool mpc_trigger;
@@ -162,9 +169,13 @@ private:
   arma::mat U;
 
   // Create publishers and subscribers
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr cartpos_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr polepos_pub_;
+
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr command_pub_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr file_cntrl_trigger_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr file_traj_trigger_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr MPC_trigger_;
 
   // Publishes the current timestep of the simulation
@@ -238,10 +249,10 @@ private:
     for (unsigned int i = 0; i < control_input.size(); i++) {
       force_cmd.data = control_input[i];
       command_pub_->publish(force_cmd);
-      std::this_thread::sleep_for(std::chrono::milliseconds(8));
+      std::this_thread::sleep_for(std::chrono::microseconds(4163));
       force_cmd.data = 0.0;
       command_pub_->publish(force_cmd);
-      std::this_thread::sleep_for(std::chrono::milliseconds(12));
+      std::this_thread::sleep_for(std::chrono::microseconds(637));
     }
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
@@ -249,6 +260,55 @@ private:
 
     response->success = true;
     response->message = "Control Passed";
+    return;
+  }
+
+  void filePosition(
+    const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+  {
+    std::vector<std::vector<float>> tracjectory;
+    std::ifstream trajectoryFile("example_trajectory.csv");
+
+    if (!trajectoryFile.is_open()) {
+      RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Control file could not be open");
+      response->success = false;
+      response->message = "Control File could not be opened";
+      return;
+    }
+
+    std::string line;
+    float num;
+    while (std::getline(trajectoryFile, line)) {
+      std::istringstream iss(line);
+      std::string value;
+      std::vector<float> trajecline;
+      while (std::getline(iss, value, ',')) {
+        num = std::stof(value);
+        trajecline.push_back(num);
+      }
+      tracjectory.push_back(trajecline);
+    }
+
+    trajectoryFile.close();
+
+    std::cout << "trajec_input size: " << tracjectory.size() << std::endl;
+    auto start = std::chrono::high_resolution_clock::now();
+    for (unsigned int i = 0; i < tracjectory.size(); i++) {
+      cart_cmd.data = tracjectory[i][0];
+      cartpos_pub_->publish(cart_cmd);
+      if (i > 200) {
+        pole_cmd.data = tracjectory[i-200][2];
+        polepos_pub_->publish(pole_cmd);
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    std::cout << "Time: " << duration.count() << std::endl;
+
+    response->success = true;
+    response->message = "Trajectory Complete";
     return;
   }
 
@@ -271,7 +331,7 @@ private:
         controls = U(0, i);
         force_cmd.data = controls;
         command_pub_->publish(force_cmd);
-        (X.col(i)).print("Ctrl_X: ");
+        // (X.col(i)).print("Ctrl_X: ");
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         // force_cmd.data = 0.0;
         // command_pub_->publish(force_cmd);

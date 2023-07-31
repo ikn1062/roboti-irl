@@ -90,19 +90,21 @@ public:
 
       gamma = beta;
       n = 0;
-      while (J_new > J + alpha * gamma * std::abs(DJ) && n < 20) {
+      while (J_new > J + alpha * gamma * DJ && n < 20) {
         Unew = U + gamma * vega;
         Xnew = createTrajectory(model, x0, Unew, dt);
         J_new = objectiveJ(Xnew, Unew);
         gamma = pow(beta, n++);
+
+        // std::cout << "J: " << J << ", Jnew: " << J_new << std::endl;
       }
       X = Xnew;
       U = Unew;
       trajectory = {X, U};
 
-      // std::cout << "i: " << i << ", n: " << n << std::endl;
-      // std::cout << "J: " << std::abs(J_new) << ", DJ: " << DJ << std::endl;
-      // (X.col(X.n_cols - 1)).print("End X: ");
+      std::cout << "i: " << i << ", n: " << n << std::endl;
+      std::cout << "J: " << std::abs(J_new) << ", DJ: " << DJ << std::endl;
+      (X.col(X.n_cols - 1)).print("End X: ");
       
       i += 1;
     }
@@ -170,10 +172,10 @@ public:
       i += 1;
     }
 
-    // std::cout << "i: " << i << std::endl;
-    // std::cout << "DJ: " << std::abs(DJ) << std::endl;
-    // std::cout << "J: " << std::abs(J_new) << std::endl;
-    // (X.col(X.n_cols - 1)).print("End X: ");
+    std::cout << "i: " << i << std::endl;
+    std::cout << "DJ: " << std::abs(DJ) << std::endl;
+    std::cout << "J: " << std::abs(J_new) << std::endl;
+    (X.col(X.n_cols - 1)).print("End X: ");
 
     return trajectory;
   }

@@ -50,9 +50,9 @@ public:
   CartPole()
   : x0({0.0, 0.0, ergodiclib::PI, 0.0}),
     u0({0.0}),
-    dt(0.0005),
+    dt(0.005),
     t0(0.0),
-    tf(10.0),
+    tf(5.0),
     M(10.0),
     m(5.0),
     g(9.81),
@@ -93,9 +93,9 @@ public:
   CartPole(double cart_mass, double pole_mass, double pole_len)
   : x0({0.0, 0.0, ergodiclib::PI, 0.0}),
     u0({0.0}),
-    dt(0.0005),
+    dt(0.005),
     t0(0.0),
-    tf(10.0),
+    tf(5.0),
     M(cart_mass),
     m(pole_mass),
     g(9.81),
@@ -142,10 +142,10 @@ public:
     arma::vec xdot(4, 1, arma::fill::zeros);
     xdot(0) = dx;
     // xdot(1) = (-m * l * sint * pow(dt, 2) + f + m * g * cost * sint) / (M + m * (1 - cos2t));
-    xdot(1) = (f + m*l*(pow(dt,2) * sint - dt * cost)) / (m + M);
     xdot(2) = dt;
     // xdot(3) = (-m * l * cost * sint * pow(dt, 2) + f * cost + (M + m) * g * sint) / (l * (M + m * (1 - cos2t)));
-    xdot(3) = (g*sint-((f + l * pow(dt, 2) * sint * m)/(M+m))*cost)/(l*(4/3-(cos2t * m/(m+M))));
+    xdot(3) = (g*sint-((f + l * pow(dt, 2) * sint * m)/(M+m))*cost)/(l*((4.0/3.0)-(cos2t * m/(m+M))));
+    xdot(1) = (f + m*l*(pow(dt,2) * sint - xdot(3) * cost)) / (m + M);
 
     return xdot;
   }
@@ -192,12 +192,12 @@ private:
     //   (2 * m * sint * cost *
     //   (f + g * m * sint * cost - l * m * pow(dt, 2) * sint)) / pow((M + m * (1 - cos2t)), 2);
     // double d2x_t = d2x_t_a - d2x_t_b;
-    double d2x_t_a_denom = l*((m*cos2t)/(M + m) - 4/3);
-    double d2x_t_a = ((cost*(g*cost + (sin(t)*(l*m*sint*dt2 + f))/(M + m) - (dt2*l*m*cos2t)/(M + m))) - (sin(t)*(g*sin(t) - (cos(t)*(l*m*sin(t)*dt2 + f))/(M + m)))) / d2x_t_a_denom; 
-    double d2x_t_b = (2*m*cos2t*sint*(g*sint- (cost*(l*m*sint*dt2 + f))/(M+m))) / (l*(M+m)*pow((m*cos2t)/(M+m) - 4/3, 2));
-
+    double d2x_t_a_denom = l*(((m*cos2t)/(M + m)) - (4.0/3.0));
+    double d2x_t_a = ((cost*(g*cost + (sint*(l*m*sint*dt2 + f))/(M + m) - (dt2*l*m*cos2t)/(M + m))) - (sint*(g*sint - (cost*(l*m*sint*dt2 + f))/(M + m)))) / d2x_t_a_denom;
+    double d2x_t_b = (2*m*cos2t*sint*(g*sint - (cost*(l*m*sint*dt2+ f))/(M + m))) / (l*(M+m)*pow(((m*cos2t)/(M+m) - 4.0/3.0), 2));
     double d2x_t = (l * m * (dt2 * cost + d2x_t_a + d2x_t_b)) / (M + m);
-    double d2x_dt = -(l * m * 8 * dt * sint) / (3 * m * cos2t - 4 * (m + M));
+
+    double d2x_dt = -(l * m * 8.0 * dt * sint) / (3.0 * m * cos2t - 4.0 * (m + M));
 
     // double d2t_t_a =
     //   (-f * sint + g * (m + M) * cost + l * m *
@@ -207,10 +207,10 @@ private:
     //   (f * cost + (m + M) * g * sint - l * m *
     //   pow(dt, 2) * sint * cost)) / (l * pow(M + m * (1 - cos2t), 2));
     // double d2t_t = d2t_t_a - d2t_t_b;
-    double d2t_t_a = (3 * (g * cost * (M + m) + f * sint + l * dt2 * m * (sin2t - cos2t)))/(l * (3 * m * cos2t - 4 * (M + m)));
-    double d2t_t_b = -((9 * m * sin(2*t) * (g * sin(t) * (M + m) - f * cost - l * dt2 * m * cost * sint))/(l * pow((3 * m * cos2t - 4 * (M + m)), 2)));
-    double d2t_t = d2t_t_a - d2t_t_b;
-    double d2t_dt = (dt * m * sin(2*t) * 3) / (3 * m * cos2t - 4 * (M + m)); 
+    double d2t_t_a = (-3.0 * (g * cost * (M + m) + f * sint + l * dt2 * m * (sin2t - cos2t)))/(l * (3.0 * m * cos2t - 4.0 * (M + m)));
+    double d2t_t_b = -((9.0 * m * sin(2.0*t) * (g * sint * (M + m) - f * cost - l * dt2 * m * cost * sint))/(l * pow((3.0 * m * cos2t - 4.0 * (M + m)), 2)));
+    double d2t_t = d2t_t_a + d2t_t_b;
+    double d2t_dt = (dt * m * sin(2.0*t) * 3.0) / (3.0 * m * cos2t - 4.0 * (M + m)); 
 
     A(0, 1) = 1.0;
     A(1, 2) = d2x_t;
@@ -238,8 +238,8 @@ private:
     // B(1, 0) = 1.0 / (M + m * (1 - cos2t));
     // B(3, 0) = cost / (l * (M + m * (1 - cos2t)));
 
-    B(1, 0) = - 4.0 / (3 * m * cos2t - 4.0 * (M + m));
-    B(3, 0) = (3.0 * cost) / (l * (3 * m * cos2t - 4 * (M + m)));
+    B(1, 0) = - 4.0 / (3.0 * m * cos2t - 4.0 * (M + m));
+    B(3, 0) = (3.0 * cost) / (l * (3.0 * m * cos2t - 4.0 * (M + m)));
 
     return B;
   }
